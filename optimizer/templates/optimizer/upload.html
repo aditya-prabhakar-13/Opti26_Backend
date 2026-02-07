@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Opti26 Optimizer</title>
+</head>
+<body>
+    <h1>Vehicle Route Optimizer</h1>
+    <p>Upload an Excel file (formatted like TestCase_TC01.xlsx) to get optimized routes.</p>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="excel_file" accept=".xlsx" required>
+        <br><br>
+        <button type="submit">Run velora.exe</button>
+    </form>
+</body>
+</html>
