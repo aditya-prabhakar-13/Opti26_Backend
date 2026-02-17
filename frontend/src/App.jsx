@@ -265,11 +265,12 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    document.body.style.overflowY = hasCases ? 'auto' : 'hidden';
+    const shouldHideOverflow = (!hasCases || effectiveNav === 'new') && !isMobile;
+    document.body.style.overflowY = shouldHideOverflow ? 'hidden' : 'auto';
     return () => {
       document.body.style.overflowY = 'auto';
     };
-  }, [hasCases]);
+  }, [hasCases, effectiveNav, isMobile]);
 
   useEffect(() => {
     let cancelled = false;
@@ -315,18 +316,18 @@ export default function App() {
 
     if (rows.length === 0) {
       setSelectedResult(null);
-      setActiveNav('new');
-      return;
+      return rows;
     }
 
     if (selectId) {
       const detail = await fetchResultDetail(selectId);
       setSelectedResult(normalizeOptimizationPayload(detail));
-      return;
+      return rows;
     }
 
     const detail = await fetchResultDetail(rows[0].id);
     setSelectedResult(normalizeOptimizationPayload(detail));
+    return rows;
   }
 
   async function runOptimization() {
@@ -379,9 +380,11 @@ export default function App() {
       if (isCurrent) {
         setSelectedResult(null);
       }
-      await refreshResults();
-      if (isCurrent) {
-        setActiveNav('dashboard');
+      const rows = await refreshResults();
+      if (rows.length === 0) {
+        setActiveNav('new');
+      } else {
+        setActiveNav('testcases');
       }
     } catch (deleteErr) {
       setError(deleteErr.message || 'Unable to delete result');
@@ -450,11 +453,22 @@ export default function App() {
         </button>
       </div>
 
+      {hasCases && <h2 className="dashboard-section-title">TEST CASE PARAMETERS:</h2>}
+
       <div className="stats-grid">
         <StatCard label="VEHICLES USED" value={formatNumber(metrics.vehicles_used)} />
         <StatCard label="EMPLOYEES COVERED" value={formatNumber(metrics.employees_covered)} />
         <StatCard label="TOTAL DISTANCE" value={`${formatNumber(metrics.total_distance_km)} km`} />
         <StatCard label="TOTAL COST" value={formatCurrency(metrics.total_cost)} />
+        {hasCases && (
+          <>
+            <StatCard label="BASELINE COST" value={formatCurrency(metrics.baseline_cost)} />
+            <StatCard label="NET SAVINGS" value={formatCurrency(metrics.net_savings)} />
+            <StatCard label="SAVINGS %" value={`${formatNumber(metrics.savings_percentage)}%`} />
+            <StatCard label="OPTIMIZED TIME" value={formatMinutes(metrics.optimized_travel_time_min)} />
+            <StatCard label="BASELINE TIME" value={formatMinutes(metrics.baseline_travel_time_min)} />
+          </>
+        )}
       </div>
     </section>
   );
@@ -539,18 +553,6 @@ export default function App() {
           </button>
         </div>
 
-        {hasCases && (
-          <>
-            <h2>TEST CASE PARAMETERS:</h2>
-            <div className="params-grid">
-              <StatCard label="BASELINE COST" value={formatCurrency(metrics.baseline_cost)} />
-              <StatCard label="NET SAVINGS" value={formatCurrency(metrics.net_savings)} />
-              <StatCard label="SAVINGS %" value={`${formatNumber(metrics.savings_percentage)}%`} />
-              <StatCard label="OPTIMIZED TIME" value={formatMinutes(metrics.optimized_travel_time_min)} />
-              <StatCard label="BASELINE TIME" value={formatMinutes(metrics.baseline_travel_time_min)} />
-            </div>
-          </>
-        )}
       </div>
 
       {hasCases && (
