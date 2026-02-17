@@ -47,15 +47,32 @@ def haversine_fallback(lat1, lon1, lat2, lon2):
 
 def parse_excel_to_dict(file_path):
     """
-    Parses Excel and removes any rows containing empty fields.
+    Parse required sheets from the testcase workbook and build the
+    optimizer input payload.
     """
     try:
         with pd.ExcelFile(file_path) as xls:
-            # Load and immediately drop rows with any empty (NaN) cells
+            required_sheets = {'employees', 'vehicles', 'baseline', 'metadata'}
+            missing_sheets = required_sheets.difference(set(xls.sheet_names))
+            if missing_sheets:
+                raise ValueError(f"Missing required sheets: {', '.join(sorted(missing_sheets))}")
+
+            # Remove rows with empty cells to avoid malformed optimizer input.
             df_emp = xls.parse('employees').dropna()
             df_veh = xls.parse('vehicles').dropna()
             df_base = xls.parse('baseline').dropna()
             df_meta = xls.parse('metadata').dropna()
+
+        if df_emp.empty or df_veh.empty:
+            raise ValueError("Employees and vehicles sheets must contain at least one valid row")
+
+        required_employee_cols = {
+            'employee_id', 'priority', 'pickup_lat', 'pickup_lng', 'drop_lat', 'drop_lng',
+            'earliest_pickup', 'latest_drop', 'vehicle_preference', 'sharing_preference'
+        }
+        missing_cols = required_employee_cols.difference(set(df_emp.columns))
+        if missing_cols:
+            raise ValueError(f"Missing required employee columns: {', '.join(sorted(missing_cols))}")
 
         employee_ids = []
         matrix_locations = []
@@ -74,11 +91,31 @@ def parse_excel_to_dict(file_path):
         employees_dict = {}
         for i, emp_id in enumerate(employee_ids):
             row = df_emp.iloc[i]
-            distances = {"drop": round(distance_matrix[i][office_idx] if not use_fallback else 0, 1)}
+            if use_fallback:
+                drop_distance = haversine_fallback(
+                    row['pickup_lat'],
+                    row['pickup_lng'],
+                    row['drop_lat'],
+                    row['drop_lng'],
+                )
+            else:
+                drop_distance = distance_matrix[i][office_idx]
+
+            distances = {"drop": round(drop_distance, 1)}
             
             for j, other_id in enumerate(employee_ids):
                 if i != j:
-                    distances[other_id] = round(distance_matrix[i][j] if not use_fallback else 0, 1)
+                    if use_fallback:
+                        other = df_emp.iloc[j]
+                        inter_distance = haversine_fallback(
+                            row['pickup_lat'],
+                            row['pickup_lng'],
+                            other['pickup_lat'],
+                            other['pickup_lng'],
+                        )
+                    else:
+                        inter_distance = distance_matrix[i][j]
+                    distances[other_id] = round(inter_distance, 1)
 
             employees_dict[emp_id] = {
                 "priority": row['priority'],
