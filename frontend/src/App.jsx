@@ -31,9 +31,7 @@ function darkenHex(hex, factor = 0.72) {
 function LogoMark() {
   return (
     <div className="logo-mark" aria-hidden>
-      <span className="logo-ring" />
-      <span className="logo-dot" />
-      <span className="logo-pin" />
+      <img src="/favicon.svg" alt="" className="logo-mark-image" />
     </div>
   );
 }
@@ -643,3 +641,5 @@ export default function App() {
     </div>
   );
 }
+
+
