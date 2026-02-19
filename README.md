@@ -39,8 +39,22 @@ npm run dev
 ## Mobile App (Android APK)
 - Mobile wrapper project is included at `Opti26_mobile/` (Capacitor + Android).
 - It loads the hosted frontend URL configured in `Opti26_mobile/capacitor.config.json`.
+- Website URL update guide: [Change Website URL for Mobile App](#change-website-url-for-mobile-app)
 
-### Build Release APK
+### Build APK (Release)
+1. Install mobile dependencies (one time):
+```powershell
+cd Opti26_mobile
+npm install
+```
+
+2. Sync Capacitor config/assets to Android:
+```powershell
+cd Opti26_mobile
+npx cap sync
+```
+
+3. Build release APK:
 ```powershell
 cd Opti26_mobile\android
 .\gradlew.bat assembleRelease
@@ -49,8 +63,32 @@ cd Opti26_mobile\android
 Release output:
 - `Opti26_mobile/android/app/build/outputs/apk/release/app-release.apk`
 
-### Sync after mobile config changes
+### Build APK (Debug)
+```powershell
+cd Opti26_mobile\android
+.\gradlew.bat assembleDebug
+```
+
+Debug output:
+- `Opti26_mobile/android/app/build/outputs/apk/debug/app-debug.apk`
+
+### Change Website URL for Mobile App
+1. Open `Opti26_mobile/capacitor.config.json`.
+2. Update `server.url` to your hosted frontend URL.
+
+Example:
+```json
+"server": {
+	"url": "http://10.57.61.159:5173",
+	"cleartext": true
+}
+```
+
+3. Sync and rebuild:
 ```powershell
 cd Opti26_mobile
 npx cap sync
+
+cd android
+.\gradlew.bat assembleRelease
 ```
