@@ -1,0 +1,16 @@
+{
+  "appId": "com.opti26.app",
+  "appName": "Velora Opti26",
+  "webDir": "www",
+  "server": {
+    "url": "http://10.57.61.159:5173",
+    "cleartext": true
+  },
+  "plugins": {
+    "StatusBar": {
+      "overlaysWebView": false,
+      "style": "DARK",
+      "backgroundColor": "#FFFFFF"
+    }
+  }
+}

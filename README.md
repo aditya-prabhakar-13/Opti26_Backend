@@ -35,3 +35,22 @@ npm run dev
 - Frontend proxies `/api/*` to Django at `http://127.0.0.1:8000`.
 - `velora.exe` must exist in project root (`Opti26_Backend/velora.exe`).
 - Only `.xlsx` input files are accepted.
+
+## Mobile App (Android APK)
+- Mobile wrapper project is included at `Opti26_mobile/` (Capacitor + Android).
+- It loads the hosted frontend URL configured in `Opti26_mobile/capacitor.config.json`.
+
+### Build Release APK
+```powershell
+cd Opti26_mobile\android
+.\gradlew.bat assembleRelease
+```
+
+Release output:
+- `Opti26_mobile/android/app/build/outputs/apk/release/app-release.apk`
+
+### Sync after mobile config changes
+```powershell
+cd Opti26_mobile
+npx cap sync
+```
