@@ -135,7 +135,7 @@ def _execute_optimization(excel_file):
 
         # 4. Run velora.exe with explicit input and output arguments
         # argv[1] = input_file, argv[2] = output_file
-        exe_path = os.path.join(os.getcwd(), 'velora.exe')
+        exe_path = os.path.join(os.getcwd(), 'velora.exe' if os.name == 'nt' else 'velora')
         if not os.path.exists(exe_path):
             raise RuntimeError("velora.exe is missing in project root")
         
