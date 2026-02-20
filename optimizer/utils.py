@@ -38,18 +38,15 @@ def get_osrm_matrix(locations):
 
 def haversine_fallback(lat1, lon1, lat2, lon2):
     R = 6371000  
-    phi1, phi2 = math.radians(lat1), math.radians(lat2)
-    dphi = math.radians(lat2 - lat1)
-    dlambda = math.radians(lon2 - lon1)
+    # Force float conversion to prevent string crashes
+    phi1, phi2 = math.radians(float(lat1)), math.radians(float(lat2))
+    dphi = math.radians(float(lat2) - float(lat1))
+    dlambda = math.radians(float(lon2) - float(lon1))
     a = math.sin(dphi/2)**2 + math.cos(phi1)*math.cos(phi2)*math.sin(dlambda/2)**2
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     return R * c
 
 def parse_excel_to_dict(file_path):
-    """
-    Parse required sheets from the testcase workbook and build the
-    optimizer input payload.
-    """
     try:
         with pd.ExcelFile(file_path) as xls:
             required_sheets = {'employees', 'vehicles', 'baseline', 'metadata'}
@@ -57,11 +54,11 @@ def parse_excel_to_dict(file_path):
             if missing_sheets:
                 raise ValueError(f"Missing required sheets: {', '.join(sorted(missing_sheets))}")
 
-            # Remove rows with empty cells to avoid malformed optimizer input.
-            df_emp = xls.parse('employees').dropna()
-            df_veh = xls.parse('vehicles').dropna()
-            df_base = xls.parse('baseline').dropna()
-            df_meta = xls.parse('metadata').dropna()
+            # Use how='all' to only drop rows that are completely empty
+            df_emp = xls.parse('employees').dropna(how='all')
+            df_veh = xls.parse('vehicles').dropna(how='all')
+            df_base = xls.parse('baseline').dropna(how='all')
+            df_meta = xls.parse('metadata').dropna(how='all')
 
         if df_emp.empty or df_veh.empty:
             raise ValueError("Employees and vehicles sheets must contain at least one valid row")
@@ -80,7 +77,6 @@ def parse_excel_to_dict(file_path):
             employee_ids.append(row['employee_id'])
             matrix_locations.append([row['pickup_lng'], row['pickup_lat']])
         
-        # Office location based on the first valid employee row
         office_loc = [df_emp.iloc[0]['drop_lng'], df_emp.iloc[0]['drop_lat']]
         matrix_locations.append(office_loc)
         office_idx = len(matrix_locations) - 1
@@ -91,31 +87,30 @@ def parse_excel_to_dict(file_path):
         employees_dict = {}
         for i, emp_id in enumerate(employee_ids):
             row = df_emp.iloc[i]
-            if use_fallback:
+            
+            # Check for missing OSRM matrix OR null values inside the matrix
+            if use_fallback or distance_matrix[i][office_idx] is None:
                 drop_distance = haversine_fallback(
-                    row['pickup_lat'],
-                    row['pickup_lng'],
-                    row['drop_lat'],
-                    row['drop_lng'],
+                    row['pickup_lat'], row['pickup_lng'],
+                    row['drop_lat'], row['drop_lng'],
                 )
             else:
                 drop_distance = distance_matrix[i][office_idx]
 
-            distances = {"drop": round(drop_distance, 1)}
+            distances = {"drop": round(float(drop_distance), 1)}
             
             for j, other_id in enumerate(employee_ids):
                 if i != j:
-                    if use_fallback:
-                        other = df_emp.iloc[j]
+                    other = df_emp.iloc[j]
+                    if use_fallback or distance_matrix[i][j] is None:
                         inter_distance = haversine_fallback(
-                            row['pickup_lat'],
-                            row['pickup_lng'],
-                            other['pickup_lat'],
-                            other['pickup_lng'],
+                            row['pickup_lat'], row['pickup_lng'],
+                            other['pickup_lat'], other['pickup_lng'],
                         )
                     else:
                         inter_distance = distance_matrix[i][j]
-                    distances[other_id] = round(inter_distance, 1)
+                    
+                    distances[other_id] = round(float(inter_distance), 1)
 
             employees_dict[emp_id] = {
                 "priority": row['priority'],
