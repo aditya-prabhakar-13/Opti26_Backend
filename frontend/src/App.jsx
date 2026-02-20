@@ -17,20 +17,7 @@ import {
 import DashboardView from "./components/DashboardView.jsx";
 import TestCasesView from "./components/TestcasesView.jsx";
 import NewCaseView from "./components/NewCaseView.jsx";
-
-const NAV_ITEMS = [
-  { id: "dashboard", label: "DASHBOARD" },
-  { id: "testcases", label: "TEST CASES" },
-  { id: "new", label: "NEW TEST CASES" },
-];
-
-function LogoMark() {
-  return (
-    <div className="logo-mark" aria-hidden>
-      <img src="/favicon.svg" alt="" className="logo-mark-image" />
-    </div>
-  );
-}
+import Sidebar from "./components/Sidebar.jsx";
 
 export default function App() {
   const [activeNav, setActiveNav] = useState("new");
@@ -51,6 +38,7 @@ export default function App() {
   const hasCases = results.length > 0;
   const effectiveNav = hasCases ? activeNav : "new";
 
+  /* ── Bootstrap ── */
   useEffect(() => {
     let mounted = true;
 
@@ -114,6 +102,7 @@ export default function App() {
     };
   }, [hasCases, effectiveNav, isMobile]);
 
+  /* ── Route geometries ── */
   useEffect(() => {
     let cancelled = false;
 
@@ -150,6 +139,7 @@ export default function App() {
     };
   }, [selectedResult]);
 
+  /* ── Actions ── */
   async function refreshResults(selectId = null) {
     const rowsPayload = await fetchResults();
     const rows = toResultsListRows(rowsPayload);
@@ -171,10 +161,8 @@ export default function App() {
       setError("Please select an .xlsx file first");
       return;
     }
-
     setLoading(true);
     setError("");
-
     try {
       const created = await optimizeExcel(selectedFile);
       const normalized = normalizeOptimizationPayload(created);
@@ -207,14 +195,12 @@ export default function App() {
 
     setDeletingId(resultId);
     setError("");
-
     try {
       await deleteResult(resultId);
       const isCurrent = selectedResult?.id === resultId;
       if (isCurrent) setSelectedResult(null);
-
       const rows = await refreshResults();
-      setActiveNav(rows.length === 0 ? "new" : "testcases");
+      setActiveNav(rows.length === 0 ? "new" : "dashboard");
     } catch (deleteErr) {
       setError(deleteErr.message || "Unable to delete result");
     } finally {
@@ -222,6 +208,7 @@ export default function App() {
     }
   }
 
+  /* ── Derived state ── */
   const metrics = useMemo(() => getMetrics(selectedResult), [selectedResult]);
   const mapData = useMemo(() => buildMapData(selectedResult), [selectedResult]);
   const visibleTrips = useMemo(() => {
@@ -229,7 +216,6 @@ export default function App() {
     return mapData.trips.filter((trip) => trip.vehicleId === vehicleFilter);
   }, [mapData.trips, vehicleFilter]);
 
-  // Shared props passed down to all map-bearing views
   const sharedMapProps = {
     mapData,
     vehicleFilter,
@@ -244,87 +230,110 @@ export default function App() {
     selectedResult,
   };
 
+  /* ── Layout ── */
   return (
-    <div className="frame">
+    <div
+      className="flex h-screen overflow-hidden"
+      style={{
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
+        background:
+          "linear-gradient(135deg, #0f1623 0%, #111827 50%, #0c1420 100%)",
+      }}>
+      {/* ── Sidebar (desktop always, mobile drawer) ── */}
       {hasCases && (
         <>
+          {/* Desktop sidebar */}
+          <div className="hidden md:flex flex-col w-64 flex-shrink-0">
+            <Sidebar
+              results={results}
+              selectedResult={selectedResult}
+              deletingId={deletingId}
+              onNewCase={() => setActiveNav("new")}
+              onOpenResult={openResult}
+              onDeleteResult={removeResult}
+            />
+          </div>
+
+          {/* Mobile top bar */}
           {isMobile && (
-            <header className="mobile-topbar">
-              <div className="mobile-brand">
-                <LogoMark />
-                <div className="brand-copy">
-                  <h2>VELORA</h2>
-                  <small>Driven by Possibility</small>
+            <header
+              className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 md:hidden"
+              style={{
+                background: "rgba(15,22,35,0.95)",
+                borderBottom: "1px solid rgba(148,163,184,0.08)",
+                backdropFilter: "blur(12px)",
+              }}>
+              {/* Brand */}
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{
+                    background: "linear-gradient(135deg, #f59e0b, #ea580c)",
+                  }}>
+                  <img
+                    src="/favicon.svg"
+                    alt=""
+                    className="w-4 h-4 brightness-0 invert"
+                  />
                 </div>
+                <span
+                  className="text-white font-bold text-base tracking-wide"
+                  style={{ fontFamily: "'Fraunces', serif" }}>
+                  VELORA
+                </span>
               </div>
+
+              {/* Hamburger */}
               <button
                 type="button"
-                className={sidebarOpen ? "hamburger is-open" : "hamburger"}
-                onClick={() => setSidebarOpen((open) => !open)}>
-                <span className="hamburger-bar" />
-                <span className="hamburger-bar" />
-                <span className="hamburger-bar" />
+                onClick={() => setSidebarOpen((o) => !o)}
+                className="w-9 h-9 flex flex-col items-center justify-center gap-1.5 rounded-xl bg-slate-800/80 border border-slate-700/60">
+                <span
+                  className={`block w-4 h-[2px] bg-slate-300 rounded-full transition-all duration-200 ${sidebarOpen ? "rotate-45 translate-y-[7px]" : ""}`}
+                />
+                <span
+                  className={`block w-4 h-[2px] bg-slate-300 rounded-full transition-all duration-200 ${sidebarOpen ? "opacity-0" : ""}`}
+                />
+                <span
+                  className={`block w-4 h-[2px] bg-slate-300 rounded-full transition-all duration-200 ${sidebarOpen ? "-rotate-45 -translate-y-[7px]" : ""}`}
+                />
               </button>
             </header>
           )}
-          <aside className="side-rail desktop-open">
-            <div className="brand-head">
-              <LogoMark />
-              <div className="brand-copy">
-                <h2>VELORA</h2>
-                <small>Driven by Possibility</small>
-              </div>
-            </div>
-            <nav>
-              {NAV_ITEMS.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={
-                    effectiveNav === item.id ? "nav-link is-active" : "nav-link"
-                  }
-                  onClick={() => setActiveNav(item.id)}>
-                  {item.label}
-                </button>
-              ))}
-            </nav>
-          </aside>
 
+          {/* Mobile drawer */}
           {isMobile && sidebarOpen && (
             <>
-              <nav className="mobile-nav-dropdown">
-                {NAV_ITEMS.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className={
-                      effectiveNav === item.id
-                        ? "nav-link is-active"
-                        : "nav-link"
-                    }
-                    onClick={() => {
-                      setActiveNav(item.id);
-                      setSidebarOpen(false);
-                    }}>
-                    {item.label}
-                  </button>
-                ))}
-              </nav>
-              <button
-                type="button"
-                className="sidebar-backdrop"
+              <div
+                className="fixed inset-0 z-40 bg-slate-950/70 backdrop-blur-sm"
                 onClick={() => setSidebarOpen(false)}
               />
+              <div className="fixed top-0 left-0 bottom-0 z-50 w-72 flex flex-col">
+                <Sidebar
+                  results={results}
+                  selectedResult={selectedResult}
+                  deletingId={deletingId}
+                  onNewCase={() => {
+                    setActiveNav("new");
+                    setSidebarOpen(false);
+                  }}
+                  onOpenResult={openResult}
+                  onDeleteResult={removeResult}
+                />
+              </div>
             </>
           )}
         </>
       )}
 
+      {/* ── Main content ── */}
       <main
-        className={
-          hasCases ? "content-shell with-nav" : "content-shell no-nav"
-        }>
-        {error && <div className="error-banner">{error}</div>}
+        className={`flex-1 overflow-y-auto ${isMobile && hasCases ? "pt-14" : ""}`}>
+        {error && (
+          <div className="mx-4 mt-4 px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-sm font-semibold">
+            {error}
+          </div>
+        )}
 
         {effectiveNav === "dashboard" && (
           <DashboardView
