@@ -118,6 +118,37 @@ def _save_optimization_result(filename, result_data, result_data_noconstraints=N
             result_data_infeasible=result_data_infeasible,
         )
 
+import os
+import platform
+from pathlib import Path
+
+def get_exe_path(exe_name):
+    # Add .exe on Windows
+    exe_filename = f"{exe_name}.exe" if os.name == "nt" else exe_name
+
+    # Determine OS folder
+    if os.name == "nt":
+        subdir = "win"
+    elif os.name == "posix":
+        if platform.system() == "Darwin":
+            subdir = "macos"
+        else:
+            subdir = "linux"
+    else:
+        raise RuntimeError("Unsupported operating system")
+
+    # Base directory (directory where this script is located)
+    base_dir = Path(__file__).resolve().parent
+
+    # Construct full path
+    exe_path = base_dir / "executables" / subdir / exe_filename
+
+    if not exe_path.exists():
+        raise FileNotFoundError(f"Executable not found: {exe_path}")
+
+    return str(exe_path)
+
+
 def _execute_optimization(excel_file, progress_callback=None):
     if not excel_file.name.lower().endswith('.xlsx'):
         raise ValueError("Only .xlsx files are supported")
@@ -161,9 +192,7 @@ def _execute_optimization(excel_file, progress_callback=None):
 
         # 4. Run velora_final.exe with explicit input and output arguments
         report_progress('routing', 35, 'Calculating road distances with OSMnx...')
-        exe_path = os.path.join(os.getcwd(), 'velora_final.exe' if os.name == 'nt' else 'velora_final')
-        if not os.path.exists(exe_path):
-            raise RuntimeError("velora_final.exe is missing in project root")
+        exe_path = get_exe_path("velora_final")
         
         # Execute: velora_final.exe results/tmp_in.json results/tmp_out.json
         report_progress('optimizing', 40, 'Running optimized routes algorithm...')
@@ -178,7 +207,7 @@ def _execute_optimization(excel_file, progress_callback=None):
 
         # 5. Run velora_noconstraints.exe
         report_progress('optimizing', 55, 'Running no constraints algorithm...')
-        exe_path_noconstraints = os.path.join(os.getcwd(), 'velora_noconstraints.exe' if os.name == 'nt' else 'velora_noconstraints')
+        exe_path_noconstraints = get_exe_path("velora_noconstraints")
         if os.path.exists(exe_path_noconstraints):
             result_noconstraints = subprocess.run(
                 [exe_path_noconstraints, input_json_path, output_json_path_noconstraints],
@@ -192,7 +221,7 @@ def _execute_optimization(excel_file, progress_callback=None):
 
         # 6. Run velora_infeasiblehandling.exe
         report_progress('optimizing', 65, 'Running infeasible handling algorithm...')
-        exe_path_infeasible = os.path.join(os.getcwd(), 'velora_infeasiblehandling.exe' if os.name == 'nt' else 'velora_infeasiblehandling')
+        exe_path_infeasible = get_exe_path("velora_infeasiblehandling")
         if os.path.exists(exe_path_infeasible):
             result_infeasible = subprocess.run(
                 [exe_path_infeasible, input_json_path, output_json_path_infeasible],
