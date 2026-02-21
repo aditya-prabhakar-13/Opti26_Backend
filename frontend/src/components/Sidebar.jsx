@@ -102,7 +102,7 @@ function TestCaseRow({ result, isActive, isDeleting, onOpen, onDelete }) {
       <div className="flex-1 min-w-0">
         <p
           className={`text-xs font-semibold truncate leading-tight ${isActive ? "text-amber-300" : "text-slate-300 group-hover:text-white"} transition-colors`}>
-          {result.name ?? `Case #${result.id}`}
+          {result.filename ?? `Case #${result.id}`}
         </p>
         {result.createdAt && (
           <p className="text-[10px] text-slate-500 mt-0.5 truncate">
