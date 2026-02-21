@@ -329,7 +329,7 @@ export default function DashboardView({
                   },
                   {
                     key: "infeasible",
-                    label: "Infeasible Handling",
+                    label: "Hybrid",
                     shortLabel: "Infeasible",
                   },
                 ].map(({ key, label, shortLabel }) => {
@@ -517,7 +517,13 @@ export default function DashboardView({
           )}
         </div>
 
-        <ResultsTableView selectedResult={selectedResult} />
+        {selectedResult && (
+          <ResultsTableView
+            key={selectedResult.id}
+            selectedResult={selectedResult}
+            mapMode={mapMode}
+          />
+        )}
 
         {/* ── Footer ── */}
         <footer className="flex items-center justify-center gap-3 pt-2 pb-8">
