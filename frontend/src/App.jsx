@@ -112,7 +112,7 @@ export default function App() {
     let cancelled = false;
 
     async function loadGeometries() {
-      const mapData = buildMapData(selectedResult);
+      const mapData = buildMapData(selectedResult, mapMode);
       if (mapData.trips.length === 0) {
         setRouteGeometries({});
         setIsRouteLoading(false);
@@ -175,7 +175,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [selectedResult]);
+  }, [selectedResult, mapMode]);
 
   /* ── Actions ── */
   async function refreshResults(selectId = null) {
@@ -264,8 +264,8 @@ export default function App() {
   }
 
   /* ── Derived state ── */
-  const metrics = useMemo(() => getMetrics(selectedResult), [selectedResult]);
-  const mapData = useMemo(() => buildMapData(selectedResult), [selectedResult]);
+  const metrics = useMemo(() => getMetrics(selectedResult, mapMode), [selectedResult, mapMode]);
+  const mapData = useMemo(() => buildMapData(selectedResult, mapMode), [selectedResult, mapMode]);
   const visibleTrips = useMemo(() => {
     if (vehicleFilter === "ALL") return mapData.trips;
     return mapData.trips.filter((trip) => trip.vehicleId === vehicleFilter);

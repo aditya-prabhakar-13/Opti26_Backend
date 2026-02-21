@@ -4,7 +4,9 @@ class OptimizationResult(models.Model):
     # Store the name of the original file for reference
     original_filename = models.CharField(max_length=255)
     # Store the JSON output as a text field or JSONField
-    result_data = models.JSONField() 
+    result_data = models.JSONField()  # Optimized result (velora_final.exe)
+    result_data_noconstraints = models.JSONField(null=True, blank=True)  # No constraints result
+    result_data_infeasible = models.JSONField(null=True, blank=True)  # Infeasible handling result
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
