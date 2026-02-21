@@ -1,5 +1,6 @@
 import MapPanel from "./MapPanel";
 import { formatCurrency, formatMinutes, formatNumber } from "../lib/transform";
+import ResultsTableView from "./ResultTable";
 
 /* ── Google Fonts ── */
 if (typeof document !== "undefined" && !document.getElementById("db-fonts")) {
@@ -311,10 +312,26 @@ export default function DashboardView({
               {/* Toggle */}
               <div className="flex flex-wrap sm:flex-nowrap items-center bg-slate-900/70 rounded-xl p-1 gap-1 border border-slate-700/50 w-full sm:w-auto">
                 {[
-                  { key: "initial", label: "Initial Points", shortLabel: "Initial" },
-                  { key: "optimized", label: "Optimized Routes", shortLabel: "Optimized" },
-                  { key: "noconstraints", label: "No Constraints", shortLabel: "No Const." },
-                  { key: "infeasible", label: "Infeasible Handling", shortLabel: "Infeasible" },
+                  {
+                    key: "initial",
+                    label: "Initial Points",
+                    shortLabel: "Initial",
+                  },
+                  {
+                    key: "optimized",
+                    label: "Optimized Routes",
+                    shortLabel: "Optimized",
+                  },
+                  {
+                    key: "noconstraints",
+                    label: "No Constraints",
+                    shortLabel: "No Const.",
+                  },
+                  {
+                    key: "infeasible",
+                    label: "Infeasible Handling",
+                    shortLabel: "Infeasible",
+                  },
                 ].map(({ key, label, shortLabel }) => {
                   const active = mapMode === key;
                   const disabled = key !== "initial" && !selectedResult;
@@ -427,31 +444,31 @@ export default function DashboardView({
                 <span className="text-amber-500">· {currentModeLabel}</span>
               </SectionLabel>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <MetricCard
-                label="Vehicles Used"
-                value={formatNumber(m.vehicles_used)}
-                icon={icons.vehicle}
-              />
-              <MetricCard
-                label="Employees Covered"
-                value={formatNumber(m.employees_covered)}
-                icon={icons.people}
-              />
-              <MetricCard
-                label="Total Distance"
-                value={
-                  m.total_distance_km != null
-                    ? `${formatNumber(m.total_distance_km)} km`
-                    : null
-                }
-                icon={icons.route}
-              />
-              <MetricCard
-                label="Total Cost"
-                value={formatCurrency(m.total_cost)}
-                icon={icons.cost}
-                variant="gold"
-              />
+                <MetricCard
+                  label="Vehicles Used"
+                  value={formatNumber(m.vehicles_used)}
+                  icon={icons.vehicle}
+                />
+                <MetricCard
+                  label="Employees Covered"
+                  value={formatNumber(m.employees_covered)}
+                  icon={icons.people}
+                />
+                <MetricCard
+                  label="Total Distance"
+                  value={
+                    m.total_distance_km != null
+                      ? `${formatNumber(m.total_distance_km)} km`
+                      : null
+                  }
+                  icon={icons.route}
+                />
+                <MetricCard
+                  label="Total Cost"
+                  value={formatCurrency(m.total_cost)}
+                  icon={icons.cost}
+                  variant="gold"
+                />
               </div>
             </div>
           )}
@@ -499,6 +516,8 @@ export default function DashboardView({
             </div>
           )}
         </div>
+
+        <ResultsTableView selectedResult={selectedResult} />
 
         {/* ── Footer ── */}
         <footer className="flex items-center justify-center gap-3 pt-2 pb-8">
