@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   deleteResult,
+  deleteAllTestCases,
   fetchLatestResult,
   fetchResultDetail,
   fetchResults,
   fetchRoadGeometry,
   optimizeExcelWithProgress,
+  saveTestCaseLocally,
 } from "./api";
 import {
   buildMapData,
@@ -219,7 +221,20 @@ export default function App() {
         setProgress(progressUpdate);
       });
       
-      const normalized = normalizeOptimizationPayload(created);
+      // Save test case to localStorage (client-side only, no database)
+      const testCaseData = {
+        filename: selectedFile.name,
+        result_data: created.result,
+        result_data_noconstraints: created.result_noconstraints,
+        result_data_infeasible: created.result_infeasible,
+        computed_metrics: created.computed_metrics,
+      };
+      const savedTestCase = saveTestCaseLocally(testCaseData);
+      
+      const normalized = normalizeOptimizationPayload({
+        ...created,
+        id: savedTestCase.id, // Use localStorage ID
+      });
       setSelectedResult(normalized);
       setVehicleFilter("ALL");
       await refreshResults(normalized.id);
@@ -263,6 +278,17 @@ export default function App() {
       setError(deleteErr.message || "Unable to delete result");
     } finally {
       setDeletingId(null);
+    }
+  }
+
+  async function handleDeleteAllTestCases() {
+    try {
+      deleteAllTestCases();
+      setSelectedResult(null);
+      setResults([]);
+      setActiveNav("new");
+    } catch (error) {
+      setError(error.message || "Unable to delete all test cases");
     }
   }
 
@@ -316,6 +342,7 @@ export default function App() {
               onNewCase={() => setActiveNav("new")}
               onOpenResult={openResult}
               onDeleteResult={removeResult}
+              onDeleteAllTestCases={handleDeleteAllTestCases}
             />
           </div>
 
@@ -384,6 +411,7 @@ export default function App() {
                   }}
                   onOpenResult={openResult}
                   onDeleteResult={removeResult}
+                  onDeleteAllTestCases={handleDeleteAllTestCases}
                 />
               </div>
             </>

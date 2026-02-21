@@ -145,6 +145,7 @@ export default function Sidebar({
   onNewCase,
   onOpenResult,
   onDeleteResult,
+  onDeleteAllTestCases,
 }) {
   const selectedId = selectedResult?.id;
 
@@ -211,6 +212,28 @@ export default function Sidebar({
             </span>
           )}
         </div>
+        {results.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              if (
+                window.confirm(
+                  "Delete all test cases? This action cannot be undone."
+                )
+              ) {
+                onDeleteAllTestCases?.();
+              }
+            }}
+            className="
+              w-full text-[10px] font-semibold
+              px-2 py-1.5 rounded-lg mt-1
+              text-rose-400 hover:bg-rose-500/10
+              transition-colors duration-200
+            "
+            title="Delete all test cases">
+            Delete All
+          </button>
+        )}
       </div>
 
       {/* ── Scrollable case list ── */}

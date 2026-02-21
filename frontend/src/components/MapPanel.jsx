@@ -53,6 +53,29 @@ export default function MapPanel({
     return colorByEmployee;
   }, [mapData.trips]);
 
+  // Filter initial markers based on selected vehicle
+  const filteredInitialMarkers = useMemo(() => {
+    if (mode !== "initial" || tripFilter === "ALL") {
+      return mapData.initialMarkers;
+    }
+    
+    // If a specific vehicle is selected, show only employees in that vehicle's routes
+    const employeesInRoutes = new Set();
+    mapData.trips.forEach((trip) => {
+      if (trip.vehicleId === tripFilter) {
+        trip.waypoints.forEach((waypoint) => {
+          if (waypoint.employeeId) {
+            employeesInRoutes.add(waypoint.employeeId);
+          }
+        });
+      }
+    });
+    
+    return mapData.initialMarkers.filter(
+      (marker) => employeesInRoutes.has(marker.employeeId)
+    );
+  }, [mode, tripFilter, mapData.trips, mapData.initialMarkers]);
+
   return (
     <div className="map-stage">
       <MapContainer
@@ -67,7 +90,7 @@ export default function MapPanel({
         />
 
         {mode === "initial" &&
-          mapData.initialMarkers.map((marker) => (
+          filteredInitialMarkers.map((marker) => (
             <CircleMarker
               key={marker.id}
               center={marker.position}

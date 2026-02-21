@@ -97,35 +97,167 @@ export async function fetchLatestResult() {
   return payload;
 }
 
-export async function fetchResults() {
-  const response = await fetch("/api/results");
-  const payload = await response.json();
-  if (!response.ok) {
-    throw new Error(payload.error || "Failed to fetch results");
+// ─── localStorage Test Cases Management ─────────────────────────────────────
+
+const TESTCASES_STORAGE_KEY = "velora_testcases";
+
+/**
+ * Save a new test case to localStorage (only client-side storage, no database)
+ */
+export function saveTestCaseLocally(testCaseData) {
+  try {
+    const cases = getTestCasesFromLocalStorage();
+    const newCase = {
+      id: Date.now(), // Use timestamp as unique ID
+      filename: testCaseData.filename || "Test Case",
+      created_at: new Date().toISOString(),
+      result_data: testCaseData.result_data,
+      result_data_noconstraints: testCaseData.result_data_noconstraints,
+      result_data_infeasible: testCaseData.result_data_infeasible,
+      computed_metrics: testCaseData.computed_metrics,
+    };
+    cases.push(newCase);
+    localStorage.setItem(TESTCASES_STORAGE_KEY, JSON.stringify(cases));
+    console.log("[localStorage] Saved test case:", newCase.id);
+    return newCase;
+  } catch (err) {
+    console.error("[localStorage] Failed to save test case:", err);
+    throw err;
   }
-  return payload;
 }
 
+/**
+ * Fetch all test cases from localStorage (no database queries)
+ */
+export function fetchResults() {
+  try {
+    const cases = getTestCasesFromLocalStorage();
+    return {
+      results: cases.map((c) => ({
+        id: c.id,
+        filename: c.filename,
+        created_at: c.created_at,
+        computed_metrics: c.computed_metrics,
+      })),
+    };
+  } catch (err) {
+    console.error("[localStorage] Failed to fetch test cases:", err);
+    return { results: [] };
+  }
+}
+
+/**
+ * Get a specific test case from localStorage
+ */
+export function getTestCaseFromLocalStorage(testCaseId) {
+  try {
+    const cases = getTestCasesFromLocalStorage();
+    return cases.find((c) => c.id === testCaseId) || null;
+  } catch (err) {
+    console.error("[localStorage] Failed to get test case:", err);
+    return null;
+  }
+}
+
+/**
+ * Fetch detailed test case from localStorage
+ */
 export async function fetchResultDetail(resultId) {
-  const response = await fetch(`/api/results/${resultId}`);
-  const payload = await response.json();
-  if (!response.ok) {
-    throw new Error(payload.error || "Failed to fetch result detail");
+  const testCase = getTestCaseFromLocalStorage(resultId);
+  if (!testCase) {
+    throw new Error("Test case not found in localStorage");
   }
-  return payload;
+  return {
+    id: testCase.id,
+    original_filename: testCase.filename,
+    created_at: testCase.created_at,
+    result: testCase.result_data,
+    result_noconstraints: testCase.result_data_noconstraints,
+    result_infeasible: testCase.result_data_infeasible,
+    computed_metrics: testCase.computed_metrics,
+  };
 }
 
-export async function deleteResult(resultId) {
-  const response = await fetch(`/api/results/${resultId}`, {
-    method: "DELETE",
-  });
+/**
+ * Delete a test case from localStorage and attempt to delete from database
+ */
+export function deleteResult(resultId) {
+  try {
+    // Delete from localStorage (primary storage)
+    const cases = getTestCasesFromLocalStorage();
+    const filteredCases = cases.filter((c) => c.id !== resultId);
+    localStorage.setItem(TESTCASES_STORAGE_KEY, JSON.stringify(filteredCases));
+    console.log("[localStorage] Deleted test case:", resultId);
 
-  const payload = await response.json();
-  if (!response.ok) {
-    throw new Error(payload.error || "Failed to delete result");
+    // Attempt to delete from database (if record exists)
+    // This is best-effort and won't fail if the database record doesn't exist
+    if (typeof resultId === "number" || !isNaN(parseInt(resultId, 10))) {
+      fetch(`/api/results/${resultId}`, { method: "DELETE" })
+        .then((res) => {
+          if (!res.ok && res.status !== 404) {
+            console.warn("[DB] Warning: Failed to delete database record for test case:", resultId);
+          } else if (res.ok) {
+            console.log("[DB] Successfully deleted database record for test case:", resultId);
+          }
+        })
+        .catch((err) => {
+          console.warn("[DB] Warning: Could not delete database record:", err.message);
+        });
+    }
+
+    return { ok: true, deleted_id: resultId };
+  } catch (err) {
+    console.error("[localStorage] Failed to delete test case:", err);
+    throw err;
   }
+}
 
-  return payload;
+/**
+ * Delete ALL test cases from localStorage and attempt to clean database
+ */
+export function deleteAllTestCases() {
+  try {
+    // Get all cases before deletion to attempt DB cleanup
+    const cases = getTestCasesFromLocalStorage();
+    
+    // Delete from localStorage
+    localStorage.removeItem(TESTCASES_STORAGE_KEY);
+    console.log("[localStorage] Deleted all test cases");
+
+    // Attempt to delete all database records
+    // This is best-effort and won't fail if database is unavailable
+    cases.forEach((testCase) => {
+      if (typeof testCase.id === "number" || !isNaN(parseInt(testCase.id, 10))) {
+        fetch(`/api/results/${testCase.id}`, { method: "DELETE" })
+          .then((res) => {
+            if (!res.ok && res.status !== 404) {
+              console.warn("[DB] Warning: Failed to delete database record:", testCase.id);
+            }
+          })
+          .catch((err) => {
+            console.warn("[DB] Warning: Could not delete database record:", err.message);
+          });
+      }
+    });
+
+    return { ok: true };
+  } catch (err) {
+    console.error("[localStorage] Failed to delete all test cases:", err);
+    throw err;
+  }
+}
+
+/**
+ * Get all test cases from localStorage (internal helper)
+ */
+function getTestCasesFromLocalStorage() {
+  try {
+    const data = localStorage.getItem(TESTCASES_STORAGE_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch (err) {
+    console.error("[localStorage] Error parsing test cases:", err);
+    return [];
+  }
 }
 
 // ─── Route Geometry Cache ─────────────────────────────────────────────────────
