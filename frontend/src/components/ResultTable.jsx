@@ -65,6 +65,9 @@ const PRIORITY_COLOR = {
   5: { bg: "rgba(148,163,184,0.15)", text: "#94a3b8", dot: "#64748b" },
 };
 
+// Switch to dropdown above this many items
+const CHIPS_THRESHOLD = 10;
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function fmtCost(n) {
@@ -92,7 +95,7 @@ function durationLabel(mins) {
   return `${Math.floor(mins / 60)}h ${mins % 60}m`;
 }
 
-// ─── Sub-components ────────────────────────────────────────────────────────────
+// ─── Shared sub-components ────────────────────────────────────────────────────
 
 function Chip({ children, style, onClick, active }) {
   return (
@@ -166,6 +169,150 @@ function RouteStops({ route, palette }) {
   );
 }
 
+// ─── FilterControl ────────────────────────────────────────────────────────────
+/*
+  Renders chip buttons when items.length <= CHIPS_THRESHOLD,
+  or a styled <select> dropdown when items.length > CHIPS_THRESHOLD.
+
+  Props:
+    items       [{ value, label }]
+    allValue    string — e.g. "ALL"
+    allLabel    string — e.g. "All Employees"
+    selected    string — current value
+    onChange    (value) => void
+    paletteMap  { [value]: palette } — for coloured chips / active pill
+*/
+function FilterControl({
+  items,
+  allValue,
+  allLabel,
+  selected,
+  onChange,
+  paletteMap = {},
+}) {
+  const neutral = {
+    bg: "rgba(148,163,184,0.1)",
+    border: "rgba(148,163,184,0.25)",
+    text: "#94a3b8",
+    accent: "#94a3b8",
+  };
+
+  if (items.length > CHIPS_THRESHOLD) {
+    const activePalette =
+      selected !== allValue ? (paletteMap[selected] ?? neutral) : null;
+
+    return (
+      <div className="flex items-center gap-3 flex-wrap">
+        {/* Styled select */}
+        <div className="relative">
+          <select
+            value={selected}
+            onChange={(e) => onChange(e.target.value)}
+            className="appearance-none pl-4 pr-9 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all duration-150 focus:outline-none focus:ring-2"
+            style={{
+              background: "rgba(15,23,42,0.7)",
+              border: `1px solid ${activePalette ? activePalette.border : "rgba(148,163,184,0.2)"}`,
+              color: activePalette
+                ? activePalette.text
+                : "rgba(148,163,184,0.7)",
+              boxShadow: activePalette
+                ? `0 0 12px 0 ${activePalette.accent}22`
+                : "none",
+              // focus ring colour
+              "--tw-ring-color": activePalette
+                ? activePalette.border
+                : "rgba(148,163,184,0.3)",
+            }}>
+            <option value={allValue}>{allLabel}</option>
+            {items.map(({ value, label }) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+          {/* Chevron */}
+          <svg
+            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3"
+            style={{
+              color: activePalette
+                ? activePalette.text
+                : "rgba(148,163,184,0.4)",
+            }}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2.5}>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </div>
+
+        {/* Active selection pill with clear button */}
+        {selected !== allValue && activePalette && (
+          <div
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold"
+            style={{
+              background: activePalette.bg,
+              border: `1px solid ${activePalette.border}`,
+              color: activePalette.text,
+            }}>
+            <span
+              className="w-1.5 h-1.5 rounded-full"
+              style={{ background: activePalette.accent }}
+            />
+            {items.find((i) => i.value === selected)?.label ?? selected}
+            <button
+              type="button"
+              onClick={() => onChange(allValue)}
+              className="ml-0.5 opacity-50 hover:opacity-100 transition-opacity leading-none"
+              aria-label="Clear filter">
+              ✕
+            </button>
+          </div>
+        )}
+
+        <span
+          className="text-[10px] font-semibold"
+          style={{ color: "rgba(148,163,184,0.3)" }}>
+          {items.length} total
+        </span>
+      </div>
+    );
+  }
+
+  // ── Chip mode (≤ threshold) ──
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <Chip
+        style={neutral}
+        active={selected === allValue}
+        onClick={() => onChange(allValue)}>
+        {allLabel}
+      </Chip>
+      {items.map(({ value, label }) => {
+        const p = paletteMap[value] ?? neutral;
+        return (
+          <Chip
+            key={value}
+            style={{
+              bg: p.bg,
+              border: p.border,
+              text: p.text,
+              accent: p.accent,
+            }}
+            active={selected === value}
+            onClick={() => onChange(value)}>
+            {label}
+          </Chip>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── Vehicle View ─────────────────────────────────────────────────────────────
 
 function VehicleView({ vehicles, inputVehicles, selectedVehicleId }) {
@@ -211,7 +358,7 @@ function VehicleView({ vehicles, inputVehicles, selectedVehicleId }) {
               border: `1px solid ${palette.border}`,
               background: "rgba(15,23,42,0.5)",
             }}>
-            {/* Vehicle header */}
+            {/* Header */}
             <div
               className="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
               style={{
@@ -478,9 +625,8 @@ function EmployeeView({
       const palette = VEHICLE_PALETTE[vIdx % VEHICLE_PALETTE.length];
       vehicle.trips?.forEach((trip) => {
         trip.passengers?.forEach((p) => {
-          if (!map[p.employee_id]) {
+          if (!map[p.employee_id])
             map[p.employee_id] = { vehicle, palette, trip, passenger: p };
-          }
         });
       });
     });
@@ -734,9 +880,6 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
   const [selectedVehicle, setSelectedVehicle] = useState("ALL");
   const [selectedEmployee, setSelectedEmployee] = useState("ALL");
 
-  // ── Reset filters whenever the result changes ──
-  // This is the core fix: stale vehicle/employee IDs from a previous result
-  // won't bleed into the next one.
   const resultId = selectedResult?.id;
   useEffect(() => {
     setFilterMode("vehicle");
@@ -744,12 +887,11 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
     setSelectedEmployee("ALL");
   }, [resultId]);
 
-  // choose between selectedResult.result, selectedResult.infeasible, and selectedResult.resultNoConstraints depending on mapMode
   const result =
     selectedResult?.[
-      mapMode == "optimized"
+      mapMode === "optimized"
         ? "result"
-        : mapMode == "infeasible"
+        : mapMode === "infeasible"
           ? "resultInfeasible"
           : "resultNoConstraints"
     ];
@@ -774,14 +916,12 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
   const inputBaseline = input?.baseline ?? [];
   const allEmployeeIds = Object.keys(inputEmployees).sort();
 
-  // Build vehicleId → palette map from the current result's vehicles
   const vehiclePaletteMap = {};
   vehicles.forEach((v, i) => {
     vehiclePaletteMap[v.vehicle_id] =
       VEHICLE_PALETTE[i % VEHICLE_PALETTE.length];
   });
 
-  // If the stored selectedVehicle no longer exists in this result, treat as ALL
   const activeVehicle = vehicles.some((v) => v.vehicle_id === selectedVehicle)
     ? selectedVehicle
     : "ALL";
@@ -789,11 +929,27 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
     ? selectedEmployee
     : "ALL";
 
+  // Item arrays for FilterControl
+  const vehicleItems = vehicles.map((v) => ({
+    value: v.vehicle_id,
+    label: v.vehicle_id,
+  }));
+  const employeeItems = allEmployeeIds.map((id) => ({ value: id, label: id }));
+
+  // Employee → palette (via their assigned vehicle)
+  const employeePaletteMap = {};
+  allEmployeeIds.forEach((id) => {
+    const vId = vehicles.find((v) =>
+      v.trips?.some((t) => t.passengers?.some((p) => p.employee_id === id)),
+    )?.vehicle_id;
+    if (vId) employeePaletteMap[id] = vehiclePaletteMap[vId];
+  });
+
   return (
     <div
       className="space-y-6"
       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <p
@@ -819,10 +975,10 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
         </div>
       </div>
 
-      {/* ── Summary ── */}
+      {/* Summary */}
       <SummaryBar summary={summary} />
 
-      {/* ── Filter bar ── */}
+      {/* Filter bar */}
       <div
         className="rounded-2xl px-5 py-4 space-y-4"
         style={{
@@ -859,90 +1015,38 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
           ))}
         </div>
 
-        {/* Filter chips */}
-        <div className="flex items-center gap-2 flex-wrap">
+        {/* Filter control — auto chips vs dropdown */}
+        <div>
           <span
-            className="text-[10px] font-bold uppercase tracking-widest mr-1"
+            className="text-[10px] font-bold uppercase tracking-widest mb-2.5 block"
             style={{ color: "rgba(148,163,184,0.35)" }}>
             Filter:
           </span>
 
           {filterMode === "vehicle" && (
-            <>
-              <Chip
-                style={{
-                  bg: "rgba(148,163,184,0.1)",
-                  border: "rgba(148,163,184,0.25)",
-                  text: "#94a3b8",
-                  accent: "#94a3b8",
-                }}
-                active={activeVehicle === "ALL"}
-                onClick={() => setSelectedVehicle("ALL")}>
-                All Vehicles
-              </Chip>
-              {vehicles.map((v) => {
-                const p = vehiclePaletteMap[v.vehicle_id];
-                return (
-                  <Chip
-                    key={v.vehicle_id}
-                    style={{
-                      bg: p.bg,
-                      border: p.border,
-                      text: p.text,
-                      accent: p.accent,
-                    }}
-                    active={activeVehicle === v.vehicle_id}
-                    onClick={() => setSelectedVehicle(v.vehicle_id)}>
-                    {v.vehicle_id}
-                  </Chip>
-                );
-              })}
-            </>
+            <FilterControl
+              items={vehicleItems}
+              allValue="ALL"
+              allLabel="All Vehicles"
+              selected={activeVehicle}
+              onChange={setSelectedVehicle}
+              paletteMap={vehiclePaletteMap}
+            />
           )}
-
           {filterMode === "employee" && (
-            <>
-              <Chip
-                style={{
-                  bg: "rgba(148,163,184,0.1)",
-                  border: "rgba(148,163,184,0.25)",
-                  text: "#94a3b8",
-                  accent: "#94a3b8",
-                }}
-                active={activeEmployee === "ALL"}
-                onClick={() => setSelectedEmployee("ALL")}>
-                All Employees
-              </Chip>
-              {allEmployeeIds.map((empId) => {
-                const vId = vehicles.find((v) =>
-                  v.trips?.some((t) =>
-                    t.passengers?.some((p) => p.employee_id === empId),
-                  ),
-                )?.vehicle_id;
-                const p = vId
-                  ? vehiclePaletteMap[vId]
-                  : {
-                      bg: "rgba(148,163,184,0.08)",
-                      border: "rgba(148,163,184,0.2)",
-                      text: "#94a3b8",
-                      accent: "#94a3b8",
-                    };
-                return (
-                  <Chip
-                    key={empId}
-                    style={p}
-                    active={activeEmployee === empId}
-                    onClick={() => setSelectedEmployee(empId)}>
-                    {empId}
-                  </Chip>
-                );
-              })}
-            </>
+            <FilterControl
+              items={employeeItems}
+              allValue="ALL"
+              allLabel="All Employees"
+              selected={activeEmployee}
+              onChange={setSelectedEmployee}
+              paletteMap={employeePaletteMap}
+            />
           )}
         </div>
       </div>
 
-      {/* ── Content ── */}
+      {/* Content */}
       {filterMode === "vehicle" && (
         <VehicleView
           vehicles={vehicles}
@@ -950,7 +1054,6 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
           selectedVehicleId={activeVehicle}
         />
       )}
-
       {filterMode === "employee" && (
         <EmployeeView
           vehicles={vehicles}

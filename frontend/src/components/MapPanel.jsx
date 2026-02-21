@@ -37,7 +37,7 @@ export default function MapPanel({
       };
     }
   }, [legendVisible, setLegendVisible]);
-  
+
   // Check if we're in any optimized mode (not initial)
   const isOptimizedMode = mode !== "initial";
 
@@ -58,7 +58,7 @@ export default function MapPanel({
     if (mode !== "initial" || tripFilter === "ALL") {
       return mapData.initialMarkers;
     }
-    
+
     // If a specific vehicle is selected, show only employees in that vehicle's routes
     const employeesInRoutes = new Set();
     mapData.trips.forEach((trip) => {
@@ -70,14 +70,14 @@ export default function MapPanel({
         });
       }
     });
-    
-    return mapData.initialMarkers.filter(
-      (marker) => employeesInRoutes.has(marker.employeeId)
+
+    return mapData.initialMarkers.filter((marker) =>
+      employeesInRoutes.has(marker.employeeId),
     );
   }, [mode, tripFilter, mapData.trips, mapData.initialMarkers]);
 
   return (
-    <div className="map-stage">
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
       <MapContainer
         center={mapData.center}
         zoom={12}
@@ -184,19 +184,20 @@ export default function MapPanel({
             {totalRoutesCount > 0 && (
               <>
                 <div className="map-loading-progress-bar">
-                  <div 
+                  <div
                     className="map-loading-progress-fill"
-                    style={{ width: `${(routesLoadedCount / totalRoutesCount) * 100}%` }}
-                  >
+                    style={{
+                      width: `${(routesLoadedCount / totalRoutesCount) * 100}%`,
+                    }}>
                     <div className="map-loading-progress-shimmer"></div>
                   </div>
                 </div>
-                <small className="map-loading-count">{routesLoadedCount} of {totalRoutesCount} routes loaded</small>
+                <small className="map-loading-count">
+                  {routesLoadedCount} of {totalRoutesCount} routes loaded
+                </small>
               </>
             )}
-            {totalRoutesCount === 0 && (
-              <small>Please wait a few seconds</small>
-            )}
+            {totalRoutesCount === 0 && <small>Please wait a few seconds</small>}
           </div>
         </div>
       )}
