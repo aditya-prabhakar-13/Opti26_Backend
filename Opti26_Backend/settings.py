@@ -127,7 +127,7 @@ STATIC_URL = 'static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_ALL_ORIGINS = True   
 CORS_ALLOWED_ORIGINS = [
     "https://opti26-velora.vercel.app", 
     "http://localhost:5173", # Keep this for local testing
