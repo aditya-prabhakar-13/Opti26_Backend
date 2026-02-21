@@ -1,8 +1,10 @@
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 export async function optimizeExcel(file) {
   const formData = new FormData();
   formData.append("excel_file", file);
 
-  const response = await fetch("/api/optimize", {
+  const response = await fetch(`${API_BASE}/api/optimize`, {
     method: "POST",
     body: formData,
   });
@@ -16,7 +18,7 @@ export async function optimizeExcel(file) {
 }
 
 export async function getProgress() {
-  const response = await fetch(`/api/progress`);
+  const response = await fetch(`${API_BASE}/api/progress`);
   const payload = await response.json();
   if (!response.ok) {
     throw new Error(payload.error || "Failed to fetch progress");
@@ -29,7 +31,7 @@ export async function optimizeExcelWithProgress(file, onProgress) {
   formData.append("excel_file", file);
 
   // Start the optimization
-  const optimizationPromise = fetch("/api/optimize", {
+  const optimizationPromise = fetch(`${API_BASE}/api/optimize`, {
     method: "POST",
     body: formData,
   }).then(async (response) => {
@@ -89,7 +91,7 @@ export async function optimizeExcelWithProgress(file, onProgress) {
 }
 
 export async function fetchLatestResult() {
-  const response = await fetch("/api/results/latest");
+  const response = await fetch(`${API_BASE}/api/results/latest`);
   const payload = await response.json();
   if (!response.ok) {
     throw new Error(payload.error || "Failed to fetch latest result");
@@ -192,7 +194,7 @@ export function deleteResult(resultId) {
     // Attempt to delete from database (if record exists)
     // This is best-effort and won't fail if the database record doesn't exist
     if (typeof resultId === "number" || !isNaN(parseInt(resultId, 10))) {
-      fetch(`/api/results/${resultId}`, { method: "DELETE" })
+      fetch(`${API_BASE}/api/results/${resultId}`, { method: "DELETE" })
         .then((res) => {
           if (!res.ok && res.status !== 404) {
             console.warn("[DB] Warning: Failed to delete database record for test case:", resultId);
@@ -228,7 +230,7 @@ export function deleteAllTestCases() {
     // This is best-effort and won't fail if database is unavailable
     cases.forEach((testCase) => {
       if (typeof testCase.id === "number" || !isNaN(parseInt(testCase.id, 10))) {
-        fetch(`/api/results/${testCase.id}`, { method: "DELETE" })
+        fetch(`${API_BASE}/api/results/${testCase.id}`, { method: "DELETE" })
           .then((res) => {
             if (!res.ok && res.status !== 404) {
               console.warn("[DB] Warning: Failed to delete database record:", testCase.id);
@@ -384,7 +386,7 @@ export async function fetchRoadGeometry(latLngPoints, maxRetries = 3) {
         .map(([lat, lng]) => `${lng},${lat}`)
         .join(";");
       const response = await fetch(
-        `/api/route-geometry?coordinates=${encodeURIComponent(encodedPath)}`,
+        `${API_BASE}/api/route-geometry?coordinates=${encodeURIComponent(encodedPath)}`,
       );
       const payload = await response.json();
       
