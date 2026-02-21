@@ -37,6 +37,10 @@ export default function MapPanel({
       };
     }
   }, [legendVisible, setLegendVisible]);
+  
+  // Check if we're in any optimized mode (not initial)
+  const isOptimizedMode = mode !== "initial";
+
   const employeeTripColors = useMemo(() => {
     const colorByEmployee = {};
     mapData.trips.forEach((trip) => {
@@ -84,7 +88,7 @@ export default function MapPanel({
             </CircleMarker>
           ))}
 
-        {mode === "optimized" &&
+        {isOptimizedMode &&
           visibleTrips.map((trip) => {
             const routedCoordinates = routeGeometries[trip.id] || trip.path;
 
@@ -115,7 +119,7 @@ export default function MapPanel({
             );
           })}
 
-        {mode === "optimized" &&
+        {isOptimizedMode &&
           visibleTrips.flatMap((trip) =>
             trip.waypoints.map((point, index) => (
               <CircleMarker
@@ -149,7 +153,7 @@ export default function MapPanel({
             )),
           )}
       </MapContainer>
-      {mode === "optimized" && isRouteLoading && (
+      {isOptimizedMode && isRouteLoading && (
         <div className="map-loading-overlay">
           <div className="map-loading-card">
             <span className="map-loading-spinner" />
@@ -174,7 +178,7 @@ export default function MapPanel({
         </div>
       )}
 
-      {mode === "optimized" && visibleTrips.length > 0 && (
+      {isOptimizedMode && visibleTrips.length > 0 && (
         <div className="legend-container" ref={legendRef}>
           <button
             type="button"

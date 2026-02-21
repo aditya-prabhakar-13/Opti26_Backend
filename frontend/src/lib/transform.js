@@ -21,6 +21,8 @@ export function normalizeOptimizationPayload(apiPayload) {
     createdAt: apiPayload?.created_at,
     computedMetrics: apiPayload?.computed_metrics || null,
     result: apiPayload?.result || null,
+    resultNoConstraints: apiPayload?.result_noconstraints || null,
+    resultInfeasible: apiPayload?.result_infeasible || null,
   };
 }
 
@@ -56,6 +58,21 @@ function tripDuration(start, end) {
 }
 
 function fallbackMetrics(result) {
+  if (!result) {
+    return {
+      vehicles_used: 0,
+      employees_covered: 0,
+      employees_unrouted: 0,
+      total_distance_km: 0,
+      total_cost: 0,
+      baseline_cost: 0,
+      net_savings: 0,
+      savings_percentage: 0,
+      optimized_travel_time_min: 0,
+      baseline_travel_time_min: 0,
+    };
+  }
+
   const vehicles = result?.vehicles || [];
   const summary = result?.summary || {};
   const baselineRows = result?.input?.baseline || [];
@@ -90,7 +107,7 @@ function fallbackMetrics(result) {
   };
 }
 
-export function getMetrics(resultPayload) {
+export function getMetrics(resultPayload, mode = 'optimized') {
   if (!resultPayload) {
     return {
       vehicles_used: 0,
@@ -106,11 +123,21 @@ export function getMetrics(resultPayload) {
     };
   }
 
-  if (resultPayload.computedMetrics) {
+  // Select the appropriate result based on mode
+  let result;
+  if (mode === 'noconstraints' && resultPayload?.resultNoConstraints) {
+    result = resultPayload.resultNoConstraints;
+  } else if (mode === 'infeasible' && resultPayload?.resultInfeasible) {
+    result = resultPayload.resultInfeasible;
+  } else {
+    result = resultPayload?.result;
+  }
+
+  if (resultPayload.computedMetrics && mode === 'optimized') {
     return resultPayload.computedMetrics;
   }
 
-  return fallbackMetrics(resultPayload.result);
+  return fallbackMetrics(result);
 }
 
 function officeFromEmployees(employeeMap) {
@@ -121,8 +148,17 @@ function officeFromEmployees(employeeMap) {
   return [asNumber(first.drop.lat), asNumber(first.drop.lng)];
 }
 
-export function buildMapData(resultPayload) {
-  const result = resultPayload?.result;
+export function buildMapData(resultPayload, mode = 'optimized') {
+  // Select the appropriate result based on mode
+  let result;
+  if (mode === 'noconstraints' && resultPayload?.resultNoConstraints) {
+    result = resultPayload.resultNoConstraints;
+  } else if (mode === 'infeasible' && resultPayload?.resultInfeasible) {
+    result = resultPayload.resultInfeasible;
+  } else {
+    result = resultPayload?.result;
+  }
+
   const employees = result?.input?.employees || {};
   const vehiclesMeta = result?.input?.vehicles || [];
   const office = officeFromEmployees(employees);

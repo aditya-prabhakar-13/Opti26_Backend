@@ -214,6 +214,17 @@ export default function DashboardView({
 }) {
   const m = metrics ?? {};
 
+  // Mode labels for metrics sections
+  const modeLabels = {
+    optimized: "Optimized Routes",
+    noconstraints: "No Constraints",
+    infeasible: "Infeasible Handling",
+    initial: "Initial Points",
+  };
+
+  const currentModeLabel = modeLabels[mapMode] || "Optimized Routes";
+  const showMetrics = mapMode !== "initial" && selectedResult;
+
   return (
     <section
       className="min-h-screen"
@@ -293,18 +304,20 @@ export default function DashboardView({
         <div className="rounded-3xl border border-slate-700/60 bg-slate-800/40 backdrop-blur-sm shadow-2xl overflow-hidden">
           {/* Toolbar */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-6 py-4 border-b border-slate-700/50 bg-slate-800/40">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                 Map View
               </span>
               {/* Toggle */}
-              <div className="flex items-center bg-slate-900/70 rounded-xl p-1 gap-1 border border-slate-700/50">
+              <div className="flex flex-wrap sm:flex-nowrap items-center bg-slate-900/70 rounded-xl p-1 gap-1 border border-slate-700/50 w-full sm:w-auto">
                 {[
-                  { key: "initial", label: "Initial Points" },
-                  { key: "optimized", label: "Optimized Routes" },
-                ].map(({ key, label }) => {
+                  { key: "initial", label: "Initial Points", shortLabel: "Initial" },
+                  { key: "optimized", label: "Optimized Routes", shortLabel: "Optimized" },
+                  { key: "noconstraints", label: "No Constraints", shortLabel: "No Const." },
+                  { key: "infeasible", label: "Infeasible Handling", shortLabel: "Infeasible" },
+                ].map(({ key, label, shortLabel }) => {
                   const active = mapMode === key;
-                  const disabled = key === "optimized" && !selectedResult;
+                  const disabled = key !== "initial" && !selectedResult;
                   return (
                     <button
                       key={key}
@@ -312,7 +325,7 @@ export default function DashboardView({
                       onClick={() => !disabled && setMapMode(key)}
                       disabled={disabled}
                       className={`
-                        px-4 py-1.5 rounded-lg text-xs font-bold tracking-wide transition-all duration-200
+                        flex-1 sm:flex-none px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold tracking-wide transition-all duration-200 whitespace-nowrap
                         ${
                           active
                             ? "text-slate-900 shadow-sm shadow-amber-900/30"
@@ -329,7 +342,8 @@ export default function DashboardView({
                             }
                           : {}
                       }>
-                      {label}
+                      <span className="hidden sm:inline">{label}</span>
+                      <span className="sm:hidden">{shortLabel}</span>
                     </button>
                   );
                 })}
@@ -406,9 +420,13 @@ export default function DashboardView({
 
         {/* ── Metrics ── */}
         <div className="space-y-8">
-          <div>
-            <SectionLabel>Fleet Overview</SectionLabel>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {showMetrics && (
+            <div>
+              <SectionLabel>
+                Fleet Overview{" "}
+                <span className="text-amber-500">· {currentModeLabel}</span>
+              </SectionLabel>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <MetricCard
                 label="Vehicles Used"
                 value={formatNumber(m.vehicles_used)}
@@ -434,12 +452,16 @@ export default function DashboardView({
                 icon={icons.cost}
                 variant="gold"
               />
+              </div>
             </div>
-          </div>
+          )}
 
-          {hasCases && (
+          {showMetrics && (
             <div>
-              <SectionLabel>Savings Analysis</SectionLabel>
+              <SectionLabel>
+                Savings Analysis{" "}
+                <span className="text-amber-500">· {currentModeLabel}</span>
+              </SectionLabel>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                 <MetricCard
                   label="Baseline Cost"

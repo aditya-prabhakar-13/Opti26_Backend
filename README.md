@@ -1,7 +1,7 @@
 # Opti26 Backend + Frontend
 
 Velora corporate mobility optimization system with:
-- Django backend (`velora.exe` orchestration + result APIs)
+- Django backend (`velora_final.exe` orchestration + result APIs)
 - React + Vite frontend (Figma-inspired dashboard/test-cases/new-case flow)
 
 ## Project Structure
@@ -33,7 +33,8 @@ npm run dev
 
 ## Notes
 - Frontend proxies `/api/*` to Django at `http://127.0.0.1:8000`.
-- `velora.exe` must exist in project root (`Opti26_Backend/velora.exe`).
+- `velora_final.exe` must exist in project root (`Opti26_Backend/velora_final.exe`).
+- Optional: `velora_noconstraints.exe` and `velora_infeasiblehandling.exe` for additional optimization views.
 - Only `.xlsx` input files are accepted.
 
 ## Mobile App (Android APK)

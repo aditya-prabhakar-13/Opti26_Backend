@@ -74,6 +74,8 @@ def _serialize_result(saved_result):
         'created_at': saved_result.created_at.isoformat(),
         'computed_metrics': _build_computed_metrics(saved_result.result_data),
         'result': saved_result.result_data,
+        'result_noconstraints': saved_result.result_data_noconstraints,
+        'result_infeasible': saved_result.result_data_infeasible,
     }
 
 def _db_table_missing(error):
@@ -95,11 +97,13 @@ def _safe_latest_result():
             return None
         raise
 
-def _save_optimization_result(filename, result_data):
+def _save_optimization_result(filename, result_data, result_data_noconstraints=None, result_data_infeasible=None):
     try:
         return OptimizationResult.objects.create(
             original_filename=filename,
             result_data=result_data,
+            result_data_noconstraints=result_data_noconstraints,
+            result_data_infeasible=result_data_infeasible,
         )
     except (OperationalError, ProgrammingError) as exc:
         if not _db_table_missing(exc):
@@ -110,6 +114,8 @@ def _save_optimization_result(filename, result_data):
         return OptimizationResult.objects.create(
             original_filename=filename,
             result_data=result_data,
+            result_data_noconstraints=result_data_noconstraints,
+            result_data_infeasible=result_data_infeasible,
         )
 
 def _execute_optimization(excel_file, progress_callback=None):
@@ -142,6 +148,8 @@ def _execute_optimization(excel_file, progress_callback=None):
         base_name = os.path.basename(tmp_excel_path).replace('.xlsx', '')
         input_json_path = os.path.join(results_dir, f"{base_name}_in.json")
         output_json_path = os.path.join(results_dir, f"{base_name}_out.json")
+        output_json_path_noconstraints = os.path.join(results_dir, f"{base_name}_out_noconstraints.json")
+        output_json_path_infeasible = os.path.join(results_dir, f"{base_name}_out_infeasible.json")
 
         # 3. Parse Excel to Dictionary and save as input JSON
         report_progress('parsing', 20, 'Parsing Excel sheets...')
@@ -151,14 +159,14 @@ def _execute_optimization(excel_file, progress_callback=None):
         with open(input_json_path, 'w') as f:
             json.dump(parsed_data, f, cls=NpEncoder)
 
-        # 4. Run velora.exe with explicit input and output arguments
+        # 4. Run velora_final.exe with explicit input and output arguments
         report_progress('routing', 35, 'Calculating road distances with OSMnx...')
-        exe_path = os.path.join(os.getcwd(), 'velora.exe' if os.name == 'nt' else 'velora')
+        exe_path = os.path.join(os.getcwd(), 'velora_final.exe' if os.name == 'nt' else 'velora_final')
         if not os.path.exists(exe_path):
-            raise RuntimeError("velora.exe is missing in project root")
+            raise RuntimeError("velora_final.exe is missing in project root")
         
-        # Execute: velora.exe results/tmp_in.json results/tmp_out.json
-        report_progress('optimizing', 40, 'Running optimization algorithm...')
+        # Execute: velora_final.exe results/tmp_in.json results/tmp_out.json
+        report_progress('optimizing', 40, 'Running optimized routes algorithm...')
         result = subprocess.run(
             [exe_path, input_json_path, output_json_path],
             capture_output=True,
@@ -168,7 +176,35 @@ def _execute_optimization(excel_file, progress_callback=None):
         if result.returncode != 0:
             raise RuntimeError(f"Optimizer failed with code {result.returncode}: {result.stderr or result.stdout}")
 
-        # 5. Check if the output file was created and read it
+        # 5. Run velora_noconstraints.exe
+        report_progress('optimizing', 55, 'Running no constraints algorithm...')
+        exe_path_noconstraints = os.path.join(os.getcwd(), 'velora_noconstraints.exe' if os.name == 'nt' else 'velora_noconstraints')
+        if os.path.exists(exe_path_noconstraints):
+            result_noconstraints = subprocess.run(
+                [exe_path_noconstraints, input_json_path, output_json_path_noconstraints],
+                capture_output=True,
+                text=True
+            )
+            if result_noconstraints.returncode != 0:
+                print(f"Warning: No constraints optimizer failed: {result_noconstraints.stderr}")
+        else:
+            print("Warning: velora_noconstraints.exe not found, skipping")
+
+        # 6. Run velora_infeasiblehandling.exe
+        report_progress('optimizing', 65, 'Running infeasible handling algorithm...')
+        exe_path_infeasible = os.path.join(os.getcwd(), 'velora_infeasiblehandling.exe' if os.name == 'nt' else 'velora_infeasiblehandling')
+        if os.path.exists(exe_path_infeasible):
+            result_infeasible = subprocess.run(
+                [exe_path_infeasible, input_json_path, output_json_path_infeasible],
+                capture_output=True,
+                text=True
+            )
+            if result_infeasible.returncode != 0:
+                print(f"Warning: Infeasible handling optimizer failed: {result_infeasible.stderr}")
+        else:
+            print("Warning: velora_infeasiblehandling.exe not found, skipping")
+
+        # 7. Check if the output files were created and read them
         report_progress('processing', 70, 'Processing optimization results...')
         if not os.path.exists(output_json_path):
             raise RuntimeError(f"Output file not created. CLI Output: {result.stdout}")
@@ -176,15 +212,32 @@ def _execute_optimization(excel_file, progress_callback=None):
         with open(output_json_path, 'r') as f:
             final_data = json.load(f)
 
-        # 6. Save the structured JSON data to the database
+        # Read additional results if they exist
+        final_data_noconstraints = None
+        if os.path.exists(output_json_path_noconstraints):
+            with open(output_json_path_noconstraints, 'r') as f:
+                final_data_noconstraints = json.load(f)
+
+        final_data_infeasible = None
+        if os.path.exists(output_json_path_infeasible):
+            with open(output_json_path_infeasible, 'r') as f:
+                final_data_infeasible = json.load(f)
+
+        # 8. Save the structured JSON data to the database
         report_progress('saving', 85, 'Saving to database...')
-        saved_result = _save_optimization_result(excel_file.name, final_data)
+        saved_result = _save_optimization_result(
+            excel_file.name, 
+            final_data,
+            final_data_noconstraints,
+            final_data_infeasible
+        )
         
         report_progress('complete', 100, 'Optimization complete!')
         return saved_result, final_data
     finally:
-        # 7. Cleanup temporary files to save disk space
-        for path in [tmp_excel_path, input_json_path, output_json_path]:
+        # 9. Cleanup temporary files to save disk space
+        for path in [tmp_excel_path, input_json_path, output_json_path, 
+                     output_json_path_noconstraints, output_json_path_infeasible]:
             if path and os.path.exists(path):
                 os.remove(path)
 
