@@ -123,6 +123,8 @@ def _execute_optimization(excel_file, progress_callback=None):
         raise ValueError("Only .xlsx files are supported")
 
     def report_progress(stage, percentage, message=""):
+        log_msg = f"[{stage.upper()}:{percentage}%] {message}"
+        print(log_msg)
         if progress_callback:
             progress_callback({
                 'stage': stage,
@@ -131,99 +133,113 @@ def _execute_optimization(excel_file, progress_callback=None):
             })
 
     try:
-        # 1. Ensure a 'results' directory exists in your project root
-        report_progress('setup', 5, 'Setting up directories...')
-        results_dir = os.path.join(os.getcwd(), 'results')
-        if not os.path.exists(results_dir):
-            os.makedirs(results_dir)
-
-        # 2. Setup temporary file paths
-        report_progress('parsing', 10, 'Reading Excel file...')
+        # 1. Setup temporary files (no persistent storage)
+        report_progress('setup', 5, 'Setting up temporary files...')
         with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_excel:
             for chunk in excel_file.chunks():
                 tmp_excel.write(chunk)
             tmp_excel_path = tmp_excel.name
 
-        # Create unique names for input/output JSON files
-        base_name = os.path.basename(tmp_excel_path).replace('.xlsx', '')
-        input_json_path = os.path.join(results_dir, f"{base_name}_in.json")
-        output_json_path = os.path.join(results_dir, f"{base_name}_out.json")
-        output_json_path_noconstraints = os.path.join(results_dir, f"{base_name}_out_noconstraints.json")
-        output_json_path_infeasible = os.path.join(results_dir, f"{base_name}_out_infeasible.json")
+        # Create temporary JSON file paths (in system temp directory, not results/)
+        with tempfile.NamedTemporaryFile(delete=False, suffix='_in.json', mode='w') as tmp_in:
+            input_json_path = tmp_in.name
+        with tempfile.NamedTemporaryFile(delete=False, suffix='_out.json') as tmp_out:
+            output_json_path = tmp_out.name
+        with tempfile.NamedTemporaryFile(delete=False, suffix='_out_noconstraints.json') as tmp_noconst:
+            output_json_path_noconstraints = tmp_noconst.name
+        with tempfile.NamedTemporaryFile(delete=False, suffix='_out_infeasible.json') as tmp_inf:
+            output_json_path_infeasible = tmp_inf.name
 
-        # 3. Parse Excel to Dictionary and save as input JSON
+        # 2. Parse Excel to Dictionary and save as temporary input JSON
         report_progress('parsing', 20, 'Parsing Excel sheets...')
         parsed_data = parse_excel_to_dict(tmp_excel_path)
         
-        report_progress('parsing', 28, 'Converting to JSON...')
+        report_progress('parsing', 28, 'Serializing to JSON...')
         with open(input_json_path, 'w') as f:
             json.dump(parsed_data, f, cls=NpEncoder)
+        print(f"[DEBUG] Created temporary input JSON: {input_json_path}")
 
-        # 4. Run velora_final.exe with explicit input and output arguments
-        report_progress('routing', 35, 'Calculating road distances with OSMnx...')
+        # 3. Run velora_final.exe with explicit input and output arguments
+        report_progress('routing', 35, 'Calculating road distances...')
         exe_path = os.path.join(os.getcwd(), 'velora_final.exe' if os.name == 'nt' else 'velora_final')
         if not os.path.exists(exe_path):
             raise RuntimeError("velora_final.exe is missing in project root")
         
-        # Execute: velora_final.exe results/tmp_in.json results/tmp_out.json
         report_progress('optimizing', 40, 'Running optimized routes algorithm...')
+        print(f"[DEBUG] Executing: {exe_path} {input_json_path} {output_json_path}")
         result = subprocess.run(
             [exe_path, input_json_path, output_json_path],
             capture_output=True,
             text=True
         )
-
+        print(f"[STDOUT] {result.stdout}")
         if result.returncode != 0:
+            print(f"[STDERR] {result.stderr}")
             raise RuntimeError(f"Optimizer failed with code {result.returncode}: {result.stderr or result.stdout}")
+        print("[SUCCESS] Optimized routes algorithm completed")
 
-        # 5. Run velora_noconstraints.exe
+        # 4. Run velora_noconstraints.exe
         report_progress('optimizing', 55, 'Running no constraints algorithm...')
         exe_path_noconstraints = os.path.join(os.getcwd(), 'velora_noconstraints.exe' if os.name == 'nt' else 'velora_noconstraints')
         if os.path.exists(exe_path_noconstraints):
+            print(f"[DEBUG] Executing: {exe_path_noconstraints} {input_json_path} {output_json_path_noconstraints}")
             result_noconstraints = subprocess.run(
                 [exe_path_noconstraints, input_json_path, output_json_path_noconstraints],
                 capture_output=True,
                 text=True
             )
+            print(f"[STDOUT] {result_noconstraints.stdout}")
             if result_noconstraints.returncode != 0:
-                print(f"Warning: No constraints optimizer failed: {result_noconstraints.stderr}")
+                print(f"[WARNING] No constraints optimizer failed: {result_noconstraints.stderr}")
+            else:
+                print("[SUCCESS] No constraints algorithm completed")
         else:
-            print("Warning: velora_noconstraints.exe not found, skipping")
+            print("[WARNING] velora_noconstraints.exe not found, skipping")
 
-        # 6. Run velora_infeasiblehandling.exe
+        # 5. Run velora_infeasiblehandling.exe
         report_progress('optimizing', 65, 'Running infeasible handling algorithm...')
         exe_path_infeasible = os.path.join(os.getcwd(), 'velora_infeasiblehandling.exe' if os.name == 'nt' else 'velora_infeasiblehandling')
         if os.path.exists(exe_path_infeasible):
+            print(f"[DEBUG] Executing: {exe_path_infeasible} {input_json_path} {output_json_path_infeasible}")
             result_infeasible = subprocess.run(
                 [exe_path_infeasible, input_json_path, output_json_path_infeasible],
                 capture_output=True,
                 text=True
             )
+            print(f"[STDOUT] {result_infeasible.stdout}")
             if result_infeasible.returncode != 0:
-                print(f"Warning: Infeasible handling optimizer failed: {result_infeasible.stderr}")
+                print(f"[WARNING] Infeasible handling optimizer failed: {result_infeasible.stderr}")
+            else:
+                print("[SUCCESS] Infeasible handling algorithm completed")
         else:
-            print("Warning: velora_infeasiblehandling.exe not found, skipping")
+            print("[WARNING] velora_infeasiblehandling.exe not found, skipping")
 
-        # 7. Check if the output files were created and read them
+        # 6. Check if the output files were created and read them
         report_progress('processing', 70, 'Processing optimization results...')
         if not os.path.exists(output_json_path):
             raise RuntimeError(f"Output file not created. CLI Output: {result.stdout}")
-
+        
+        print(f"[DEBUG] Reading output JSON: {output_json_path}")
         with open(output_json_path, 'r') as f:
             final_data = json.load(f)
+        print(f"[DEBUG] Loaded final_data with {len(final_data.get('vehicles', []))} vehicles")
 
         # Read additional results if they exist
         final_data_noconstraints = None
         if os.path.exists(output_json_path_noconstraints):
+            print(f"[DEBUG] Reading no constraints result: {output_json_path_noconstraints}")
             with open(output_json_path_noconstraints, 'r') as f:
                 final_data_noconstraints = json.load(f)
+            print(f"[DEBUG] Loaded no constraints data with {len(final_data_noconstraints.get('vehicles', []))} vehicles")
 
         final_data_infeasible = None
         if os.path.exists(output_json_path_infeasible):
+            print(f"[DEBUG] Reading infeasible result: {output_json_path_infeasible}")
             with open(output_json_path_infeasible, 'r') as f:
                 final_data_infeasible = json.load(f)
+            print(f"[DEBUG] Loaded infeasible data with {len(final_data_infeasible.get('vehicles', []))} vehicles")
 
-        # 8. Save the structured JSON data to the database
+        # 7. Save the structured JSON data to the database
         report_progress('saving', 85, 'Saving to database...')
         saved_result = _save_optimization_result(
             excel_file.name, 
@@ -231,15 +247,21 @@ def _execute_optimization(excel_file, progress_callback=None):
             final_data_noconstraints,
             final_data_infeasible
         )
+        print(f"[SUCCESS] Saved optimization result to database with ID: {saved_result.id}")
         
         report_progress('complete', 100, 'Optimization complete!')
         return saved_result, final_data
     finally:
-        # 9. Cleanup temporary files to save disk space
+        # 8. Cleanup ALL temporary files immediately
+        print("[CLEANUP] Removing all temporary files...")
         for path in [tmp_excel_path, input_json_path, output_json_path, 
                      output_json_path_noconstraints, output_json_path_infeasible]:
             if path and os.path.exists(path):
-                os.remove(path)
+                try:
+                    os.remove(path)
+                    print(f"[CLEANUP] Removed: {path}")
+                except Exception as e:
+                    print(f"[WARNING] Failed to remove {path}: {str(e)}")
 
 def run_optimization(request):
     if request.method == 'POST' and request.FILES.get('excel_file'):
@@ -351,13 +373,34 @@ def api_route_geometry(request):
     if len(points) < 2:
         return JsonResponse({'error': 'At least two coordinates are required'}, status=400)
 
-    def _fetch_osrm(coords: str, timeout_sec=25):
+    def _fetch_osrm(coords: str, timeout_sec=25, max_retries=3):
+        """Fetch route geometry from OSRM with retry logic"""
         osrm_url = f"http://router.project-osrm.org/route/v1/driving/{coords}?overview=full&geometries=geojson&steps=false"
-        response = requests.get(osrm_url, timeout=timeout_sec)
-        payload = response.json() if response.ok else {}
-        routes = payload.get('routes', [])
-        if routes and routes[0].get('geometry', {}).get('coordinates'):
-            return routes[0]['geometry']['coordinates']
+        
+        for attempt in range(max_retries):
+            try:
+                response = requests.get(osrm_url, timeout=timeout_sec)
+                payload = response.json() if response.ok else {}
+                routes = payload.get('routes', [])
+                if routes and routes[0].get('geometry', {}).get('coordinates'):
+                    return routes[0]['geometry']['coordinates']
+                if not response.ok:
+                    print(f"[OSRM] Status {response.status_code} for coords: {coords[:50]}...")
+                    if attempt < max_retries - 1:
+                        wait_time = 2 ** attempt  # Exponential backoff
+                        time.sleep(wait_time)
+                        continue
+            except requests.Timeout:
+                print(f"[OSRM] Timeout on attempt {attempt + 1}/{max_retries}")
+                if attempt < max_retries - 1:
+                    time.sleep(2 ** attempt)
+                    continue
+            except Exception as e:
+                print(f"[OSRM] Error: {str(e)}")
+                if attempt < max_retries - 1:
+                    time.sleep(2 ** attempt)
+                    continue
+        
         return None
 
     try:
@@ -370,7 +413,8 @@ def api_route_geometry(request):
                 },
                 encoder=NpEncoder,
             )
-    except Exception:
+    except Exception as e:
+        print(f"[OSRM Full] Exception: {str(e)}")
         pass
 
     stitched = []
@@ -383,7 +427,7 @@ def api_route_geometry(request):
         pair_coords = f"{start_lng},{start_lat};{end_lng},{end_lat}"
 
         try:
-            segment = _fetch_osrm(pair_coords, timeout_sec=15)
+            segment = _fetch_osrm(pair_coords, timeout_sec=15, max_retries=2)
             if segment:
                 segment_lat_lng = [[coord[1], coord[0]] for coord in segment]
                 if stitched and segment_lat_lng:
@@ -391,7 +435,8 @@ def api_route_geometry(request):
                 stitched.extend(segment_lat_lng)
                 osrm_segment_count += 1
                 continue
-        except Exception:
+        except Exception as e:
+            print(f"[OSRM Segment] Error on segment {index}: {str(e)}")
             pass
 
         fallback_leg = [[points[index][0], points[index][1]], [points[index + 1][0], points[index + 1][1]]]

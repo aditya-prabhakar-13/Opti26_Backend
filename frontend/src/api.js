@@ -220,7 +220,7 @@ export function clearRouteCache() {
 
 // ─── fetchRoadGeometry ────────────────────────────────────────────────────────
 
-export async function fetchRoadGeometry(latLngPoints) {
+export async function fetchRoadGeometry(latLngPoints, maxRetries = 3) {
   if (!Array.isArray(latLngPoints) || latLngPoints.length < 2) {
     return { coordinates: latLngPoints || [], source: "fallback" };
   }
@@ -244,44 +244,61 @@ export async function fetchRoadGeometry(latLngPoints) {
     return cached;
   }
 
-  // ── API fetch ──
-  let payload;
-  try {
-    const encodedPath = normalizedPoints
-      .map(([lat, lng]) => `${lng},${lat}`)
-      .join(";");
-    const response = await fetch(
-      `/api/route-geometry?coordinates=${encodeURIComponent(encodedPath)}`,
-    );
-    payload = await response.json();
-    if (!response.ok) {
-      throw new Error(payload.error || "Failed to fetch road geometry");
+  // ── API fetch with retry logic ──
+  let lastError = null;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const encodedPath = normalizedPoints
+        .map(([lat, lng]) => `${lng},${lat}`)
+        .join(";");
+      const response = await fetch(
+        `/api/route-geometry?coordinates=${encodeURIComponent(encodedPath)}`,
+      );
+      const payload = await response.json();
+      
+      if (!response.ok) {
+        lastError = payload.error || `HTTP ${response.status}`;
+        if (attempt < maxRetries - 1) {
+          // Exponential backoff: 100ms, 200ms, 400ms
+          await new Promise(resolve => setTimeout(resolve, 100 * (2 ** attempt)));
+          continue;
+        }
+        throw new Error(lastError);
+      }
+
+      // Successfully got a response
+      const returnedCoords = payload.coordinates;
+      const isRealGeometry =
+        Array.isArray(returnedCoords) &&
+        returnedCoords.length > normalizedPoints.length;
+
+      if (isRealGeometry) {
+        writeCache(cacheKey, payload);
+      } else {
+        // Don't cache straight-line passthrough responses
+        if (payload.source === 'fallback' || payload.source === 'osrm-segmented') {
+          console.warn(
+            "[route-geometry] Response appears to be mostly fallback - skipping cache",
+            { source: payload.source, inputPoints: normalizedPoints.length, outputPoints: returnedCoords?.length }
+          );
+        }
+      }
+
+      return payload;
+    } catch (err) {
+      lastError = err.message;
+      if (attempt < maxRetries - 1) {
+        // Exponential backoff before retry
+        await new Promise(resolve => setTimeout(resolve, 100 * (2 ** attempt)));
+        continue;
+      }
     }
-  } catch (err) {
-    // API failed — return straight-line fallback but NEVER cache it
-    console.warn(
-      "[route cache] API error, using straight-line fallback:",
-      err.message,
-    );
-    return { coordinates: normalizedPoints, source: "fallback" };
   }
 
-  // ── Guard: only cache genuine road geometry ──
-  // A real OSRM/road response will have significantly more points than the
-  // input waypoints. If the response looks like a straight-line passthrough
-  // (same or fewer coords), don't cache it so we retry next time.
-  const returnedCoords = payload.coordinates;
-  const isRealGeometry =
-    Array.isArray(returnedCoords) &&
-    returnedCoords.length > normalizedPoints.length;
-
-  if (isRealGeometry) {
-    writeCache(cacheKey, payload);
-  } else {
-    console.warn(
-      "[route cache] Response has no more points than input — looks like a passthrough or fallback. Skipping cache write.",
-    );
-  }
-
-  return payload;
+  // All retries failed - log and return fallback
+  console.warn(
+    "[route-geometry] All retries failed, using straight-line fallback:",
+    lastError,
+  );
+  return { coordinates: normalizedPoints, source: "fallback" };
 }
