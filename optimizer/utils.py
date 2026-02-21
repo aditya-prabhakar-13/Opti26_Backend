@@ -46,6 +46,32 @@ def haversine_fallback(lat1, lon1, lat2, lon2):
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     return R * c
 
+def clean_value(value):
+    """
+    Convert NaN, inf, and other problematic values to None for JSON serialization.
+    """
+    if isinstance(value, float):
+        if math.isnan(value) or math.isinf(value):
+            return None
+    elif isinstance(value, (np.floating, np.integer)):
+        if math.isnan(value) or math.isinf(value):
+            return None
+        return float(value) if isinstance(value, np.floating) else int(value)
+    elif pd.isna(value):
+        return None
+    return value
+
+def clean_dict(obj):
+    """
+    Recursively clean all values in a dictionary or list.
+    """
+    if isinstance(obj, dict):
+        return {k: clean_dict(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [clean_dict(v) for v in obj]
+    else:
+        return clean_value(obj)
+
 def parse_excel_to_dict(file_path):
     try:
         with pd.ExcelFile(file_path) as xls:
@@ -59,6 +85,12 @@ def parse_excel_to_dict(file_path):
             df_veh = xls.parse('vehicles').dropna(how='all')
             df_base = xls.parse('baseline').dropna(how='all')
             df_meta = xls.parse('metadata').dropna(how='all')
+            
+            # Replace NaN values with None to ensure proper JSON serialization
+            df_emp = df_emp.where(pd.notna(df_emp), None)
+            df_veh = df_veh.where(pd.notna(df_veh), None)
+            df_base = df_base.where(pd.notna(df_base), None)
+            df_meta = df_meta.where(pd.notna(df_meta), None)
 
         if df_emp.empty or df_veh.empty:
             raise ValueError("Employees and vehicles sheets must contain at least one valid row")
@@ -113,21 +145,23 @@ def parse_excel_to_dict(file_path):
                     distances[other_id] = round(float(inter_distance), 1)
 
             employees_dict[emp_id] = {
-                "priority": row['priority'],
-                "pickup": {'lat': row['pickup_lat'], 'lng': row['pickup_lng']},
-                "drop": {'lat': row['drop_lat'], 'lng': row['drop_lng']},
-                "earliest_pickup": row['earliest_pickup'],
-                "latest_drop": row['latest_drop'],
-                "vehicle_preference": row['vehicle_preference'],
-                "sharing_preference": row['sharing_preference'],
+                "priority": clean_value(row['priority']),
+                "pickup": {'lat': clean_value(row['pickup_lat']), 'lng': clean_value(row['pickup_lng'])},
+                "drop": {'lat': clean_value(row['drop_lat']), 'lng': clean_value(row['drop_lng'])},
+                "earliest_pickup": clean_value(row['earliest_pickup']),
+                "latest_drop": clean_value(row['latest_drop']),
+                "vehicle_preference": clean_value(row['vehicle_preference']),
+                "sharing_preference": clean_value(row['sharing_preference']),
                 "distances": distances
             }
             
-        return {
+        # Clean all dictionaries to remove any remaining NaN values
+        result = {
             "employees": employees_dict,
-            "vehicles": df_veh.to_dict(orient='records'),
-            "baseline": df_base.to_dict(orient='records'),
-            "metadata": df_meta.to_dict(orient='records')
+            "vehicles": clean_dict(df_veh.to_dict(orient='records')),
+            "baseline": clean_dict(df_base.to_dict(orient='records')),
+            "metadata": clean_dict(df_meta.to_dict(orient='records'))
         }
+        return result
     except Exception as e:
         raise e
