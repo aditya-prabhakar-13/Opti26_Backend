@@ -8,6 +8,9 @@ export default function TestCasesView({
   mapData,
   vehicleFilter,
   routeGeometries,
+  isRouteLoading,
+  routesLoadedCount,
+  totalRoutesCount,
   legendVisible,
   setLegendVisible,
   visibleTrips,
@@ -75,6 +78,9 @@ export default function TestCasesView({
               mode="optimized"
               tripFilter={vehicleFilter}
               routeGeometries={routeGeometries}
+              isRouteLoading={isRouteLoading}
+              routesLoadedCount={routesLoadedCount}
+              totalRoutesCount={totalRoutesCount}
               legendVisible={legendVisible}
               setLegendVisible={setLegendVisible}
               visibleTrips={visibleTrips}

@@ -3,14 +3,19 @@ import json
 import subprocess
 import tempfile
 import requests
+import time
 from django.shortcuts import render
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_http_methods
 from django.core.management import call_command
 from django.db.utils import OperationalError, ProgrammingError
 from .models import OptimizationResult
 from .utils import parse_excel_to_dict, NpEncoder
+
+# Progress tracking storage (session-based for now)
+_progress_store = {}
+_current_progress = {'stage': 'idle', 'percentage': 0, 'message': ''}
 
 def _hhmm_to_minutes(value):
     if not isinstance(value, str) or ':' not in value:
@@ -107,39 +112,53 @@ def _save_optimization_result(filename, result_data):
             result_data=result_data,
         )
 
-def _execute_optimization(excel_file):
+def _execute_optimization(excel_file, progress_callback=None):
     if not excel_file.name.lower().endswith('.xlsx'):
         raise ValueError("Only .xlsx files are supported")
 
-    # 1. Ensure a 'results' directory exists in your project root
-    results_dir = os.path.join(os.getcwd(), 'results')
-    if not os.path.exists(results_dir):
-        os.makedirs(results_dir)
-
-    # 2. Setup temporary file paths
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_excel:
-        for chunk in excel_file.chunks():
-            tmp_excel.write(chunk)
-        tmp_excel_path = tmp_excel.name
-
-    # Create unique names for input/output JSON files
-    base_name = os.path.basename(tmp_excel_path).replace('.xlsx', '')
-    input_json_path = os.path.join(results_dir, f"{base_name}_in.json")
-    output_json_path = os.path.join(results_dir, f"{base_name}_out.json")
+    def report_progress(stage, percentage, message=""):
+        if progress_callback:
+            progress_callback({
+                'stage': stage,
+                'percentage': min(100, max(0, percentage)),
+                'message': message
+            })
 
     try:
+        # 1. Ensure a 'results' directory exists in your project root
+        report_progress('setup', 5, 'Setting up directories...')
+        results_dir = os.path.join(os.getcwd(), 'results')
+        if not os.path.exists(results_dir):
+            os.makedirs(results_dir)
+
+        # 2. Setup temporary file paths
+        report_progress('parsing', 10, 'Reading Excel file...')
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_excel:
+            for chunk in excel_file.chunks():
+                tmp_excel.write(chunk)
+            tmp_excel_path = tmp_excel.name
+
+        # Create unique names for input/output JSON files
+        base_name = os.path.basename(tmp_excel_path).replace('.xlsx', '')
+        input_json_path = os.path.join(results_dir, f"{base_name}_in.json")
+        output_json_path = os.path.join(results_dir, f"{base_name}_out.json")
+
         # 3. Parse Excel to Dictionary and save as input JSON
+        report_progress('parsing', 20, 'Parsing Excel sheets...')
         parsed_data = parse_excel_to_dict(tmp_excel_path)
+        
+        report_progress('parsing', 28, 'Converting to JSON...')
         with open(input_json_path, 'w') as f:
             json.dump(parsed_data, f, cls=NpEncoder)
 
         # 4. Run velora.exe with explicit input and output arguments
-        # argv[1] = input_file, argv[2] = output_file
+        report_progress('routing', 35, 'Calculating road distances with OSMnx...')
         exe_path = os.path.join(os.getcwd(), 'velora.exe' if os.name == 'nt' else 'velora')
         if not os.path.exists(exe_path):
             raise RuntimeError("velora.exe is missing in project root")
         
         # Execute: velora.exe results/tmp_in.json results/tmp_out.json
+        report_progress('optimizing', 40, 'Running optimization algorithm...')
         result = subprocess.run(
             [exe_path, input_json_path, output_json_path],
             capture_output=True,
@@ -150,6 +169,7 @@ def _execute_optimization(excel_file):
             raise RuntimeError(f"Optimizer failed with code {result.returncode}: {result.stderr or result.stdout}")
 
         # 5. Check if the output file was created and read it
+        report_progress('processing', 70, 'Processing optimization results...')
         if not os.path.exists(output_json_path):
             raise RuntimeError(f"Output file not created. CLI Output: {result.stdout}")
 
@@ -157,7 +177,10 @@ def _execute_optimization(excel_file):
             final_data = json.load(f)
 
         # 6. Save the structured JSON data to the database
+        report_progress('saving', 85, 'Saving to database...')
         saved_result = _save_optimization_result(excel_file.name, final_data)
+        
+        report_progress('complete', 100, 'Optimization complete!')
         return saved_result, final_data
     finally:
         # 7. Cleanup temporary files to save disk space
@@ -185,11 +208,31 @@ def api_optimize(request):
     if not excel_file:
         return JsonResponse({'error': 'No excel_file provided'}, status=400)
 
+    global _current_progress
+    _current_progress = {'stage': 'starting', 'percentage': 0, 'message': 'Starting optimization...'}
+
     try:
-        saved_result, _ = _execute_optimization(excel_file)
+        def progress_callback(progress):
+            global _current_progress
+            _current_progress = progress
+        
+        saved_result, _ = _execute_optimization(excel_file, progress_callback=progress_callback)
+        
+        # Mark as complete
+        _current_progress = {'stage': 'complete', 'percentage': 100, 'message': 'Optimization complete!'}
+        
         return JsonResponse(_serialize_result(saved_result), encoder=NpEncoder)
     except Exception as e:
+        # Mark as failed
+        _current_progress = {'stage': 'error', 'percentage': 0, 'message': str(e)}
         return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
+@require_GET
+def api_progress(request):
+    """Get the current progress of optimization"""
+    global _current_progress
+    return JsonResponse(_current_progress)
 
 @require_GET
 def api_results(request):
