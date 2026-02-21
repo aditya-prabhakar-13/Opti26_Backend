@@ -202,6 +202,8 @@ export default function DashboardView({
   setVehicleFilter,
   routeGeometries,
   isRouteLoading,
+  routesLoadedCount,
+  totalRoutesCount,
   legendVisible,
   setLegendVisible,
   visibleTrips,
@@ -372,6 +374,8 @@ export default function DashboardView({
               tripFilter={vehicleFilter}
               routeGeometries={routeGeometries}
               isRouteLoading={isRouteLoading}
+              routesLoadedCount={routesLoadedCount}
+              totalRoutesCount={totalRoutesCount}
               legendVisible={legendVisible}
               setLegendVisible={setLegendVisible}
               visibleTrips={visibleTrips}

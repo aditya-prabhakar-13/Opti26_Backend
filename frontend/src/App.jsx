@@ -5,7 +5,7 @@ import {
   fetchResultDetail,
   fetchResults,
   fetchRoadGeometry,
-  optimizeExcel,
+  optimizeExcelWithProgress,
 } from "./api";
 import {
   buildMapData,
@@ -18,6 +18,7 @@ import DashboardView from "./components/DashboardView.jsx";
 import TestCasesView from "./components/TestcasesView.jsx";
 import NewCaseView from "./components/NewCaseView.jsx";
 import Sidebar from "./components/Sidebar.jsx";
+import ProgressBar from "./components/ProgressBar.jsx";
 
 export default function App() {
   const [activeNav, setActiveNav] = useState("new");
@@ -30,10 +31,14 @@ export default function App() {
   const [vehicleFilter, setVehicleFilter] = useState("ALL");
   const [routeGeometries, setRouteGeometries] = useState({});
   const [isRouteLoading, setIsRouteLoading] = useState(false);
+  const [routesLoadedCount, setRoutesLoadedCount] = useState(0);
+  const [totalRoutesCount, setTotalRoutesCount] = useState(0);
   const [deletingId, setDeletingId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [legendVisible, setLegendVisible] = useState(false);
+  const [progress, setProgress] = useState({ stage: 'starting', percentage: 0, message: '' });
+  const [showProgress, setShowProgress] = useState(false);
 
   const hasCases = results.length > 0;
   const effectiveNav = hasCases ? activeNav : "new";
@@ -111,25 +116,58 @@ export default function App() {
       if (mapData.trips.length === 0) {
         setRouteGeometries({});
         setIsRouteLoading(false);
+        setRoutesLoadedCount(0);
+        setTotalRoutesCount(0);
         return;
       }
 
       setIsRouteLoading(true);
+      setTotalRoutesCount(mapData.trips.length);
+      setRoutesLoadedCount(0);
 
-      const entries = await Promise.all(
-        mapData.trips.map(async (trip) => {
-          try {
-            const route = await fetchRoadGeometry(trip.path);
-            return [trip.id, route.coordinates || trip.path];
-          } catch {
-            return [trip.id, trip.path];
+      // Track progress as routes load
+      const entries = [];
+      let loadedCount = 0;
+
+      const routePromises = mapData.trips.map(async (trip) => {
+        try {
+          const route = await fetchRoadGeometry(trip.path);
+          const result = [trip.id, route.coordinates || trip.path];
+          
+          if (!cancelled) {
+            loadedCount++;
+            setRoutesLoadedCount(loadedCount);
           }
-        }),
-      );
+          
+          return result;
+        } catch {
+          const result = [trip.id, trip.path];
+          
+          if (!cancelled) {
+            loadedCount++;
+            setRoutesLoadedCount(loadedCount);
+          }
+          
+          return result;
+        }
+      });
 
-      if (!cancelled) {
-        setRouteGeometries(Object.fromEntries(entries));
-        setIsRouteLoading(false);
+      try {
+        const results = await Promise.all(routePromises);
+        
+        if (!cancelled) {
+          setRouteGeometries(Object.fromEntries(results));
+          setIsRouteLoading(false);
+          setRoutesLoadedCount(0);
+          setTotalRoutesCount(0);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Error loading route geometries:", error);
+          setIsRouteLoading(false);
+          setRoutesLoadedCount(0);
+          setTotalRoutesCount(0);
+        }
       }
     }
 
@@ -156,6 +194,13 @@ export default function App() {
     return rows;
   }
 
+  
+  function handleOptimizationComplete() {
+    // Hide progress and redirect to dashboard
+    setShowProgress(false);
+    setActiveNav("dashboard");
+  }
+
   async function runOptimization() {
     if (!selectedFile) {
       setError("Please select an .xlsx file first");
@@ -163,15 +208,25 @@ export default function App() {
     }
     setLoading(true);
     setError("");
+    setShowProgress(true);
+    setProgress({ stage: 'starting', percentage: 0, message: 'Starting optimization...' });
+    
     try {
-      const created = await optimizeExcel(selectedFile);
+      const created = await optimizeExcelWithProgress(selectedFile, (progressUpdate) => {
+        setProgress(progressUpdate);
+      });
+      
       const normalized = normalizeOptimizationPayload(created);
       setSelectedResult(normalized);
       setVehicleFilter("ALL");
       await refreshResults(normalized.id);
       setActiveNav("dashboard");
+      
+      // Keep progress visible for a moment before hiding
+      setTimeout(() => setShowProgress(false), 1000);
     } catch (runErr) {
       setError(runErr.message || "Optimization failed");
+      setShowProgress(false);
     } finally {
       setLoading(false);
     }
@@ -222,6 +277,8 @@ export default function App() {
     setVehicleFilter,
     routeGeometries,
     isRouteLoading,
+    routesLoadedCount,
+    totalRoutesCount,
     legendVisible,
     setLegendVisible,
     visibleTrips,
@@ -239,6 +296,11 @@ export default function App() {
         background:
           "linear-gradient(135deg, #0f1623 0%, #111827 50%, #0c1420 100%)",
       }}>
+      <ProgressBar 
+        progress={progress} 
+        isVisible={showProgress} 
+        onComplete={handleOptimizationComplete}
+      />
       {/* ── Sidebar (desktop always, mobile drawer) ── */}
       {hasCases && (
         <>

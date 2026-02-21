@@ -15,6 +15,8 @@ export default function MapPanel({
   tripFilter,
   routeGeometries,
   isRouteLoading,
+  routesLoadedCount,
+  totalRoutesCount,
   legendVisible,
   setLegendVisible,
   visibleTrips,
@@ -152,7 +154,22 @@ export default function MapPanel({
           <div className="map-loading-card">
             <span className="map-loading-spinner" />
             <strong>Rendering real road routes...</strong>
-            <small>Please wait a few seconds</small>
+            {totalRoutesCount > 0 && (
+              <>
+                <div className="map-loading-progress-bar">
+                  <div 
+                    className="map-loading-progress-fill"
+                    style={{ width: `${(routesLoadedCount / totalRoutesCount) * 100}%` }}
+                  >
+                    <div className="map-loading-progress-shimmer"></div>
+                  </div>
+                </div>
+                <small className="map-loading-count">{routesLoadedCount} of {totalRoutesCount} routes loaded</small>
+              </>
+            )}
+            {totalRoutesCount === 0 && (
+              <small>Please wait a few seconds</small>
+            )}
           </div>
         </div>
       )}

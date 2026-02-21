@@ -15,6 +15,79 @@ export async function optimizeExcel(file) {
   return payload;
 }
 
+export async function getProgress() {
+  const response = await fetch(`/api/progress`);
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(payload.error || "Failed to fetch progress");
+  }
+  return payload;
+}
+
+export async function optimizeExcelWithProgress(file, onProgress) {
+  const formData = new FormData();
+  formData.append("excel_file", file);
+
+  // Start the optimization
+  const optimizationPromise = fetch("/api/optimize", {
+    method: "POST",
+    body: formData,
+  }).then(async (response) => {
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new Error(payload.error || "Optimization failed");
+    }
+    return payload;
+  });
+
+  // Start polling for progress updates
+  const maxAttempts = 300; // 5 minutes of polling at 500ms intervals
+  let attempts = 0;
+
+  const progressPollingPromise = new Promise((resolve, reject) => {
+    const pollProgress = async () => {
+      try {
+        attempts++;
+        const progress = await getProgress();
+        
+        if (onProgress) {
+          onProgress(progress);
+        }
+
+        // Stop polling if optimization is complete
+        if (progress.stage === 'complete' || progress.stage === 'error' || progress.percentage >= 100) {
+          resolve();
+          return;
+        }
+
+        if (attempts >= maxAttempts) {
+          resolve(); // Timeout - stop polling
+          return;
+        }
+
+        // Poll every 500ms
+        setTimeout(pollProgress, 500);
+      } catch (error) {
+        // Silently ignore polling errors
+        if (attempts < maxAttempts) {
+          setTimeout(pollProgress, 500);
+        } else {
+          resolve();
+        }
+      }
+    };
+
+    pollProgress();
+  });
+
+  // Wait for optimization to complete
+  const result = await optimizationPromise;
+  // Wait a bit for progress polling to catch up
+  await progressPollingPromise;
+  
+  return result;
+}
+
 export async function fetchLatestResult() {
   const response = await fetch("/api/results/latest");
   const payload = await response.json();
