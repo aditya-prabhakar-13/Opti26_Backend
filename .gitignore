@@ -33,7 +33,5 @@ pnpm-debug.log*
 Thumbs.db
 
 # Build artifacts and generated outputs
-results/*_in.json
-results/*_out.json
 output.json
 

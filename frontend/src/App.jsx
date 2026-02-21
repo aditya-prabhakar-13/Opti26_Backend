@@ -112,8 +112,12 @@ export default function App() {
     let cancelled = false;
 
     async function loadGeometries() {
-      const mapData = buildMapData(selectedResult, mapMode);
-      if (mapData.trips.length === 0) {
+      // Load routes for ALL modes in parallel so switching is instant
+      const modes = ['optimized', 'noconstraints', 'infeasible'];
+      const allMapData = modes.map(mode => buildMapData(selectedResult, mode));
+      const allTrips = allMapData.flatMap(md => md.trips);
+      
+      if (allTrips.length === 0) {
         setRouteGeometries({});
         setIsRouteLoading(false);
         setRoutesLoadedCount(0);
@@ -122,14 +126,13 @@ export default function App() {
       }
 
       setIsRouteLoading(true);
-      setTotalRoutesCount(mapData.trips.length);
+      setTotalRoutesCount(allTrips.length);
       setRoutesLoadedCount(0);
 
       // Track progress as routes load
-      const entries = [];
       let loadedCount = 0;
 
-      const routePromises = mapData.trips.map(async (trip) => {
+      const routePromises = allTrips.map(async (trip) => {
         try {
           const route = await fetchRoadGeometry(trip.path);
           const result = [trip.id, route.coordinates || trip.path];
@@ -175,7 +178,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [selectedResult, mapMode]);
+  }, [selectedResult]);
 
   /* ── Actions ── */
   async function refreshResults(selectId = null) {
