@@ -43,7 +43,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'optimizer',
     'corsheaders',
     'optimizer',
 ]
@@ -130,6 +129,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
-    "https://opti26-velora.vercel.app/", 
+    "https://opti26-velora.vercel.app", 
     "http://localhost:5173", # Keep this for local testing
 ]

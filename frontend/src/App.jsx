@@ -228,6 +228,7 @@ export default function App() {
         result_data_noconstraints: created.result_noconstraints,
         result_data_infeasible: created.result_infeasible,
         computed_metrics: created.computed_metrics,
+        reports: created.reports, // Save the human-readable optimization reports
       };
       const savedTestCase = saveTestCaseLocally(testCaseData);
       

@@ -117,10 +117,16 @@ export function saveTestCaseLocally(testCaseData) {
       result_data_noconstraints: testCaseData.result_data_noconstraints,
       result_data_infeasible: testCaseData.result_data_infeasible,
       computed_metrics: testCaseData.computed_metrics,
+      reports: testCaseData.reports || {}, // Save human-readable optimization reports
     };
     cases.push(newCase);
     localStorage.setItem(TESTCASES_STORAGE_KEY, JSON.stringify(cases));
     console.log("[localStorage] Saved test case:", newCase.id);
+    console.log("[localStorage] Reports saved:", {
+      hasOptimizedReport: !!newCase.reports?.report_optimized,
+      hasNoConstraintsReport: !!newCase.reports?.report_noconstraints,
+      hasInfeasibleReport: !!newCase.reports?.report_infeasible,
+    });
     return newCase;
   } catch (err) {
     console.error("[localStorage] Failed to save test case:", err);
@@ -177,6 +183,7 @@ export async function fetchResultDetail(resultId) {
     result_noconstraints: testCase.result_data_noconstraints,
     result_infeasible: testCase.result_data_infeasible,
     computed_metrics: testCase.computed_metrics,
+    reports: testCase.reports || {}, // Include human-readable optimization reports
   };
 }
 

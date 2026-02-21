@@ -201,6 +201,7 @@ def _execute_optimization(excel_file, progress_callback=None):
             capture_output=True,
             text=True
         )
+        report_optimized = result.stdout
         print(f"[STDOUT] {result.stdout}")
         if result.returncode != 0:
             print(f"[STDERR] {result.stderr}")
@@ -210,6 +211,7 @@ def _execute_optimization(excel_file, progress_callback=None):
         # 4. Run velora_noconstraints.exe
         report_progress('optimizing', 55, 'Running no constraints algorithm...')
         exe_path_noconstraints = get_exe_path("velora_noconstraints")
+        report_noconstraints = None
         if os.path.exists(exe_path_noconstraints):
             print(f"[DEBUG] Executing: {exe_path_noconstraints} {input_json_path} {output_json_path_noconstraints}")
             result_noconstraints = subprocess.run(
@@ -217,6 +219,7 @@ def _execute_optimization(excel_file, progress_callback=None):
                 capture_output=True,
                 text=True
             )
+            report_noconstraints = result_noconstraints.stdout
             print(f"[STDOUT] {result_noconstraints.stdout}")
             if result_noconstraints.returncode != 0:
                 print(f"[WARNING] No constraints optimizer failed: {result_noconstraints.stderr}")
@@ -228,6 +231,7 @@ def _execute_optimization(excel_file, progress_callback=None):
         # 5. Run velora_infeasiblehandling.exe
         report_progress('optimizing', 65, 'Running infeasible handling algorithm...')
         exe_path_infeasible = get_exe_path("velora_infeasiblehandling")
+        report_infeasible = None
         if os.path.exists(exe_path_infeasible):
             print(f"[DEBUG] Executing: {exe_path_infeasible} {input_json_path} {output_json_path_infeasible}")
             result_infeasible = subprocess.run(
@@ -235,6 +239,7 @@ def _execute_optimization(excel_file, progress_callback=None):
                 capture_output=True,
                 text=True
             )
+            report_infeasible = result_infeasible.stdout
             print(f"[STDOUT] {result_infeasible.stdout}")
             if result_infeasible.returncode != 0:
                 print(f"[WARNING] Infeasible handling optimizer failed: {result_infeasible.stderr}")
@@ -279,7 +284,11 @@ def _execute_optimization(excel_file, progress_callback=None):
         print(f"[SUCCESS] Saved optimization result to database with ID: {saved_result.id}")
         
         report_progress('complete', 100, 'Optimization complete!')
-        return saved_result, final_data
+        return saved_result, final_data, {
+            'report_optimized': report_optimized,
+            'report_noconstraints': report_noconstraints,
+            'report_infeasible': report_infeasible,
+        }
     finally:
         # 8. Cleanup ALL temporary files immediately
         print("[CLEANUP] Removing all temporary files...")
@@ -320,12 +329,15 @@ def api_optimize(request):
             global _current_progress
             _current_progress = progress
         
-        saved_result, _ = _execute_optimization(excel_file, progress_callback=progress_callback)
+        saved_result, _, reports = _execute_optimization(excel_file, progress_callback=progress_callback)
         
         # Mark as complete
         _current_progress = {'stage': 'complete', 'percentage': 100, 'message': 'Optimization complete!'}
         
-        return JsonResponse(_serialize_result(saved_result), encoder=NpEncoder)
+        # Include the text-based reports in the response
+        response_data = _serialize_result(saved_result)
+        response_data['reports'] = reports
+        return JsonResponse(response_data, encoder=NpEncoder)
     except Exception as e:
         # Mark as failed
         _current_progress = {'stage': 'error', 'percentage': 0, 'message': str(e)}
