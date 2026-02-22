@@ -31,7 +31,11 @@ export default function App() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [mapMode, setMapMode] = useState("optimized");
   const [vehicleFilter, setVehicleFilter] = useState("ALL");
-  const [routeGeometries, setRouteGeometries] = useState({});
+  const [routeGeometries, setRouteGeometries] = useState({
+    optimized: {},
+    noconstraints: {},
+    infeasible: {},
+  });
   const [isRouteLoading, setIsRouteLoading] = useState(false);
   const [routesLoadedCount, setRoutesLoadedCount] = useState(0);
   const [totalRoutesCount, setTotalRoutesCount] = useState(0);
@@ -116,11 +120,20 @@ export default function App() {
     async function loadGeometries() {
       // Load routes for ALL modes in parallel so switching is instant
       const modes = ['optimized', 'noconstraints', 'infeasible'];
-      const allMapData = modes.map(mode => buildMapData(selectedResult, mode));
-      const allTrips = allMapData.flatMap(md => md.trips);
+      const allMapData = modes.map(mode => ({
+        mode,
+        mapData: buildMapData(selectedResult, mode),
+      }));
+      const allTrips = allMapData.flatMap(({ mode, mapData }) =>
+        mapData.trips.map((trip) => ({ mode, trip })),
+      );
       
       if (allTrips.length === 0) {
-        setRouteGeometries({});
+        setRouteGeometries({
+          optimized: {},
+          noconstraints: {},
+          infeasible: {},
+        });
         setIsRouteLoading(false);
         setRoutesLoadedCount(0);
         setTotalRoutesCount(0);
@@ -134,10 +147,13 @@ export default function App() {
       // Track progress as routes load
       let loadedCount = 0;
 
-      const routePromises = allTrips.map(async (trip) => {
+      const routePromises = allTrips.map(async ({ mode, trip }) => {
         try {
           const route = await fetchRoadGeometry(trip.path);
-          const result = [trip.id, route.coordinates || trip.path];
+          const coords = Array.isArray(route.coordinates) && route.coordinates.length >= 2
+            ? route.coordinates
+            : trip.path;
+          const result = [mode, trip.id, coords];
           
           if (!cancelled) {
             loadedCount++;
@@ -146,7 +162,7 @@ export default function App() {
           
           return result;
         } catch {
-          const result = [trip.id, trip.path];
+          const result = [mode, trip.id, trip.path];
           
           if (!cancelled) {
             loadedCount++;
@@ -161,7 +177,16 @@ export default function App() {
         const results = await Promise.all(routePromises);
         
         if (!cancelled) {
-          setRouteGeometries(Object.fromEntries(results));
+          const nextGeometries = {
+            optimized: {},
+            noconstraints: {},
+            infeasible: {},
+          };
+          results.forEach(([mode, tripId, coords]) => {
+            if (!nextGeometries[mode]) nextGeometries[mode] = {};
+            nextGeometries[mode][tripId] = coords;
+          });
+          setRouteGeometries(nextGeometries);
           setIsRouteLoading(false);
           setRoutesLoadedCount(0);
           setTotalRoutesCount(0);
@@ -298,8 +323,27 @@ export default function App() {
   const mapData = useMemo(() => buildMapData(selectedResult, mapMode), [selectedResult, mapMode]);
   const visibleTrips = useMemo(() => {
     if (vehicleFilter === "ALL") return mapData.trips;
-    return mapData.trips.filter((trip) => trip.vehicleId === vehicleFilter);
+    const normalizeVehicleId = (value) =>
+      String(value ?? "").trim().toLowerCase();
+    const normalizedFilter = normalizeVehicleId(vehicleFilter);
+    return mapData.trips.filter(
+      (trip) => normalizeVehicleId(trip.vehicleId) === normalizedFilter,
+    );
   }, [mapData.trips, vehicleFilter]);
+
+  useEffect(() => {
+    if (!mapData?.vehicles || vehicleFilter === "ALL") return;
+    const normalizeVehicleId = (value) =>
+      String(value ?? "").trim().toLowerCase();
+    const normalizedFilter = normalizeVehicleId(vehicleFilter);
+    const hasVehicle = mapData.vehicles.some(
+      (v) => normalizeVehicleId(v) === normalizedFilter,
+    );
+    if (!hasVehicle) {
+      setVehicleFilter("ALL");
+    }
+  }, [mapData?.vehicles, vehicleFilter]);
+
 
   const sharedMapProps = {
     mapData,

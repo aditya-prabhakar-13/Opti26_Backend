@@ -22,6 +22,8 @@ export default function MapPanel({
   visibleTrips,
 }) {
   const legendRef = useRef(null);
+  const normalizeVehicleId = (value) =>
+    String(value ?? "").trim().toLowerCase();
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -40,6 +42,7 @@ export default function MapPanel({
 
   // Check if we're in any optimized mode (not initial)
   const isOptimizedMode = mode !== "initial";
+  const modeGeometries = routeGeometries?.[mode] || {};
 
   const employeeTripColors = useMemo(() => {
     const colorByEmployee = {};
@@ -61,8 +64,9 @@ export default function MapPanel({
 
     // If a specific vehicle is selected, show only employees in that vehicle's routes
     const employeesInRoutes = new Set();
+    const normalizedFilter = normalizeVehicleId(tripFilter);
     mapData.trips.forEach((trip) => {
-      if (trip.vehicleId === tripFilter) {
+      if (normalizeVehicleId(trip.vehicleId) === normalizedFilter) {
         trip.waypoints.forEach((waypoint) => {
           if (waypoint.employeeId) {
             employeesInRoutes.add(waypoint.employeeId);
@@ -113,7 +117,7 @@ export default function MapPanel({
 
         {isOptimizedMode &&
           visibleTrips.map((trip) => {
-            const routedCoordinates = routeGeometries[trip.id] || trip.path;
+            const routedCoordinates = modeGeometries[trip.id] || trip.path;
 
             return (
               <Polyline
