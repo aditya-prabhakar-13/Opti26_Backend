@@ -3,7 +3,7 @@
   "appName": "Velora Opti26",
   "webDir": "www",
   "server": {
-    "url": "http://10.57.61.159:5173",
+    "url": "https://opti26-velora.vercel.app",
     "cleartext": true
   },
   "plugins": {
