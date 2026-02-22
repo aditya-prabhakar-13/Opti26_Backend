@@ -1,6 +1,7 @@
 import MapPanel from "./MapPanel";
 import { formatCurrency, formatMinutes, formatNumber } from "../lib/transform";
 import ResultsTableView from "./ResultTable";
+import TripTimeline from "./TripTimeline";
 
 /* ── Google Fonts ── */
 if (typeof document !== "undefined" && !document.getElementById("db-fonts")) {
@@ -219,7 +220,7 @@ export default function DashboardView({
   const modeLabels = {
     optimized: "Optimized Routes",
     noconstraints: "No Constraints",
-    infeasible: "Infeasible Handling",
+    infeasible: "Hybrid",
     initial: "Initial Points",
   };
 
@@ -523,6 +524,17 @@ export default function DashboardView({
             selectedResult={selectedResult}
             mapMode={mapMode}
           />
+        )}
+
+        {/* ── Trip Timeline ── */}
+        {visibleTrips?.length > 0 && (
+          <div>
+            <SectionLabel>Trip Timeline</SectionLabel>
+            <TripTimeline
+              trips={visibleTrips}
+              title={vehicleFilter === "ALL" ? "All Vehicles" : vehicleFilter}
+            />
+          </div>
         )}
 
         {/* ── Footer ── */}
