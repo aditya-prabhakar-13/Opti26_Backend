@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { 
+import {
   deleteResult,
   deleteAllTestCases,
   fetchLatestResult,
@@ -43,11 +43,19 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [legendVisible, setLegendVisible] = useState(false);
-  const [progress, setProgress] = useState({ stage: 'starting', percentage: 0, message: '' });
+  const [progress, setProgress] = useState({
+    stage: "starting",
+    percentage: 0,
+    message: "",
+  });
   const [showProgress, setShowProgress] = useState(false);
 
   const hasCases = results.length > 0;
   const effectiveNav = hasCases ? activeNav : "new";
+
+  setInterval(() => {
+    console.log(selectedResult);
+  }, 1000);
 
   /* ── Bootstrap ── */
   useEffect(() => {
@@ -119,15 +127,15 @@ export default function App() {
 
     async function loadGeometries() {
       // Load routes for ALL modes in parallel so switching is instant
-      const modes = ['optimized', 'noconstraints', 'infeasible'];
-      const allMapData = modes.map(mode => ({
+      const modes = ["optimized", "noconstraints", "infeasible"];
+      const allMapData = modes.map((mode) => ({
         mode,
         mapData: buildMapData(selectedResult, mode),
       }));
       const allTrips = allMapData.flatMap(({ mode, mapData }) =>
         mapData.trips.map((trip) => ({ mode, trip })),
       );
-      
+
       if (allTrips.length === 0) {
         setRouteGeometries({
           optimized: {},
@@ -150,32 +158,33 @@ export default function App() {
       const routePromises = allTrips.map(async ({ mode, trip }) => {
         try {
           const route = await fetchRoadGeometry(trip.path);
-          const coords = Array.isArray(route.coordinates) && route.coordinates.length >= 2
-            ? route.coordinates
-            : trip.path;
+          const coords =
+            Array.isArray(route.coordinates) && route.coordinates.length >= 2
+              ? route.coordinates
+              : trip.path;
           const result = [mode, trip.id, coords];
-          
+
           if (!cancelled) {
             loadedCount++;
             setRoutesLoadedCount(loadedCount);
           }
-          
+
           return result;
         } catch {
           const result = [mode, trip.id, trip.path];
-          
+
           if (!cancelled) {
             loadedCount++;
             setRoutesLoadedCount(loadedCount);
           }
-          
+
           return result;
         }
       });
 
       try {
         const results = await Promise.all(routePromises);
-        
+
         if (!cancelled) {
           const nextGeometries = {
             optimized: {},
@@ -224,7 +233,6 @@ export default function App() {
     return rows;
   }
 
-  
   function handleOptimizationComplete() {
     // Hide progress and redirect to dashboard
     setShowProgress(false);
@@ -239,13 +247,20 @@ export default function App() {
     setLoading(true);
     setError("");
     setShowProgress(true);
-    setProgress({ stage: 'starting', percentage: 0, message: 'Starting optimization...' });
-    
+    setProgress({
+      stage: "starting",
+      percentage: 0,
+      message: "Starting optimization...",
+    });
+
     try {
-      const created = await optimizeExcelWithProgress(selectedFile, (progressUpdate) => {
-        setProgress(progressUpdate);
-      });
-      
+      const created = await optimizeExcelWithProgress(
+        selectedFile,
+        (progressUpdate) => {
+          setProgress(progressUpdate);
+        },
+      );
+
       // Save test case to localStorage (client-side only, no database)
       const testCaseData = {
         filename: selectedFile.name,
@@ -256,16 +271,19 @@ export default function App() {
         reports: created.reports, // Save the human-readable optimization reports
       };
       const savedTestCase = saveTestCaseLocally(testCaseData);
-      
+
       const normalized = normalizeOptimizationPayload({
         ...created,
         id: savedTestCase.id, // Use localStorage ID
       });
       setSelectedResult(normalized);
+
+      console.log(created.reports);
+
       setVehicleFilter("ALL");
       await refreshResults(normalized.id);
       setActiveNav("dashboard");
-      
+
       // Keep progress visible for a moment before hiding
       setTimeout(() => setShowProgress(false), 1000);
     } catch (runErr) {
@@ -319,12 +337,20 @@ export default function App() {
   }
 
   /* ── Derived state ── */
-  const metrics = useMemo(() => getMetrics(selectedResult, mapMode), [selectedResult, mapMode]);
-  const mapData = useMemo(() => buildMapData(selectedResult, mapMode), [selectedResult, mapMode]);
+  const metrics = useMemo(
+    () => getMetrics(selectedResult, mapMode),
+    [selectedResult, mapMode],
+  );
+  const mapData = useMemo(
+    () => buildMapData(selectedResult, mapMode),
+    [selectedResult, mapMode],
+  );
   const visibleTrips = useMemo(() => {
     if (vehicleFilter === "ALL") return mapData.trips;
     const normalizeVehicleId = (value) =>
-      String(value ?? "").trim().toLowerCase();
+      String(value ?? "")
+        .trim()
+        .toLowerCase();
     const normalizedFilter = normalizeVehicleId(vehicleFilter);
     return mapData.trips.filter(
       (trip) => normalizeVehicleId(trip.vehicleId) === normalizedFilter,
@@ -334,7 +360,9 @@ export default function App() {
   useEffect(() => {
     if (!mapData?.vehicles || vehicleFilter === "ALL") return;
     const normalizeVehicleId = (value) =>
-      String(value ?? "").trim().toLowerCase();
+      String(value ?? "")
+        .trim()
+        .toLowerCase();
     const normalizedFilter = normalizeVehicleId(vehicleFilter);
     const hasVehicle = mapData.vehicles.some(
       (v) => normalizeVehicleId(v) === normalizedFilter,
@@ -343,7 +371,6 @@ export default function App() {
       setVehicleFilter("ALL");
     }
   }, [mapData?.vehicles, vehicleFilter]);
-
 
   const sharedMapProps = {
     mapData,
@@ -370,9 +397,9 @@ export default function App() {
         background:
           "linear-gradient(135deg, #0f1623 0%, #111827 50%, #0c1420 100%)",
       }}>
-      <ProgressBar 
-        progress={progress} 
-        isVisible={showProgress} 
+      <ProgressBar
+        progress={progress}
+        isVisible={showProgress}
         onComplete={handleOptimizationComplete}
       />
       {/* ── Sidebar (desktop always, mobile drawer) ── */}
@@ -479,6 +506,7 @@ export default function App() {
             mapMode={mapMode}
             setMapMode={setMapMode}
             onNewCase={() => setActiveNav("new")}
+            reports={selectedResult?.reports || []}
           />
         )}
 

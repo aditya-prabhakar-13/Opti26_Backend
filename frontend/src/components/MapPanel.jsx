@@ -23,7 +23,9 @@ export default function MapPanel({
 }) {
   const legendRef = useRef(null);
   const normalizeVehicleId = (value) =>
-    String(value ?? "").trim().toLowerCase();
+    String(value ?? "")
+      .trim()
+      .toLowerCase();
 
   useEffect(() => {
     function handleClickOutside(event) {

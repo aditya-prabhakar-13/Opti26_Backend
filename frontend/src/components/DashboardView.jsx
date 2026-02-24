@@ -2,6 +2,7 @@ import MapPanel from "./MapPanel";
 import { formatCurrency, formatMinutes, formatNumber } from "../lib/transform";
 import ResultsTableView from "./ResultTable";
 import TripTimeline from "./TripTimeline";
+import InfeasibilityReport from "./InfeasibilityReport";
 
 /* ── Google Fonts ── */
 if (typeof document !== "undefined" && !document.getElementById("db-fonts")) {
@@ -213,8 +214,11 @@ export default function DashboardView({
   hasCases,
   selectedResult,
   onNewCase,
+  reports,
 }) {
   const m = metrics ?? {};
+
+  console.log(reports);
 
   // Mode labels for metrics sections
   const modeLabels = {
@@ -305,13 +309,13 @@ export default function DashboardView({
         {/* ── Map Card ── */}
         <div className="rounded-3xl border border-slate-700/60 bg-slate-800/40 backdrop-blur-sm shadow-2xl overflow-hidden">
           {/* Toolbar */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-6 py-4 border-b border-slate-700/50 bg-slate-800/40">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+          <div className="flex flex-row flex-wrap sm:flex-nowrap items-center justify-between gap-4 px-6 py-4 border-b border-slate-700/50 bg-slate-800/40 overflow-x-auto no-scrollbar">
+            <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0 w-full sm:w-auto">
+              <span className="hidden lg:inline text-[11px] font-bold text-slate-500 uppercase tracking-widest flex-shrink-0">
                 Map View
               </span>
-              {/* Toggle */}
-              <div className="flex flex-wrap sm:flex-nowrap items-center bg-slate-900/70 rounded-xl p-1 gap-1 border border-slate-700/50 w-full sm:w-auto">
+              {/* Toggle group */}
+              <div className="flex items-center bg-slate-900/70 rounded-xl p-1 gap-0.5 border border-slate-700/50 w-full sm:w-auto">
                 {[
                   {
                     key: "initial",
@@ -331,7 +335,7 @@ export default function DashboardView({
                   {
                     key: "infeasible",
                     label: "Hybrid",
-                    shortLabel: "Infeasible",
+                    shortLabel: "Hybrid",
                   },
                 ].map(({ key, label, shortLabel }) => {
                   const active = mapMode === key;
@@ -343,33 +347,33 @@ export default function DashboardView({
                       onClick={() => !disabled && setMapMode(key)}
                       disabled={disabled}
                       className={`
-                        flex-1 sm:flex-none px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold tracking-wide transition-all duration-200 whitespace-nowrap
-                        ${
-                          active
-                            ? "text-slate-900 shadow-sm shadow-amber-900/30"
-                            : disabled
-                              ? "text-slate-600 cursor-not-allowed"
-                              : "text-slate-400 hover:text-slate-200"
+                        px-2.5 sm:px-3 xl:px-4 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold tracking-wide transition-all duration-200 whitespace-nowrap flex-1 sm:flex-none flex-shrink-0
+                        ${active
+                          ? "text-slate-900 shadow-sm shadow-amber-900/30"
+                          : disabled
+                            ? "text-slate-600 cursor-not-allowed"
+                            : "text-slate-400 hover:text-slate-200"
                         }
                       `}
                       style={
                         active
                           ? {
-                              background:
-                                "linear-gradient(135deg, #f59e0b, #ea580c)",
-                            }
+                            background:
+                              "linear-gradient(135deg, #f59e0b, #ea580c)",
+                          }
                           : {}
                       }>
-                      <span className="hidden sm:inline">{label}</span>
-                      <span className="sm:hidden">{shortLabel}</span>
+                      <span className="hidden 2xl:inline">{label}</span>
+                      <span className="2xl:hidden">{shortLabel}</span>
                     </button>
                   );
                 })}
               </div>
+
             </div>
 
-            {/* Vehicle select desktop */}
-            <div className="relative hidden sm:block">
+            {/* Vehicle select desktop - only for very large screens */}
+            <div className="relative hidden 2xl:block flex-shrink-0">
               <select
                 value={vehicleFilter}
                 onChange={(e) => setVehicleFilter(e.target.value)}
@@ -414,8 +418,8 @@ export default function DashboardView({
             />
           </div>
 
-          {/* Mobile vehicle select */}
-          <div className="sm:hidden px-5 py-4 border-t border-slate-700/50 bg-slate-800/40">
+          {/* Bottom vehicle select (for all but 2xl screens) */}
+          <div className="2xl:hidden px-5 py-4 border-t border-slate-700/50 bg-slate-800/40">
             <div className="relative">
               <select
                 value={vehicleFilter}
@@ -531,11 +535,16 @@ export default function DashboardView({
           <div>
             <SectionLabel>Trip Timeline</SectionLabel>
             <TripTimeline
-              trips={visibleTrips}
+              trips={mapData.trips}
               title={vehicleFilter === "ALL" ? "All Vehicles" : vehicleFilter}
             />
           </div>
         )}
+
+        <div>
+          <SectionLabel>Infeasibility Report</SectionLabel>
+          <InfeasibilityReport report={reports.reportInfeasible} />
+        </div>
 
         {/* ── Footer ── */}
         <footer className="flex items-center justify-center gap-3 pt-2 pb-8">
