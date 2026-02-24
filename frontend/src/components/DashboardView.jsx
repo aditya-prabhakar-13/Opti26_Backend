@@ -2,7 +2,6 @@ import MapPanel from "./MapPanel";
 import { formatCurrency, formatMinutes, formatNumber } from "../lib/transform";
 import ResultsTableView from "./ResultTable";
 import TripTimeline from "./TripTimeline";
-import InfeasibilityReport from "./InfeasibilityReport";
 
 /* ── Google Fonts ── */
 if (typeof document !== "undefined" && !document.getElementById("db-fonts")) {
@@ -348,19 +347,20 @@ export default function DashboardView({
                       disabled={disabled}
                       className={`
                         px-2.5 sm:px-3 xl:px-4 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold tracking-wide transition-all duration-200 whitespace-nowrap flex-1 sm:flex-none flex-shrink-0
-                        ${active
-                          ? "text-slate-900 shadow-sm shadow-amber-900/30"
-                          : disabled
-                            ? "text-slate-600 cursor-not-allowed"
-                            : "text-slate-400 hover:text-slate-200"
+                        ${
+                          active
+                            ? "text-slate-900 shadow-sm shadow-amber-900/30"
+                            : disabled
+                              ? "text-slate-600 cursor-not-allowed"
+                              : "text-slate-400 hover:text-slate-200"
                         }
                       `}
                       style={
                         active
                           ? {
-                            background:
-                              "linear-gradient(135deg, #f59e0b, #ea580c)",
-                          }
+                              background:
+                                "linear-gradient(135deg, #f59e0b, #ea580c)",
+                            }
                           : {}
                       }>
                       <span className="hidden 2xl:inline">{label}</span>
@@ -369,7 +369,6 @@ export default function DashboardView({
                   );
                 })}
               </div>
-
             </div>
 
             {/* Vehicle select desktop - only for very large screens */}
@@ -540,11 +539,11 @@ export default function DashboardView({
             />
           </div>
         )}
-
+        {/* 
         <div>
           <SectionLabel>Infeasibility Report</SectionLabel>
           <InfeasibilityReport report={reports.reportInfeasible} />
-        </div>
+        </div> */}
 
         {/* ── Footer ── */}
         <footer className="flex items-center justify-center gap-3 pt-2 pb-8">
