@@ -132,5 +132,8 @@ CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
     "https://opti26-velora.vercel.app",
     "http://localhost:5173",
-    "http://localhost:5174", 
+    "http://localhost:5174",
+    "https://localhost",
+    "http://localhost",
+    "capacitor://localhost",
 ]

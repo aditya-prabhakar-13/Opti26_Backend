@@ -2,15 +2,14 @@
   "appId": "com.opti26.app",
   "appName": "Velora Opti26",
   "webDir": "www",
-  "server": {
-    "url": "https://opti26-velora.vercel.app",
-    "cleartext": true
-  },
   "plugins": {
     "StatusBar": {
       "overlaysWebView": false,
       "style": "DARK",
-      "backgroundColor": "#FFFFFF"
+      "backgroundColor": "#0f1623"
     }
+  },
+  "android": {
+    "allowMixedContent": true
   }
 }
