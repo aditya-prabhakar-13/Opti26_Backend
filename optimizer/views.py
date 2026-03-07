@@ -12,6 +12,7 @@ from django.core.management import call_command
 from django.db.utils import OperationalError, ProgrammingError
 from .models import OptimizationResult
 from .utils import parse_excel_to_dict, NpEncoder
+from .executables.evaluator import evaluate as run_constraint_evaluation
 
 # Progress tracking storage (session-based for now)
 _progress_store = {}
@@ -273,8 +274,43 @@ def _execute_optimization(excel_file, progress_callback=None):
                 final_data_infeasible = json.load(f)
             print(f"[DEBUG] Loaded infeasible data with {len(final_data_infeasible.get('vehicles', []))} vehicles")
 
-        # 7. Save the structured JSON data to the database
-        report_progress('saving', 85, 'Saving to database...')
+        # 7. Run constraint evaluator on each output
+        report_progress('evaluating', 80, 'Running constraint evaluator...')
+        evaluations = {}
+        for label, data in [
+            ('optimized', final_data),
+            ('noconstraints', final_data_noconstraints),
+            ('infeasible', final_data_infeasible),
+        ]:
+            if data is None:
+                evaluations[label] = None
+                continue
+            try:
+                eval_result = run_constraint_evaluation(data)
+                evaluations[label] = {
+                    'stats': eval_result.stats,
+                    'violations': [
+                        {
+                            'constraint_id': v.constraint_id,
+                            'constraint_name': v.constraint_name,
+                            'severity': v.severity,
+                            'employee_id': v.employee_id,
+                            'vehicle_id': v.vehicle_id,
+                            'trip_number': v.trip_number,
+                            'detail': v.detail,
+                        }
+                        for v in eval_result.violations
+                    ],
+                }
+                print(f"[EVALUATOR] {label}: passed={eval_result.passed}, "
+                      f"hard={eval_result.stats['hard_violations']}, "
+                      f"soft={eval_result.stats['soft_violations']}")
+            except Exception as eval_err:
+                print(f"[WARNING] Evaluator failed for {label}: {eval_err}")
+                evaluations[label] = None
+
+        # 8. Save the structured JSON data to the database
+        report_progress('saving', 90, 'Saving to database...')
         saved_result = _save_optimization_result(
             excel_file.name, 
             final_data,
@@ -288,7 +324,7 @@ def _execute_optimization(excel_file, progress_callback=None):
             'report_optimized': report_optimized,
             'report_noconstraints': report_noconstraints,
             'report_infeasible': report_infeasible,
-        }
+        }, evaluations
     finally:
         # 8. Cleanup ALL temporary files immediately
         print("[CLEANUP] Removing all temporary files...")
@@ -329,14 +365,15 @@ def api_optimize(request):
             global _current_progress
             _current_progress = progress
         
-        saved_result, _, reports = _execute_optimization(excel_file, progress_callback=progress_callback)
+        saved_result, _, reports, evaluations = _execute_optimization(excel_file, progress_callback=progress_callback)
         
         # Mark as complete
         _current_progress = {'stage': 'complete', 'percentage': 100, 'message': 'Optimization complete!'}
         
-        # Include the text-based reports in the response
+        # Include the text-based reports and constraint evaluations in the response
         response_data = _serialize_result(saved_result)
         response_data['reports'] = reports
+        response_data['evaluations'] = evaluations
         return JsonResponse(response_data, encoder=NpEncoder)
     except Exception as e:
         # Mark as failed

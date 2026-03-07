@@ -53,10 +53,6 @@ export default function App() {
   const hasCases = results.length > 0;
   const effectiveNav = hasCases ? activeNav : "new";
 
-  setInterval(() => {
-    console.log(selectedResult);
-  }, 1000);
-
   /* ── Bootstrap ── */
   useEffect(() => {
     let mounted = true;
@@ -269,6 +265,7 @@ export default function App() {
         result_data_infeasible: created.result_infeasible,
         computed_metrics: created.computed_metrics,
         reports: created.reports, // Save the human-readable optimization reports
+        evaluations: created.evaluations || null, // Constraint evaluation data
       };
       const savedTestCase = saveTestCaseLocally(testCaseData);
 
@@ -277,8 +274,6 @@ export default function App() {
         id: savedTestCase.id, // Use localStorage ID
       });
       setSelectedResult(normalized);
-
-      console.log(created.reports);
 
       setVehicleFilter("ALL");
       await refreshResults(normalized.id);

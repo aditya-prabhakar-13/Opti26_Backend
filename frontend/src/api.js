@@ -118,15 +118,10 @@ export function saveTestCaseLocally(testCaseData) {
       result_data_infeasible: testCaseData.result_data_infeasible,
       computed_metrics: testCaseData.computed_metrics,
       reports: testCaseData.reports || {}, // Save human-readable optimization reports
+      evaluations: testCaseData.evaluations || null, // Constraint evaluation data
     };
     cases.push(newCase);
     localStorage.setItem(TESTCASES_STORAGE_KEY, JSON.stringify(cases));
-    console.log("[localStorage] Saved test case:", newCase.id);
-    console.log("[localStorage] Reports saved:", {
-      hasOptimizedReport: !!newCase.reports?.report_optimized,
-      hasNoConstraintsReport: !!newCase.reports?.report_noconstraints,
-      hasInfeasibleReport: !!newCase.reports?.report_infeasible,
-    });
     return newCase;
   } catch (err) {
     console.error("[localStorage] Failed to save test case:", err);
@@ -184,6 +179,7 @@ export async function fetchResultDetail(resultId) {
     result_infeasible: testCase.result_data_infeasible,
     computed_metrics: testCase.computed_metrics,
     reports: testCase.reports || {}, // Include human-readable optimization reports
+    evaluations: testCase.evaluations || null, // Constraint evaluation data
   };
 }
 
@@ -196,7 +192,6 @@ export function deleteResult(resultId) {
     const cases = getTestCasesFromLocalStorage();
     const filteredCases = cases.filter((c) => c.id !== resultId);
     localStorage.setItem(TESTCASES_STORAGE_KEY, JSON.stringify(filteredCases));
-    console.log("[localStorage] Deleted test case:", resultId);
 
     // Attempt to delete from database (if record exists)
     // This is best-effort and won't fail if the database record doesn't exist
@@ -231,7 +226,6 @@ export function deleteAllTestCases() {
     
     // Delete from localStorage
     localStorage.removeItem(TESTCASES_STORAGE_KEY);
-    console.log("[localStorage] Deleted all test cases");
 
     // Attempt to delete all database records
     // This is best-effort and won't fail if database is unavailable

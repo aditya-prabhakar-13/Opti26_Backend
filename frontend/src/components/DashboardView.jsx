@@ -217,8 +217,6 @@ export default function DashboardView({
 }) {
   const m = metrics ?? {};
 
-  console.log(reports);
-
   // Mode labels for metrics sections
   const modeLabels = {
     optimized: "Optimized Routes",

@@ -23,6 +23,7 @@ export function normalizeOptimizationPayload(apiPayload) {
     result: apiPayload?.result || null,
     resultNoConstraints: apiPayload?.result_noconstraints || null,
     resultInfeasible: apiPayload?.result_infeasible || null,
+    evaluations: apiPayload?.evaluations || null,
   };
 }
 
