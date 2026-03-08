@@ -93,7 +93,7 @@ select {
   justify-content: center;
   flex-direction: column;
   gap: 5px;
-  padding: 0;
+  padding: 0; 
   cursor: pointer;
 }
 
