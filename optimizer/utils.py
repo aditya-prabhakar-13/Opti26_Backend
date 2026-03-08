@@ -72,7 +72,7 @@ def clean_dict(obj):
     else:
         return clean_value(obj)
 
-def parse_excel_to_dict(file_path):
+def parse_excel_to_dict(file_path, optimization_mode=None):
     try:
         with pd.ExcelFile(file_path) as xls:
             required_sheets = {'employees', 'vehicles', 'baseline', 'metadata'}
@@ -162,6 +162,8 @@ def parse_excel_to_dict(file_path):
             "baseline": clean_dict(df_base.to_dict(orient='records')),
             "metadata": clean_dict(df_meta.to_dict(orient='records'))
         }
+        if optimization_mode is not None:
+            result["config"] = [{"key": "alns_depth","value":optimization_mode}]
         return result
     except Exception as e:
         raise e

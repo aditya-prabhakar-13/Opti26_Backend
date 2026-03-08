@@ -5,7 +5,6 @@ import TripTimeline from "./TripTimeline";
 import AddEmployeeModal from "./AddEmployeeModal";
 import ViolationsReport from "./ViolationsReport";
 import { useState, useRef } from "react";
-import { postDynamicOptimization } from "../api";
 import { pdf } from '@react-pdf/renderer';
 import domtoimage from "dom-to-image";
 import { Download, UploadCloud, RefreshCw, Trash2, Map } from "lucide-react";
@@ -161,6 +160,7 @@ export default function DashboardView({
   onNewCase,
   reports,
   metrics,
+  onDynamicOptimize,
 }) {
   const mapRef = useRef(null);
   const m = metrics || {};
@@ -686,10 +686,14 @@ export default function DashboardView({
         onSubmit={async (newEmployees) => {
           setIsAddEmployeeModalOpen(false);
           try {
-            await postDynamicOptimization(selectedResult, newEmployees);
+            if (onDynamicOptimize) {
+              await onDynamicOptimize(newEmployees);
+            }
           } catch (err) {
             console.error(err);
-            alert("Failed to submit optimization");
+            if (err?.showAlert) {
+              alert(err.message);
+            }
           }
         }}
       />
