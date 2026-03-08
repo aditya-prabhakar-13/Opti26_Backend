@@ -11,9 +11,9 @@ export default function ViolationsReport({ evaluations, mapMode }) {
     const { stats, violations } = evaluationData;
 
     return (
-        <div className="mt-4 bg-slate-900 border border-slate-700/60 rounded-xl overflow-hidden shadow-lg">
+        <div className="mt-4 bg-[#0a0c10] border border-slate-700/60 rounded-md overflow-hidden shadow-lg">
             {/* Header */}
-            <div className="px-5 py-3 border-b border-slate-700/60 flex items-center justify-between bg-slate-800/40">
+            <div className="px-5 py-3 border-b border-slate-700/60 flex items-center justify-between bg-[#0c0e12]">
                 <h3 className="text-sm font-semibold text-white tracking-wide">
                     Constraint Violations ({mapMode})
                 </h3>
@@ -39,7 +39,7 @@ export default function ViolationsReport({ evaluations, mapMode }) {
                         <col style={{ width: '100px' }} />
                         <col /> {/* Detail takes remaining space */}
                     </colgroup>
-                    <thead className="bg-slate-800/60 sticky top-0 z-10 backdrop-blur-sm">
+                    <thead className="bg-[#131620] sticky top-0 z-10 backdrop-blur-sm">
                         <tr>
                             {['Severity', 'Constraint', 'Employee', 'Vehicle', 'Detail'].map(col => (
                                 <th key={col} className="px-4 py-2.5 text-xs font-semibold text-slate-400 border-b border-slate-700/50 whitespace-nowrap">
@@ -57,7 +57,7 @@ export default function ViolationsReport({ evaluations, mapMode }) {
                                     <tr key={i} className="hover:bg-slate-800/30 transition-colors align-top">
                                         {/* Severity */}
                                         <td className="px-4 py-2.5 text-xs">
-                                            <span className={`px-2 py-0.5 rounded-full font-medium ${v.severity === 'HARD'
+                                            <span className={`px-2 py-0.5 rounded-md font-medium ${v.severity === 'HARD'
                                                 ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
                                                 : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                                                 }`}>

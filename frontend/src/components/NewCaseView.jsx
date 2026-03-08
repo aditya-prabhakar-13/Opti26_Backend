@@ -109,9 +109,9 @@ function Step({ number, label, active, done }) {
       `}
         style={
           done
-            ? { background: "linear-gradient(135deg, #10b981, #0d9488)" }
+            ? { background: "var(--color-green)" }
             : active
-              ? { background: "linear-gradient(135deg, #f59e0b, #ea580c)" }
+              ? { background: "var(--color-accent)" }
               : {}
         }>
         {done ? <IconCheck /> : number}
@@ -141,25 +141,15 @@ export default function NewCaseView({
       className="min-h-screen flex items-center justify-center px-4 py-12"
       style={{
         fontFamily: "'Plus Jakarta Sans', sans-serif",
-        background:
-          "linear-gradient(135deg, #0f1623 0%, #111827 50%, #0c1420 100%)",
+        background: "var(--color-bg)",
       }}>
-      {/* Ambient glow */}
-      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <div
-          className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] rounded-full opacity-[0.07]"
-          style={{
-            background: "radial-gradient(ellipse, #f59e0b 0%, transparent 70%)",
-          }}
-        />
-      </div>
 
       <div className="relative z-10 w-full max-w-lg">
         {/* ── Header ── */}
         <div className="text-center mb-10 flex flex-col items-center gap-4">
           <div
-            className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-5 shadow-xl shadow-amber-900/30"
-            style={{ background: "linear-gradient(135deg, #f59e0b, #ea580c)" }}>
+            className="inline-flex items-center justify-center w-14 h-14 rounded-lg mb-5 flex-shrink-0"
+            style={{ background: "var(--color-accent)" }}>
             <IconRoute />
           </div>
           <h1
@@ -194,7 +184,7 @@ export default function NewCaseView({
         </div>
 
         {/* ── Card ── */}
-        <div className="rounded-3xl border border-slate-700/60 bg-slate-800/40 backdrop-blur-sm shadow-2xl overflow-hidden">
+        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl overflow-hidden">
           {/* Upload zone */}
           <label
             htmlFor="upload-input"
@@ -218,7 +208,7 @@ export default function NewCaseView({
             {/* Icon circle */}
             <div
               className={`
-              w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-200
+              w-16 h-16 rounded-lg flex items-center justify-center transition-all duration-200
               ${selectedFile
                   ? "bg-emerald-500/15 text-emerald-400 shadow-lg shadow-emerald-900/20"
                   : "bg-slate-700/80 text-slate-400 group-hover:bg-amber-500/15 group-hover:text-amber-400 group-hover:shadow-lg group-hover:shadow-amber-900/20"
@@ -254,7 +244,7 @@ export default function NewCaseView({
 
             {/* Dashed border overlay */}
             {!selectedFile && (
-              <div className="absolute inset-4 rounded-2xl border-2 border-dashed border-slate-600/50 group-hover:border-amber-500/30 transition-colors duration-200 pointer-events-none" />
+              <div className="absolute inset-4 rounded-lg border-2 border-dashed border-slate-600/50 group-hover:border-amber-500/30 transition-colors duration-200 pointer-events-none" />
             )}
           </label>
 
@@ -276,7 +266,7 @@ export default function NewCaseView({
                       type="button"
                       disabled={loading}
                       onClick={() => setOptimizationMode(mode.id)}
-                      className={`px-5 py-2 rounded-xl text-xs font-bold tracking-wide transition-all ${optimizationMode === mode.id
+                      className={`px-5 py-2 rounded-md text-xs font-bold tracking-wide transition-all ${optimizationMode === mode.id
                         ? 'bg-amber-500/15 text-amber-400 border border-amber-500/50 shadow-sm shadow-amber-900/20'
                         : 'bg-slate-800/50 text-slate-400 border border-slate-700/60 hover:bg-slate-700/50 hover:text-slate-200'
                         }`}
@@ -294,7 +284,7 @@ export default function NewCaseView({
               onClick={() => onRunOptimization(optimizationMode)}
               className="
                 w-full flex items-center justify-center gap-3
-                px-6 py-3.5 rounded-2xl
+                px-6 py-3.5 rounded-lg
                 font-bold text-sm text-white
                 transition-all duration-200
                 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0
@@ -303,8 +293,8 @@ export default function NewCaseView({
               "
               style={
                 !loading && selectedFile
-                  ? { background: "linear-gradient(135deg, #f59e0b, #ea580c)" }
-                  : { background: "rgba(100,116,139,0.3)", boxShadow: "none" }
+                  ? { background: "var(--color-accent)" }
+                  : { background: "rgba(100,116,139,0.2)", boxShadow: "none" }
               }>
               {loading ? (
                 <>

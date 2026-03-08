@@ -102,7 +102,7 @@ function Chip({ children, style, onClick, active }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 whitespace-nowrap"
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all duration-150 whitespace-nowrap"
       style={{
         border: `1px solid ${active ? style.border : "rgba(148,163,184,0.15)"}`,
         background: active ? style.bg : "rgba(15,23,42,0.4)",
@@ -208,7 +208,7 @@ function FilterControl({
           <select
             value={selected}
             onChange={(e) => onChange(e.target.value)}
-            className="appearance-none pl-4 pr-9 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all duration-150 focus:outline-none focus:ring-2"
+            className="appearance-none pl-4 pr-9 py-2 rounded-md text-xs font-bold cursor-pointer transition-all duration-150 focus:outline-none focus:ring-2"
             style={{
               background: "rgba(15,23,42,0.7)",
               border: `1px solid ${activePalette ? activePalette.border : "rgba(148,163,184,0.2)"}`,
@@ -253,7 +253,7 @@ function FilterControl({
         {/* Active selection pill with clear button */}
         {selected !== allValue && activePalette && (
           <div
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold"
             style={{
               background: activePalette.bg,
               border: `1px solid ${activePalette.border}`,
@@ -324,7 +324,7 @@ function VehicleView({ vehicles, inputVehicles, selectedVehicleId }) {
   if (filtered.length === 0) {
     return (
       <div
-        className="flex items-center justify-center py-16 rounded-2xl"
+        className="flex items-center justify-center py-16 rounded-md"
         style={{
           border: "1px solid rgba(148,163,184,0.1)",
           background: "rgba(15,23,42,0.4)",
@@ -353,7 +353,7 @@ function VehicleView({ vehicles, inputVehicles, selectedVehicleId }) {
         return (
           <div
             key={vehicle.vehicle_id}
-            className="rounded-2xl overflow-hidden"
+            className="rounded-md overflow-hidden"
             style={{
               border: `1px solid ${palette.border}`,
               background: "rgba(15,23,42,0.5)",
@@ -367,7 +367,7 @@ function VehicleView({ vehicles, inputVehicles, selectedVehicleId }) {
               }}>
               <div className="flex items-center gap-3">
                 <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm flex-shrink-0"
+                  className="w-10 h-10 rounded-md flex items-center justify-center font-bold text-sm flex-shrink-0"
                   style={{ background: palette.accent, color: "#0f172a" }}>
                   {vehicle.vehicle_id}
                 </div>
@@ -640,7 +640,7 @@ function EmployeeView({
   if (displayed.length === 0) {
     return (
       <div
-        className="flex items-center justify-center py-16 rounded-2xl"
+        className="flex items-center justify-center py-16 rounded-md"
         style={{
           border: "1px solid rgba(148,163,184,0.1)",
           background: "rgba(15,23,42,0.4)",
@@ -656,7 +656,7 @@ function EmployeeView({
 
   return (
     <div
-      className="overflow-x-auto rounded-2xl"
+      className="overflow-x-auto rounded-md"
       style={{ border: "1px solid rgba(148,163,184,0.1)" }}>
       <table className="w-full min-w-[860px] text-sm">
         <thead>
@@ -715,7 +715,7 @@ function EmployeeView({
                 }}>
                 <td className="px-4 py-3">
                   <span
-                    className="inline-flex items-center justify-center w-14 py-1.5 rounded-xl text-xs font-bold"
+                    className="inline-flex items-center justify-center w-14 py-1.5 rounded-md text-xs font-bold"
                     style={
                       palette
                         ? {
@@ -854,7 +854,7 @@ function SummaryBar({ summary }) {
       {items.map(({ label, value, color }) => (
         <div
           key={label}
-          className="rounded-xl px-4 py-3"
+          className="rounded-md px-4 py-3"
           style={{
             background: "rgba(15,23,42,0.6)",
             border: "1px solid rgba(148,163,184,0.1)",
@@ -964,7 +964,7 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
           </h2>
         </div>
         <div
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold self-start"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-xs font-bold self-start"
           style={{
             background: "rgba(245,158,11,0.12)",
             border: "1px solid rgba(245,158,11,0.3)",
@@ -980,14 +980,14 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
 
       {/* Filter bar */}
       <div
-        className="rounded-2xl px-5 py-4 space-y-4"
+        className="rounded-md px-5 py-4 space-y-4"
         style={{
           background: "rgba(15,23,42,0.6)",
           border: "1px solid rgba(148,163,184,0.1)",
         }}>
         {/* Mode toggle */}
         <div
-          className="flex items-center p-1 rounded-xl gap-1 w-fit"
+          className="flex items-center p-1 rounded-md gap-1 w-fit"
           style={{
             background: "rgba(15,23,42,0.7)",
             border: "1px solid rgba(148,163,184,0.1)",
@@ -1004,9 +1004,9 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
               style={
                 filterMode === key
                   ? {
-                    background: "linear-gradient(135deg, #f59e0b, #ea580c)",
+                    background: "var(--color-accent)",
                     color: "#0f172a",
-                    boxShadow: "0 0 16px rgba(245,158,11,0.3)",
+                    boxShadow: "0 0 16px rgba(245,158,11,0.1)",
                   }
                   : { color: "rgba(148,163,184,0.5)" }
               }>

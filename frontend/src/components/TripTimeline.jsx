@@ -182,7 +182,7 @@ function Tooltip({ trip, color, anchorRect, containerRect }) {
 
   return (
     <div
-      className="absolute z-50 pointer-events-none"
+      className="absolute z-500 pointer-events-none"
       style={{
         left,
         top,
@@ -190,7 +190,7 @@ function Tooltip({ trip, color, anchorRect, containerRect }) {
         transform: showAbove ? "translateY(-100%)" : "none",
       }}>
       <div
-        className="rounded-2xl border text-xs shadow-2xl overflow-hidden"
+        className="rounded-md border text-xs shadow-2xl overflow-hidden"
         style={{
           background: "rgba(15,22,35,0.97)",
           borderColor: color.border,
@@ -271,8 +271,8 @@ function Playhead({ pct }) {
         style={{ background: "rgba(245,158,11,0.7)" }}
       />
       <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-amber-400"
-        style={{ background: "#0f1623" }}
+        className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-amber-500"
+        style={{ background: "#06080a" }}
       />
     </div>
   );
@@ -364,9 +364,9 @@ export default function TripTimeline({ trips = [], title = "Trip Timeline" }) {
   if (!vehicles.length) {
     return (
       <div
-        className="rounded-3xl border border-slate-700/60 bg-slate-800/40 p-10 flex flex-col items-center gap-3"
+        className="rounded-md border border-slate-700/60 bg-[#0a0c10] p-10 flex flex-col items-center gap-3"
         style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-        <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center text-slate-600">
+        <div className="w-12 h-12 rounded-md bg-slate-800 flex items-center justify-center text-slate-600">
           <svg
             className="w-6 h-6"
             fill="none"
@@ -392,14 +392,14 @@ export default function TripTimeline({ trips = [], title = "Trip Timeline" }) {
 
   return (
     <div
-      className="rounded-3xl border border-slate-700/60 bg-slate-800/40 backdrop-blur-sm shadow-2xl overflow-hidden"
+      className="rounded-md border border-slate-700/60 bg-[#0a0c10] backdrop-blur-sm shadow-2xl overflow-hidden"
       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       {/* ── Header ── */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700/50 bg-slate-800/40">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700/50 bg-[#0c0e12]">
         <div className="flex items-center gap-3">
           <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center"
-            style={{ background: "linear-gradient(135deg, #f59e0b, #ea580c)" }}>
+            className="w-8 h-8 rounded-md flex items-center justify-center"
+            style={{ background: "var(--color-accent)" }}>
             <svg
               className="w-4 h-4 text-white"
               fill="none"
@@ -562,14 +562,14 @@ export default function TripTimeline({ trips = [], title = "Trip Timeline" }) {
                     return (
                       <div
                         key={trip.id ?? `${trip._start}-${trip._end}`}
-                        className="absolute top-1/2 rounded-lg cursor-pointer transition-all duration-150"
+                        className="absolute top-1/2 rounded-md cursor-pointer transition-all duration-150"
                         style={{
                           left: `${left}%`,
                           width: `${width}%`,
                           height: ROW_H * 0.9,
                           background: isHovered
                             ? c.bg
-                            : `linear-gradient(135deg, ${c.bg}cc, ${c.bg}88)`,
+                            : `${c.bg}73`, // ~45% opacity for better visibility while flat
                           border: `1px solid ${isHovered ? c.bg : c.border}`,
                           boxShadow: isHovered
                             ? `0 0 16px ${c.bg}66, 0 2px 8px rgba(0,0,0,0.4)`
@@ -592,8 +592,7 @@ export default function TripTimeline({ trips = [], title = "Trip Timeline" }) {
                         {width > 4 && (
                           <div className="absolute inset-0 flex items-center px-2 overflow-hidden pointer-events-none">
                             <span
-                              className="text-[10px] font-bold truncate"
-                              style={{ color: "rgba(15,22,35,0.9)" }}>
+                              className="text-[10px] font-bold truncate text-white">
                               {fmtDur(trip._end - trip._start)}
                             </span>
                           </div>

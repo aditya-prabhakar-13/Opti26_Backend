@@ -94,11 +94,11 @@ function fmtPct(n) {
 function buildWaterfallData(selectedResult, mapMode) {
   const result =
     selectedResult?.[
-      mapMode === "optimized"
-        ? "result"
-        : mapMode === "infeasible"
-          ? "resultInfeasible"
-          : "resultNoConstraints"
+    mapMode === "optimized"
+      ? "result"
+      : mapMode === "infeasible"
+        ? "resultInfeasible"
+        : "resultNoConstraints"
     ];
   if (!result) return null;
 
@@ -178,7 +178,7 @@ function WfTooltip({ bar, containerWidth }) {
 
   return (
     <div
-      className="absolute pointer-events-none z-40 text-xs rounded-2xl overflow-hidden"
+      className="absolute pointer-events-none z-40 text-xs rounded-md overflow-hidden"
       style={{
         left,
         width: TIP_W,
@@ -252,7 +252,7 @@ export default function SavingsWaterfall({
   if (!data) {
     return (
       <div
-        className="rounded-3xl border border-slate-700/60 bg-slate-800/40 flex items-center justify-center py-16"
+        className="rounded-md border border-slate-700/60 bg-[#0a0c10] flex items-center justify-center py-16"
         style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
         <p className="text-sm font-semibold text-slate-500">
           No data available for this view.
@@ -382,14 +382,14 @@ export default function SavingsWaterfall({
 
   return (
     <div
-      className="rounded-3xl border border-slate-700/60 bg-slate-800/40 backdrop-blur-sm shadow-2xl overflow-hidden"
+      className="rounded-md border border-slate-700/60 bg-[#0a0c10] backdrop-blur-sm shadow-2xl overflow-hidden"
       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-6 py-4 border-b border-slate-700/50 bg-slate-800/40">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-6 py-4 border-b border-slate-700/50 bg-[#0c0e12]">
         <div className="flex items-center gap-3">
           <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ background: "linear-gradient(135deg, #10b981, #0d9488)" }}>
+            className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0"
+            style={{ background: "#10b981" }}>
             <svg
               className="w-4 h-4 text-white"
               fill="none"

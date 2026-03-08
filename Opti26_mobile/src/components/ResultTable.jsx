@@ -102,7 +102,7 @@ function Chip({ children, style, onClick, active }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 whitespace-nowrap"
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all duration-150 whitespace-nowrap"
       style={{
         border: `1px solid ${active ? style.border : "rgba(148,163,184,0.15)"}`,
         background: active ? style.bg : "rgba(15,23,42,0.4)",
@@ -208,7 +208,7 @@ function FilterControl({
           <select
             value={selected}
             onChange={(e) => onChange(e.target.value)}
-            className="appearance-none pl-4 pr-9 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all duration-150 focus:outline-none focus:ring-2"
+            className="appearance-none pl-4 pr-9 py-2 rounded-md text-xs font-bold cursor-pointer transition-all duration-150 focus:outline-none focus:ring-2"
             style={{
               background: "rgba(15,23,42,0.7)",
               border: `1px solid ${activePalette ? activePalette.border : "rgba(148,163,184,0.2)"}`,
@@ -253,7 +253,7 @@ function FilterControl({
         {/* Active selection pill with clear button */}
         {selected !== allValue && activePalette && (
           <div
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold"
             style={{
               background: activePalette.bg,
               border: `1px solid ${activePalette.border}`,
@@ -343,8 +343,8 @@ function VehicleView({ vehicles, inputVehicles, selectedVehicleId }) {
       {filtered.map((vehicle) => {
         const palette =
           VEHICLE_PALETTE[
-            vehicles.findIndex((v) => v.vehicle_id === vehicle.vehicle_id) %
-              VEHICLE_PALETTE.length
+          vehicles.findIndex((v) => v.vehicle_id === vehicle.vehicle_id) %
+          VEHICLE_PALETTE.length
           ];
         const inputV = inputVehicles?.find(
           (v) => v.vehicle_id === vehicle.vehicle_id,
@@ -367,7 +367,7 @@ function VehicleView({ vehicles, inputVehicles, selectedVehicleId }) {
               }}>
               <div className="flex items-center gap-3">
                 <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm flex-shrink-0"
+                  className="w-10 h-10 rounded-md flex items-center justify-center font-bold text-sm flex-shrink-0"
                   style={{ background: palette.accent, color: "#0f172a" }}>
                   {vehicle.vehicle_id}
                 </div>
@@ -698,9 +698,9 @@ function EmployeeView({
             const palette = assignment?.palette;
             const rideDuration = assignment
               ? timeDiffMin(
-                  assignment.passenger.pickup_time,
-                  assignment.passenger.drop_time,
-                )
+                assignment.passenger.pickup_time,
+                assignment.passenger.drop_time,
+              )
               : null;
 
             return (
@@ -715,18 +715,18 @@ function EmployeeView({
                 }}>
                 <td className="px-4 py-3">
                   <span
-                    className="inline-flex items-center justify-center w-14 py-1.5 rounded-xl text-xs font-bold"
+                    className="inline-flex items-center justify-center w-14 py-1.5 rounded-md text-xs font-bold"
                     style={
                       palette
                         ? {
-                            background: palette.soft,
-                            color: palette.text,
-                            border: `1px solid ${palette.border}`,
-                          }
+                          background: palette.soft,
+                          color: palette.text,
+                          border: `1px solid ${palette.border}`,
+                        }
                         : {
-                            background: "rgba(148,163,184,0.1)",
-                            color: "#94a3b8",
-                          }
+                          background: "rgba(148,163,184,0.1)",
+                          color: "#94a3b8",
+                        }
                     }>
                     {empId}
                   </span>
@@ -854,7 +854,7 @@ function SummaryBar({ summary }) {
       {items.map(({ label, value, color }) => (
         <div
           key={label}
-          className="rounded-xl px-4 py-3"
+          className="rounded-md px-4 py-3"
           style={{
             background: "rgba(15,23,42,0.6)",
             border: "1px solid rgba(148,163,184,0.1)",
@@ -889,11 +889,11 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
 
   const result =
     selectedResult?.[
-      mapMode === "optimized"
-        ? "result"
-        : mapMode === "infeasible"
-          ? "resultInfeasible"
-          : "resultNoConstraints"
+    mapMode === "optimized"
+      ? "result"
+      : mapMode === "infeasible"
+        ? "resultInfeasible"
+        : "resultNoConstraints"
     ];
 
   if (!result) {
@@ -964,7 +964,7 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
           </h2>
         </div>
         <div
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold self-start"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-xs font-bold self-start"
           style={{
             background: "rgba(245,158,11,0.12)",
             border: "1px solid rgba(245,158,11,0.3)",
@@ -987,7 +987,7 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
         }}>
         {/* Mode toggle */}
         <div
-          className="flex items-center p-1 rounded-xl gap-1 w-fit"
+          className="flex items-center p-1 rounded-md gap-1 w-fit"
           style={{
             background: "rgba(15,23,42,0.7)",
             border: "1px solid rgba(148,163,184,0.1)",
@@ -1004,10 +1004,10 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
               style={
                 filterMode === key
                   ? {
-                      background: "linear-gradient(135deg, #f59e0b, #ea580c)",
-                      color: "#0f172a",
-                      boxShadow: "0 0 16px rgba(245,158,11,0.3)",
-                    }
+                    background: "linear-gradient(135deg, #f59e0b, #ea580c)",
+                    color: "#0f172a",
+                    boxShadow: "0 0 16px rgba(245,158,11,0.3)",
+                  }
                   : { color: "rgba(148,163,184,0.5)" }
               }>
               {label}

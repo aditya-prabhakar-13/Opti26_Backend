@@ -74,18 +74,17 @@ function TestCaseRow({ result, isActive, isDeleting, onOpen, onDelete }) {
   return (
     <div
       className={`
-        group relative flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer
+        group relative flex items-center gap-3 px-3 py-3 rounded-lg cursor-pointer
         transition-all duration-200
-        ${
-          isActive
-            ? "bg-amber-500/15 border border-amber-500/30"
-            : "hover:bg-slate-700/50 border border-transparent hover:border-slate-600/40"
+        ${isActive
+          ? "bg-amber-500/15 border border-amber-500/30"
+          : "hover:bg-slate-700/50 border border-transparent hover:border-slate-600/40"
         }
       `}
       onClick={() => onOpen(result.id)}>
       {/* Active indicator */}
       {isActive && (
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r-full bg-gradient-to-b from-amber-400 to-orange-400" />
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r-full bg-amber-500" />
       )}
 
       {/* Icon */}
@@ -154,13 +153,13 @@ export default function Sidebar({
       className="flex flex-col h-full"
       style={{
         fontFamily: "'Plus Jakarta Sans', sans-serif",
-        background: "linear-gradient(180deg, #0f1623 0%, #111827 100%)",
-        borderRight: "1px solid rgba(148,163,184,0.08)",
+        background: "var(--color-surface)",
+        borderRight: "1px solid var(--color-border)",
       }}>
       {/* ── Brand ── */}
       <div className="flex items-center gap-3 px-5 py-6">
         {/* <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg shadow-amber-900/40 flex-shrink-0"
+          className="w-9 h-9 rounded-lg flex items-center justify-center shadow-lg shadow-amber-900/40 flex-shrink-0"
           style={{ background: "linear-gradient(135deg, #f59e0b, #ea580c)" }}> */}
         <img src="/favicon.svg" alt="" className="h-8" />
         {/* </div> */}
@@ -186,14 +185,14 @@ export default function Sidebar({
           onClick={onNewCase}
           className="
             w-full flex items-center justify-center gap-2.5
-            px-4 py-2.5 rounded-xl
+            px-4 py-2.5 rounded-lg
             font-bold text-sm text-white
             transition-all duration-200
             hover:-translate-y-0.5
             shadow-lg shadow-amber-900/30 hover:shadow-amber-900/50
             cursor-pointer
           "
-          style={{ background: "linear-gradient(135deg, #f59e0b, #ea580c)" }}>
+          style={{ background: "var(--color-accent)" }}>
           <IconPlus />
           New Test Case
         </button>
@@ -218,7 +217,7 @@ export default function Sidebar({
       <div className="flex-1 overflow-y-auto px-3 pb-4 space-y-1 scrollbar-thin">
         {results.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-10 px-4 text-center">
-            <div className="w-10 h-10 rounded-xl bg-slate-800/80 flex items-center justify-center text-slate-600">
+            <div className="w-10 h-10 rounded-lg bg-slate-800/80 flex items-center justify-center text-slate-600">
               <IconRoute />
             </div>
             <p className="text-xs text-slate-500 leading-relaxed">

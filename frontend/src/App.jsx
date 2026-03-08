@@ -437,8 +437,7 @@ export default function App() {
       className="flex h-screen overflow-hidden"
       style={{
         fontFamily: "'Plus Jakarta Sans', sans-serif",
-        background:
-          "linear-gradient(135deg, #0f1623 0%, #111827 50%, #0c1420 100%)",
+        background: "var(--color-bg)",
       }}>
       <ProgressBar
         progress={progress}
@@ -466,9 +465,9 @@ export default function App() {
             <header
               className="fixed top-0 left-0 right-0 flex items-center justify-between px-4 py-3 md:hidden"
               style={{
-                background: "rgba(15,22,35,0.95)",
-                borderBottom: "1px solid rgba(148,163,184,0.08)",
-                backdropFilter: "blur(12px)",
+                background: "var(--color-surface)",
+                borderBottom: "1px solid var(--color-border)",
+                backdropFilter: "blur(8px)",
               }}>
               {/* Brand */}
               <div className="flex items-center gap-2.5">
