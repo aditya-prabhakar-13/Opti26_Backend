@@ -40,11 +40,11 @@ function MetricCard({ label, value, icon, accentColor }) {
       style={{
         background: "var(--color-surface)",
         border: "1px solid var(--color-border)",
-        borderRadius: "10px",
-        padding: "16px 18px",
+        borderRadius: "12px",
+        padding: "20px 24px",
         display: "flex",
         flexDirection: "column",
-        gap: "8px",
+        gap: "12px",
         transition: "border-color 150ms ease, background 150ms ease",
         cursor: "default",
       }}
@@ -57,31 +57,31 @@ function MetricCard({ label, value, icon, accentColor }) {
         e.currentTarget.style.background = "var(--color-surface)";
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
         <span style={{
-          fontSize: "0.6875rem",
-          fontWeight: 600,
-          letterSpacing: "0.08em",
+          fontSize: "0.8125rem",
+          fontWeight: 700,
+          letterSpacing: "0.05em",
           textTransform: "uppercase",
-          color: "var(--color-text-3)",
+          color: "var(--color-text-2)",
         }}>
           {label}
         </span>
         {icon && (
-          <div style={{ color: isAccented ? accentColor : "var(--color-text-3)", opacity: 0.8, flexShrink: 0 }}>
-            <Icon d={icon} size={13} />
+          <div style={{ color: isAccented ? accentColor : "var(--color-text-2)", opacity: 0.9, flexShrink: 0 }}>
+            <Icon d={icon} size={18} />
           </div>
         )}
       </div>
       <p style={{
         margin: 0,
-        fontSize: "1.375rem",
-        fontWeight: 700,
+        fontSize: "1.75rem",
+        fontWeight: 800,
         letterSpacing: "-0.025em",
-        lineHeight: 1,
+        lineHeight: 1.1,
         color: isAccented ? accentColor : "var(--color-text)",
       }}>
-        {value ?? <span style={{ color: "var(--color-text-3)", fontWeight: 400, fontSize: "1rem" }}>—</span>}
+        {value ?? <span style={{ color: "var(--color-text-3)", fontWeight: 400, fontSize: "1.25rem" }}>—</span>}
       </p>
     </div>
   );
@@ -620,8 +620,8 @@ export default function DashboardView({
               <SectionLabel>Fleet Overview — {currentModeLabel}</SectionLabel>
               <div style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-                gap: "12px",
+                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                gap: "16px",
               }}>
                 <MetricCard label="Vehicles Used" value={formatNumber(m.vehicles_used)} icon={I.vehicle} />
                 <MetricCard label="Employees Covered" value={formatNumber(m.employees_covered)} icon={I.people} />
@@ -637,8 +637,8 @@ export default function DashboardView({
               <SectionLabel>Savings Analysis — {currentModeLabel}</SectionLabel>
               <div style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-                gap: "12px",
+                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                gap: "16px",
               }}>
                 <MetricCard label="Baseline Cost" value={formatCurrency(m.baseline_cost)} icon={I.cost} />
                 <MetricCard label="Net Savings" value={formatCurrency(m.net_savings)} icon={I.savings} accentColor="var(--color-green)" />
