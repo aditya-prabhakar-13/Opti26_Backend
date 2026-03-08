@@ -37,7 +37,7 @@
 
   /* ── shadcn/ui tokens (dark mode values) ── */
   --background: #0d0f14;
-  --foreground: #e8ecf0;
+  --foreground: #e8ecf0; 
   --card: #131620;
   --card-foreground: #e8ecf0;
   --popover: #1a1d26;
