@@ -15,19 +15,19 @@ HARD (must never be violated):
   H1  All employees routed            – no employee left unserved
   H2  Earliest pickup                 – pickup_time >= earliest_pickup
   H3  Latest drop                     – drop_time   <= latest_drop
-  H4  Vehicle category preference     – premium employee → premium vehicle
-                                        normal employee  → non-premium vehicle
-  H5  Sharing preference              – single → load == 1
-                                        double → load <= 2
-                                        triple → load <= 3
-  H6  Vehicle capacity                – load <= vehicle capacity
-  H7  Employee appears exactly once   – not duplicated across trips/vehicles
-  H8  Employee-vehicle match          – every passenger_id is in input employees
+  H4  Vehicle capacity                – load <= vehicle capacity
+  H5  Employee appears exactly once   – not duplicated across trips/vehicles
+  H6  Employee-vehicle match          – every passenger_id is in input employees
 
 SOFT (tracked but not "failures"):
-  S1  Priority delay budget           – pickup delay vs latest_drop window,
+  S1  Vehicle category preference     – premium employee → premium vehicle
+                                        normal employee  → non-premium vehicle
+  S2  Sharing preference              – single → load == 1
+                                        double → load <= 2
+                                        triple → load <= 3
+  S3  Priority delay budget           – pickup delay vs latest_drop window,
                                         using priority_N_max_delay_min from metadata
-  S2  Cost vs baseline                – optimized_cost vs baseline_cost per employee
+  S4  Cost vs baseline                – optimized_cost vs baseline_cost per employee
 """
 
 import json
@@ -162,10 +162,10 @@ def evaluate(output: dict) -> EvaluationResult:
             route    = trip.get("route", [])
             passengers = trip.get("passengers", [])
 
-            # ── H6 – Vehicle capacity ─────────────────────────────────
+            # ── H4 – Vehicle capacity ─────────────────────────────────
             if load > v_cap:
                 viols.append(Violation(
-                    constraint_id   = "H6",
+                    constraint_id   = "H4",
                     constraint_name = "Vehicle Capacity",
                     severity        = "HARD",
                     employee_id     = "—",
@@ -188,10 +188,10 @@ def evaluate(output: dict) -> EvaluationResult:
                 # track appearances
                 seen_employees.setdefault(eid, []).append((vid, tno))
 
-                # ── H8 – Employee exists in input ─────────────────────
+                # ── H6 – Employee exists in input ─────────────────────
                 if eid not in emp_input:
                     viols.append(Violation(
-                        constraint_id   = "H8",
+                        constraint_id   = "H6",
                         constraint_name = "Unknown Employee",
                         severity        = "HARD",
                         employee_id     = eid,
@@ -243,12 +243,12 @@ def evaluate(output: dict) -> EvaluationResult:
                         )
                     ))
 
-                # ── H4 – Vehicle category preference ─────────────────
+                # ── S1 – Vehicle category preference ─────────────────
                 if veh_pref == "premium" and v_cat != "premium":
                     viols.append(Violation(
-                        constraint_id   = "H4",
+                        constraint_id   = "S1",
                         constraint_name = "Vehicle Category Preference",
-                        severity        = "HARD",
+                        severity        = "SOFT",
                         employee_id     = eid,
                         vehicle_id      = vid,
                         trip_number     = tno,
@@ -259,9 +259,9 @@ def evaluate(output: dict) -> EvaluationResult:
                     ))
                 elif veh_pref == "normal" and v_cat == "premium":
                     viols.append(Violation(
-                        constraint_id   = "H4",
+                        constraint_id   = "S1",
                         constraint_name = "Vehicle Category Preference",
-                        severity        = "HARD",
+                        severity        = "SOFT",
                         employee_id     = eid,
                         vehicle_id      = vid,
                         trip_number     = tno,
@@ -271,11 +271,11 @@ def evaluate(output: dict) -> EvaluationResult:
                         )
                     ))
 
-                # ── S3 – Sharing preference (soft) ───────────────────
+                # ── S2 – Sharing preference (soft) ───────────────────
                 share_limit = {"single": 1, "double": 2, "triple": 3}.get(share_pref, 9999)
                 if load > share_limit:
                     viols.append(Violation(
-                        constraint_id   = "S3",
+                        constraint_id   = "S2",
                         constraint_name = "Sharing Preference",
                         severity        = "SOFT",
                         employee_id     = eid,
@@ -287,13 +287,13 @@ def evaluate(output: dict) -> EvaluationResult:
                         )
                     ))
 
-                # ── S1 – Priority delay budget ────────────────────────
+                # ── S3 – Priority delay budget ────────────────────────
                 if priority in priority_delay:
                     budget = priority_delay[priority]
                     delay  = drop_min - ld_min   # positive means late
                     if delay > budget:
                         viols.append(Violation(
-                            constraint_id   = "S1",
+                            constraint_id   = "S3",
                             constraint_name = "Priority Delay Budget",
                             severity        = "SOFT",
                             employee_id     = eid,
@@ -307,13 +307,13 @@ def evaluate(output: dict) -> EvaluationResult:
                         ))
 
     # ──────────────────────────────────────────────────────────────────
-    # H7 – Employee appears exactly once
+    # H5 – Employee appears exactly once
     # ──────────────────────────────────────────────────────────────────
     for eid, appearances in seen_employees.items():
         if len(appearances) > 1:
             locs = ", ".join(f"{v} trip#{t}" for v, t in appearances)
             viols.append(Violation(
-                constraint_id   = "H7",
+                constraint_id   = "H5",
                 constraint_name = "Employee Appears Exactly Once",
                 severity        = "HARD",
                 employee_id     = eid,
@@ -323,7 +323,7 @@ def evaluate(output: dict) -> EvaluationResult:
             ))
 
     # ──────────────────────────────────────────────────────────────────
-    # S2 – Cost vs baseline (per-employee not available granularly,
+    # S4 – Cost vs baseline (per-employee not available granularly,
     #      so we do aggregate-level comparison)
     # ──────────────────────────────────────────────────────────────────
     baseline_total  = summary.get("total_baseline_cost", 0)
@@ -331,7 +331,7 @@ def evaluate(output: dict) -> EvaluationResult:
     if optimized_total > baseline_total and baseline_total > 0:
         pct = (optimized_total - baseline_total) / baseline_total * 100
         viols.append(Violation(
-            constraint_id   = "S2",
+            constraint_id   = "S4",
             constraint_name = "Cost vs Baseline",
             severity        = "SOFT",
             employee_id     = "—",

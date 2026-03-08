@@ -74,6 +74,21 @@ def clean_dict(obj):
 
 def parse_excel_to_dict(file_path, optimization_mode=None):
     try:
+        def _find_empty_cells(df, sheet_name):
+            empties = []
+            for r_idx, row in df.iterrows():
+                for col in df.columns:
+                    value = row[col]
+                    if pd.isna(value):
+                        empties.append((r_idx + 2, col))
+                        continue
+                    if value is None:
+                        empties.append((r_idx + 2, col))
+                        continue
+                    if isinstance(value, str) and value.strip() == "":
+                        empties.append((r_idx + 2, col))
+            return empties
+
         with pd.ExcelFile(file_path) as xls:
             required_sheets = {'employees', 'vehicles', 'baseline', 'metadata'}
             missing_sheets = required_sheets.difference(set(xls.sheet_names))
@@ -102,6 +117,33 @@ def parse_excel_to_dict(file_path, optimization_mode=None):
         missing_cols = required_employee_cols.difference(set(df_emp.columns))
         if missing_cols:
             raise ValueError(f"Missing required employee columns: {', '.join(sorted(missing_cols))}")
+
+        # Reject files with empty fields in required sheets.
+        for sheet_name, df in (
+            ("employees", df_emp),
+            ("vehicles", df_veh),
+            ("baseline", df_base),
+            ("metadata", df_meta),
+        ):
+            empty_cells = _find_empty_cells(df, sheet_name)
+            if empty_cells:
+                row_no, col_name = empty_cells[0]
+                raise ValueError(
+                    f"Please pass a proper excel file: empty value found in '{sheet_name}' sheet "
+                    f"at row {row_no}, column '{col_name}'"
+                )
+
+        # Reject invalid vehicle speed values.
+        if 'avg_speed_kmph' not in df_veh.columns:
+            raise ValueError("Please pass a proper excel file: missing 'avg_speed_kmph' in vehicles sheet")
+        speed_series = pd.to_numeric(df_veh['avg_speed_kmph'], errors='coerce')
+        invalid_speed_rows = df_veh[speed_series.isna() | (speed_series <= 0)]
+        if not invalid_speed_rows.empty:
+            row_no = int(invalid_speed_rows.index[0]) + 2
+            raise ValueError(
+                f"Please pass a proper excel file: vehicle avg_speed_kmph must be > 0 "
+                f"(vehicles sheet row {row_no})"
+            )
 
         employee_ids = []
         matrix_locations = []
