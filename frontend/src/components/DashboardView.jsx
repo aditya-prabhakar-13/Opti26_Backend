@@ -170,6 +170,7 @@ export default function DashboardView({
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isAddEmployeeModalOpen, setIsAddEmployeeModalOpen] = useState(false);
   const [fitBoundsToggle, setFitBoundsToggle] = useState(0);
+  const [isDownloadMenuOpen, setIsDownloadMenuOpen] = useState(false);
 
   const modeLabels = {
     optimized: "Optimized",
@@ -197,30 +198,6 @@ export default function DashboardView({
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch { alert("Failed to export data."); }
-  };
-
-  const handleExportPdf = async () => {
-    if (!selectedResult || !selectedResult.id) return;
-    try {
-      const cases = JSON.parse(localStorage.getItem('velora_testcases') || '[]');
-      const tc = cases.find(c => String(c.id) === String(selectedResult.id));
-      if (!tc) { alert("Could not find testcase data in storage."); return; }
-      const blob = new Blob([JSON.stringify(tc, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      const basename = typeof selectedResult.original_filename === 'string'
-        ? selectedResult.original_filename
-        : (typeof selectedResult.filename === 'string' ? selectedResult.filename : 'testcase');
-      a.download = `${basename.replace('.xlsx', '').replace('.json', '')}_report.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("Failed to generate PDF", err);
-      alert("Failed to export PDF report.");
-    }
   };
 
   const handleExportPdf = async () => {
@@ -357,50 +334,105 @@ export default function DashboardView({
             </div>
 
             <div className="flex items-center gap-3">
-              <button
-                onClick={handleExportPdf}
-                title="Export Report as PDF"
-                className="cursor-pointer group flex items-center justify-center w-11 h-11 rounded-xl bg-slate-800/80 border border-slate-700/60 transition-all duration-300 hover:bg-slate-700/80 hover:border-slate-500/50 hover:-translate-y-0.5 shadow-lg shadow-black/20"
-              >
-                <svg
-                  className="w-5 h-5 text-slate-400 group-hover:text-rose-400 transition-colors duration-300"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
+              <div style={{ position: "relative" }}>
+                <button
+                  onClick={() => setIsDownloadMenuOpen(!isDownloadMenuOpen)}
+                  title="Download"
+                  style={{
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "6px",
+                    border: "1px solid var(--color-border-2)",
+                    background: "var(--color-surface)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    color: "var(--color-text-2)",
+                    transition: "all 120ms ease",
+                    flexShrink: 0,
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = "var(--color-surface-2)";
+                    e.currentTarget.style.color = "var(--color-text)";
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = "var(--color-surface)";
+                    e.currentTarget.style.color = "var(--color-text-2)";
+                  }}
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 11v6m-3-3l3 3 3-3" />
-                </svg>
-              </button>
-              <button
-                onClick={handleExportJson}
-                title="Export as JSON"
-                style={{
-                  width: "32px",
-                  height: "32px",
-                  borderRadius: "6px",
-                  border: "1px solid var(--color-border-2)",
-                  background: "var(--color-surface)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                  color: "var(--color-text-2)",
-                  transition: "all 120ms ease",
-                  flexShrink: 0,
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.background = "var(--color-surface-2)";
-                  e.currentTarget.style.color = "var(--color-text)";
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.background = "var(--color-surface)";
-                  e.currentTarget.style.color = "var(--color-text-2)";
-                }}
-              >
-                <Icon d={I.download} size={13} />
-              </button>
+                  <Icon d={I.download} size={13} />
+                </button>
+
+                {isDownloadMenuOpen && (
+                  <>
+                    <div
+                      style={{ position: "fixed", inset: 0, zIndex: 40 }}
+                      onClick={() => setIsDownloadMenuOpen(false)}
+                    />
+                    <div style={{
+                      position: "absolute",
+                      right: 0,
+                      top: "calc(100% + 8px)",
+                      background: "var(--color-surface)",
+                      border: "1px solid var(--color-border-2)",
+                      borderRadius: "8px",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                      padding: "4px",
+                      minWidth: "160px",
+                      zIndex: 50,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "2px"
+                    }}>
+                      <button
+                        onClick={() => {
+                          setIsDownloadMenuOpen(false);
+                          handleExportPdf();
+                        }}
+                        style={{
+                          width: "100%",
+                          textAlign: "left",
+                          padding: "8px 12px",
+                          borderRadius: "4px",
+                          background: "transparent",
+                          border: "none",
+                          fontSize: "0.8125rem",
+                          color: "var(--color-text)",
+                          cursor: "pointer",
+                          transition: "background 120ms"
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = "var(--color-surface-2)"}
+                        onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                      >
+                        Export as PDF
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsDownloadMenuOpen(false);
+                          handleExportJson();
+                        }}
+                        style={{
+                          width: "100%",
+                          textAlign: "left",
+                          padding: "8px 12px",
+                          borderRadius: "4px",
+                          background: "transparent",
+                          border: "none",
+                          fontSize: "0.8125rem",
+                          color: "var(--color-text)",
+                          cursor: "pointer",
+                          transition: "background 120ms"
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = "var(--color-surface-2)"}
+                        onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                      >
+                        Export as JSON
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
 
               <button
                 onClick={() => setIsAddEmployeeModalOpen(true)}
