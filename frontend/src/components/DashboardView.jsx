@@ -237,6 +237,7 @@ export default function DashboardView({
   onNewCase,
   reports,
   metrics,
+  onDynamicOptimize,
 }) {
   const mapRef = useRef(null);
   const m = metrics || {};
@@ -741,11 +742,14 @@ export default function DashboardView({
         onSubmit={async (newEmployees) => {
           setIsAddEmployeeModalOpen(false);
           try {
-            await postDynamicOptimization(selectedResult, newEmployees);
-            // Wait a moment and then assume the polling caught it.
+            if (onDynamicOptimize) {
+              await onDynamicOptimize(newEmployees);
+            }
           } catch (err) {
             console.error(err);
-            alert("Failed to submit optimization");
+            if (err?.showAlert) {
+              alert(err.message);
+            }
           }
         }}
       />

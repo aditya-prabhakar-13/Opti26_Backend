@@ -6,7 +6,9 @@ import {
   fetchResults,
   fetchRoadGeometry,
   optimizeExcelWithProgress,
+  postDynamicOptimization,
   saveTestCaseLocally,
+  upsertTestCaseLocally,
 } from "./api";
 import {
   buildMapData,
@@ -337,6 +339,99 @@ export default function App() {
     }
   }
 
+  async function runDynamicOptimization(newEmployees) {
+    if (!selectedResult) {
+      setError("No active testcase selected");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    try {
+      const created = await postDynamicOptimization(selectedResult, newEmployees);
+
+      const collectRoutedIds = (resultData) => {
+        const ids = new Set();
+        (resultData?.vehicles || []).forEach((vehicle) => {
+          (vehicle?.trips || []).forEach((trip) => {
+            (trip?.passengers || []).forEach((p) => {
+              if (p?.employee_id) ids.add(String(p.employee_id));
+            });
+          });
+        });
+        return ids;
+      };
+
+      const collectUnroutedIds = (resultData) => {
+        const ids = new Set();
+        (resultData?.unrouted_employees || []).forEach((item) => {
+          if (item?.employee_id) ids.add(String(item.employee_id));
+        });
+        return ids;
+      };
+
+      const addedIds = (() => {
+        if (Array.isArray(newEmployees)) {
+          return new Set(newEmployees.map((e) => String(e?.id || "").trim()).filter(Boolean));
+        }
+        const fromObject = newEmployees?.new_employees;
+        if (fromObject && typeof fromObject === "object") {
+          return new Set(Object.keys(fromObject).map((id) => String(id).trim()).filter(Boolean));
+        }
+        return new Set();
+      })();
+
+      const prevRouted = collectRoutedIds(selectedResult?.result);
+      const nextUnrouted = collectUnroutedIds(created?.result);
+      const blockedIds = new Set();
+
+      nextUnrouted.forEach((empId) => {
+        if (addedIds.has(empId) || prevRouted.has(empId)) {
+          blockedIds.add(empId);
+        }
+      });
+
+      if (blockedIds.size > 0) {
+        const ids = [...blockedIds].sort().join(", ");
+        const err = new Error(`No vehicles available to route ${ids}`);
+        err.showAlert = true;
+        throw err;
+      }
+
+      const testCaseData = {
+        filename: created.filename || selectedResult.filename || "Dynamic Test Case",
+        result_data: created.result,
+        result_data_noconstraints: created.result_noconstraints,
+        result_data_infeasible: created.result_infeasible,
+        computed_metrics: created.computed_metrics,
+        reports: created.reports || {},
+        evaluations: created.evaluations || null,
+      };
+
+      const savedTestCase = upsertTestCaseLocally(selectedResult.id, testCaseData);
+      const normalized = normalizeOptimizationPayload({
+        ...created,
+        id: savedTestCase.id,
+      });
+
+      // Force-refresh from storage so UI always reflects latest persisted testcase state.
+      const rowsPayload = fetchResults();
+      const rows = toResultsListRows(rowsPayload);
+      setResults(rows);
+
+      const refreshedDetail = await fetchResultDetail(savedTestCase.id);
+      setSelectedResult(normalizeOptimizationPayload(refreshedDetail));
+      setVehicleFilter("ALL");
+      setMapMode("optimized");
+      setActiveNav("dashboard");
+    } catch (err) {
+      setError(err.message || "Dynamic optimization failed");
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function openResult(resultId) {
     try {
       const detail = await fetchResultDetail(resultId);
@@ -550,6 +645,7 @@ export default function App() {
             setMapMode={setMapMode}
             onNewCase={() => setActiveNav("new")}
             reports={selectedResult?.reports || []}
+            onDynamicOptimize={runDynamicOptimization}
           />
         )}
 

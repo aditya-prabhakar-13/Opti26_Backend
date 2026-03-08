@@ -1,15 +1,17 @@
 import os
 import json
+import copy
 import subprocess
 import tempfile
 import requests
 import time
 from django.shortcuts import render
-from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_http_methods
 from django.core.management import call_command
 from django.db.utils import OperationalError, ProgrammingError
+from django.utils import timezone
 from .models import OptimizationResult
 from .utils import parse_excel_to_dict, NpEncoder
 from .executables.evaluator import evaluate as run_constraint_evaluation
@@ -17,6 +19,23 @@ from .executables.evaluator import evaluate as run_constraint_evaluation
 # Progress tracking storage (session-based for now)
 _progress_store = {}
 _current_progress = {'stage': 'idle', 'percentage': 0, 'message': ''}
+
+def _debug_log_json_input(label, data):
+    # Temporary debug logger: prints full JSON payload sent to executables.
+    try:
+        print(f"[DEBUG_JSON_INPUT_START] {label}")
+        print(json.dumps(data, cls=NpEncoder, ensure_ascii=False, indent=2))
+        print(f"[DEBUG_JSON_INPUT_END] {label}")
+    except Exception as exc:
+        print(f"[DEBUG_JSON_INPUT_ERROR] {label}: {exc}")
+
+def _parse_optimization_mode(raw_value):
+    if raw_value in (None, ''):
+        return None
+    try:
+        return int(raw_value)
+    except (TypeError, ValueError):
+        raise ValueError("optimization_mode must be an integer")
 
 def _hhmm_to_minutes(value):
     if not isinstance(value, str) or ':' not in value:
@@ -149,8 +168,463 @@ def get_exe_path(exe_name):
 
     return str(exe_path)
 
+def _extract_mode_result(test_case_data, mode):
+    if mode == 'optimized':
+        keys = ('result', 'result_data')
+    elif mode == 'noconstraints':
+        keys = ('resultNoConstraints', 'result_noconstraints', 'result_data_noconstraints')
+    else:
+        keys = ('resultInfeasible', 'result_infeasible', 'result_data_infeasible')
 
-def _execute_optimization(excel_file, progress_callback=None):
+    for key in keys:
+        value = test_case_data.get(key)
+        if value:
+            return value
+    return None
+
+def _collect_route_employee_ids(solved_output):
+    ids = set()
+    for vehicle in solved_output.get('vehicles', []) or []:
+        for trip in vehicle.get('trips', []) or []:
+            for pax in trip.get('passengers', []) or []:
+                employee_id = pax.get('employee_id')
+                if employee_id:
+                    ids.add(str(employee_id))
+            for token in trip.get('route', []) or []:
+                token_str = str(token)
+                if token_str not in ('START', 'END'):
+                    ids.add(token_str)
+    return ids
+
+def _is_solved_output_consistent(solved_output):
+    input_employees = solved_output.get('input', {}).get('employees', {}) or {}
+    if not isinstance(input_employees, dict) or not input_employees:
+        return False, "missing input.employees"
+
+    route_ids = _collect_route_employee_ids(solved_output)
+    missing = sorted(eid for eid in route_ids if eid not in input_employees)
+    if missing:
+        preview = ", ".join(missing[:5])
+        return False, f"unknown employees in routes: {preview}"
+    return True, None
+
+def _repair_solved_output_consistency(solved_output, new_employees):
+    repaired = copy.deepcopy(solved_output)
+    input_block = repaired.setdefault('input', {})
+    employees = input_block.setdefault('employees', {})
+    baseline = input_block.setdefault('baseline', [])
+    if not isinstance(employees, dict):
+        employees = {}
+        input_block['employees'] = employees
+    if not isinstance(baseline, list):
+        baseline = []
+        input_block['baseline'] = baseline
+
+    missing_ids = sorted(eid for eid in _collect_route_employee_ids(repaired) if eid not in employees)
+    if not missing_ids:
+        return repaired, []
+
+    # Build lookup from incoming new employees (frontend payload)
+    incoming_by_id = {}
+    for item in new_employees or []:
+        if isinstance(item, dict):
+            key = str(item.get('id', '')).strip()
+            if key:
+                incoming_by_id[key] = item
+
+    # Infer office coords from first known employee
+    office_lat, office_lng = 0.0, 0.0
+    if employees:
+        first = next(iter(employees.values()))
+        drop = first.get('drop', {}) if isinstance(first, dict) else {}
+        office_lat = float(drop.get('lat', 0.0) or 0.0)
+        office_lng = float(drop.get('lng', 0.0) or 0.0)
+
+    # Backfill missing employees with best-available data.
+    for eid in missing_ids:
+        item = incoming_by_id.get(eid)
+        if item:
+            pickup_lat = float(item.get('lat', office_lat) or office_lat)
+            pickup_lng = float(item.get('lng', office_lng) or office_lng)
+            priority = int(item.get('priority', 3) or 3)
+            earliest_pickup = item.get('earliest_pickup') or '08:00'
+            latest_drop = item.get('latest_drop') or '10:00'
+            vehicle_pref = item.get('vehicle_preference') or 'any'
+            sharing_pref = item.get('sharing_preference') or 'triple'
+            baseline_cost = float(item.get('baseline_cost', 0) or 0)
+        else:
+            # Fallback if no source data exists in payload.
+            pickup_lat = office_lat
+            pickup_lng = office_lng
+            priority = 3
+            earliest_pickup = '08:00'
+            latest_drop = '10:00'
+            vehicle_pref = 'any'
+            sharing_pref = 'triple'
+            baseline_cost = 0.0
+
+        employees[eid] = {
+            'priority': priority,
+            'pickup': {'lat': pickup_lat, 'lng': pickup_lng},
+            'drop': {'lat': office_lat, 'lng': office_lng},
+            'earliest_pickup': earliest_pickup,
+            'latest_drop': latest_drop,
+            'vehicle_preference': vehicle_pref,
+            'sharing_preference': sharing_pref,
+            'distances': {'drop': 0.0},
+        }
+
+        baseline.append({
+            'employee_id': eid,
+            'baseline_cost': baseline_cost,
+            'baseline_time_min': 0,
+        })
+
+    # Ensure distances dict contains keys for all employees (zero-filled fallback).
+    all_ids = list(employees.keys())
+    for emp_id, emp_data in employees.items():
+        distances = emp_data.setdefault('distances', {})
+        if not isinstance(distances, dict):
+            distances = {}
+            emp_data['distances'] = distances
+        distances.setdefault('drop', 0.0)
+        for other_id in all_ids:
+            if other_id != emp_id:
+                distances.setdefault(other_id, 0.0)
+
+    return repaired, missing_ids
+
+def _merge_new_employees_into_output(output_data, new_employees_payload):
+    if not output_data or not isinstance(output_data, dict):
+        return output_data
+
+    new_map = (new_employees_payload or {}).get('new_employees', {}) or {}
+    if not new_map:
+        return output_data
+
+    result = copy.deepcopy(output_data)
+    input_block = result.setdefault('input', {})
+    employees = input_block.setdefault('employees', {})
+    baseline = input_block.setdefault('baseline', [])
+    if not isinstance(employees, dict):
+        employees = {}
+        input_block['employees'] = employees
+    if not isinstance(baseline, list):
+        baseline = []
+        input_block['baseline'] = baseline
+
+    existing_baseline_ids = {str(row.get('employee_id')) for row in baseline if isinstance(row, dict)}
+    existing_route_ids = _collect_route_employee_ids(result)
+    unrouted = result.get('unrouted_employees') or []
+    if not isinstance(unrouted, list):
+        unrouted = []
+    existing_unrouted_ids = {str(item.get('employee_id')) for item in unrouted if isinstance(item, dict)}
+
+    for employee_id, item in new_map.items():
+        if employee_id not in employees:
+            pickup = item.get('pickup', {}) or {}
+            drop = item.get('drop', {}) or {}
+            employees[employee_id] = {
+                'priority': int(item.get('priority', 3) or 3),
+                'pickup': {
+                    'lat': float(pickup.get('lat', 0.0) or 0.0),
+                    'lng': float(pickup.get('lng', 0.0) or 0.0),
+                },
+                'drop': {
+                    'lat': float(drop.get('lat', 0.0) or 0.0),
+                    'lng': float(drop.get('lng', 0.0) or 0.0),
+                },
+                'earliest_pickup': item.get('earliest_pickup') or '08:00',
+                'latest_drop': item.get('latest_drop') or '10:00',
+                'vehicle_preference': item.get('vehicle_preference') or 'any',
+                'sharing_preference': item.get('sharing_preference') or 'triple',
+                'distances': {'drop': 0.0},
+            }
+
+        if employee_id not in existing_baseline_ids:
+            baseline.append({
+                'employee_id': employee_id,
+                'baseline_cost': float(item.get('baseline_cost', 0) or 0),
+                'baseline_time_min': 0,
+            })
+
+        # If not present in any route and not already explicitly unrouted, mark unrouted.
+        if employee_id not in existing_route_ids and employee_id not in existing_unrouted_ids:
+            unrouted.append({
+                'employee_id': employee_id,
+                'reason': 'Not inserted into any route by dynamic optimizer',
+            })
+            existing_unrouted_ids.add(employee_id)
+
+    # Keep distances dictionary complete (zero fallback for missing pairs).
+    all_ids = list(employees.keys())
+    for emp_id, emp_data in employees.items():
+        distances = emp_data.setdefault('distances', {})
+        if not isinstance(distances, dict):
+            distances = {}
+            emp_data['distances'] = distances
+        distances.setdefault('drop', 0.0)
+        for other_id in all_ids:
+            if other_id != emp_id:
+                distances.setdefault(other_id, 0.0)
+
+    result['unrouted_employees'] = unrouted
+    summary = result.setdefault('summary', {})
+    if isinstance(summary, dict):
+        total = len(employees)
+        unrouted_count = len(unrouted)
+        summary['total_employees'] = total
+        summary['employees_unrouted'] = unrouted_count
+        summary['employees_routed'] = max(0, total - unrouted_count)
+
+    return result
+
+def _build_new_employees_payload(base_result, new_employees):
+    employees = base_result.get('input', {}).get('employees', {})
+    if not employees:
+        raise ValueError("Selected testcase does not contain input employees")
+
+    first_emp = next(iter(employees.values()))
+    drop = first_emp.get('drop', {})
+    drop_lat = drop.get('lat')
+    drop_lng = drop.get('lng')
+    if drop_lat is None or drop_lng is None:
+        raise ValueError("Could not infer office drop coordinates from testcase")
+
+    payload = {'new_employees': {}}
+
+    # Accept both:
+    # 1) frontend array format: [{id, ...}, ...]
+    # 2) direct dynamic format: {"new_employees": {"E11": {...}}}
+    if isinstance(new_employees, dict) and isinstance(new_employees.get('new_employees'), dict):
+        iterable = []
+        for employee_id, data in new_employees['new_employees'].items():
+            item = dict(data or {})
+            item['id'] = employee_id
+            item.setdefault('lat', ((item.get('pickup') or {}).get('lat')))
+            item.setdefault('lng', ((item.get('pickup') or {}).get('lng')))
+            iterable.append(item)
+    elif isinstance(new_employees, list):
+        iterable = new_employees
+    else:
+        raise ValueError("newEmployees must be an array or an object with new_employees")
+
+    for item in iterable:
+        employee_id = str(item.get('id', '')).strip()
+        if not employee_id:
+            raise ValueError("Each new employee must include a non-empty id")
+
+        try:
+            payload['new_employees'][employee_id] = {
+                'priority': int(item.get('priority', 3)),
+                'pickup': {
+                    'lat': float(item.get('lat')),
+                    'lng': float(item.get('lng')),
+                },
+                'drop': {
+                    'lat': float(drop_lat),
+                    'lng': float(drop_lng),
+                },
+                'earliest_pickup': item.get('earliest_pickup'),
+                'latest_drop': item.get('latest_drop'),
+                'vehicle_preference': item.get('vehicle_preference', 'any'),
+                'sharing_preference': item.get('sharing_preference', 'triple'),
+                'baseline_cost': float(item.get('baseline_cost', 0)),
+            }
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"Invalid numeric values for employee {employee_id}") from exc
+
+    return payload
+
+def _execute_dynamic_optimization(test_case_data, new_employees, progress_callback=None):
+    if not isinstance(test_case_data, dict):
+        raise ValueError("testCaseData must be an object")
+    if not new_employees:
+        raise ValueError("newEmployees is required")
+
+    raw_inputs_by_mode = {
+        'optimized': _extract_mode_result(test_case_data, 'optimized'),
+        'noconstraints': _extract_mode_result(test_case_data, 'noconstraints'),
+        'infeasible': _extract_mode_result(test_case_data, 'infeasible'),
+    }
+
+    consistency = {}
+    for mode, data in raw_inputs_by_mode.items():
+        if data is None:
+            consistency[mode] = (False, "missing solved output")
+            continue
+        consistency[mode] = _is_solved_output_consistent(data)
+
+    primary_input = None
+    for mode in ('optimized', 'noconstraints', 'infeasible'):
+        ok, _ = consistency.get(mode, (False, None))
+        if ok:
+            primary_input = raw_inputs_by_mode[mode]
+            break
+
+    if primary_input is None:
+        # Attempt auto-repair: backfill employees missing from route/passenger IDs.
+        repaired_inputs = {}
+        repaired_consistency = {}
+        repaired_notes = {}
+        for mode, data in raw_inputs_by_mode.items():
+            if data is None:
+                repaired_inputs[mode] = None
+                repaired_consistency[mode] = (False, "missing solved output")
+                continue
+            repaired_data, inserted_ids = _repair_solved_output_consistency(data, new_employees)
+            repaired_inputs[mode] = repaired_data
+            repaired_consistency[mode] = _is_solved_output_consistent(repaired_data)
+            repaired_notes[mode] = inserted_ids
+
+        raw_inputs_by_mode = repaired_inputs
+        consistency = repaired_consistency
+
+        for mode in ('optimized', 'noconstraints', 'infeasible'):
+            ok, _ = consistency.get(mode, (False, None))
+            if ok:
+                primary_input = raw_inputs_by_mode[mode]
+                inserted = repaired_notes.get(mode) or []
+                if inserted:
+                    print(f"[DYNAMIC] Auto-repaired {mode} input by backfilling employees: {', '.join(inserted)}")
+                break
+
+    if primary_input is None:
+        problems = "; ".join(
+            f"{mode}: {reason}"
+            for mode, (ok, reason) in consistency.items()
+            if not ok
+        )
+        raise ValueError(f"No consistent solved output found in testcase data ({problems})")
+
+    inputs_by_mode = {}
+    for mode in ('optimized', 'noconstraints', 'infeasible'):
+        mode_input = raw_inputs_by_mode.get(mode)
+        ok, _ = consistency.get(mode, (False, None))
+        inputs_by_mode[mode] = mode_input if ok else primary_input
+    exe_by_mode = {
+        'optimized': 'velora_final_dynamic',
+        'noconstraints': 'velora_noconstraints_dynamic',
+        'infeasible': 'velora_infeasiblehandling_dynamic',
+    }
+
+    if progress_callback:
+        progress_callback({'stage': 'setup', 'percentage': 5, 'message': 'Preparing dynamic optimization input...'})
+
+    new_employees_payload = _build_new_employees_payload(primary_input, new_employees)
+
+    outputs = {}
+    reports = {
+        'report_optimized': None,
+        'report_noconstraints': None,
+        'report_infeasible': None,
+    }
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        new_employees_path = os.path.join(tmp_dir, 'new_employee_data.json')
+        with open(new_employees_path, 'w', encoding='utf-8') as f:
+            json.dump(new_employees_payload, f, cls=NpEncoder)
+        _debug_log_json_input("dynamic_new_employees_payload", new_employees_payload)
+
+        mode_order = [('optimized', 30), ('noconstraints', 55), ('infeasible', 75)]
+        for mode, pct in mode_order:
+            mode_input = inputs_by_mode.get(mode)
+            if mode_input is None:
+                outputs[mode] = None
+                continue
+
+            solved_path = os.path.join(tmp_dir, f'{mode}_solved.json')
+            with open(solved_path, 'w', encoding='utf-8') as f:
+                json.dump(mode_input, f, cls=NpEncoder)
+            _debug_log_json_input(f"dynamic_{mode}_solved_input", mode_input)
+
+            if progress_callback:
+                progress_callback({
+                    'stage': 'optimizing',
+                    'percentage': pct,
+                    'message': f'Running dynamic {mode} optimization...',
+                })
+
+            exe_path = get_exe_path(exe_by_mode[mode])
+            result = subprocess.run(
+                [exe_path, solved_path, new_employees_path],
+                capture_output=True,
+                text=True,
+                cwd=tmp_dir,
+            )
+
+            report_key = 'report_optimized' if mode == 'optimized' else (
+                'report_noconstraints' if mode == 'noconstraints' else 'report_infeasible'
+            )
+            reports[report_key] = result.stdout
+
+            if result.returncode != 0:
+                if mode == 'optimized':
+                    raise RuntimeError(result.stderr or result.stdout or "Dynamic optimized run failed")
+                outputs[mode] = None
+                continue
+
+            updated_output_path = os.path.join(tmp_dir, 'updated_output.json')
+            if not os.path.exists(updated_output_path):
+                if mode == 'optimized':
+                    raise RuntimeError("Dynamic optimized run did not produce updated_output.json")
+                outputs[mode] = None
+                continue
+
+            with open(updated_output_path, 'r', encoding='utf-8') as f:
+                mode_output = json.load(f)
+                outputs[mode] = _merge_new_employees_into_output(mode_output, new_employees_payload)
+
+    if progress_callback:
+        progress_callback({'stage': 'evaluating', 'percentage': 85, 'message': 'Evaluating dynamic results...'})
+
+    evaluations = {}
+    for label, data in outputs.items():
+        if data is None:
+            evaluations[label] = None
+            continue
+        try:
+            eval_result = run_constraint_evaluation(data)
+            evaluations[label] = {
+                'stats': eval_result.stats,
+                'violations': [
+                    {
+                        'constraint_id': v.constraint_id,
+                        'constraint_name': v.constraint_name,
+                        'severity': v.severity,
+                        'employee_id': v.employee_id,
+                        'vehicle_id': v.vehicle_id,
+                        'trip_number': v.trip_number,
+                        'detail': v.detail,
+                    }
+                    for v in eval_result.violations
+                ],
+            }
+        except Exception:
+            evaluations[label] = None
+
+    if progress_callback:
+        progress_callback({'stage': 'processing', 'percentage': 92, 'message': 'Preparing dynamic response...'})
+
+    filename = test_case_data.get('filename') or test_case_data.get('original_filename') or 'dynamic_case.json'
+    optimized_result = outputs.get('optimized') or _merge_new_employees_into_output(primary_input, new_employees_payload)
+    response_data = {
+        'id': test_case_data.get('id'),
+        'filename': filename,
+        'created_at': test_case_data.get('created_at') or test_case_data.get('createdAt') or timezone.now().isoformat(),
+        'computed_metrics': _build_computed_metrics(optimized_result),
+        'result': optimized_result,
+        'result_noconstraints': outputs.get('noconstraints'),
+        'result_infeasible': outputs.get('infeasible'),
+    }
+
+    if progress_callback:
+        progress_callback({'stage': 'complete', 'percentage': 100, 'message': 'Dynamic optimization complete!'})
+
+    return response_data, reports, evaluations
+
+
+def _execute_optimization(excel_file, progress_callback=None, optimization_mode=None):
     if not excel_file.name.lower().endswith('.xlsx'):
         raise ValueError("Only .xlsx files are supported")
 
@@ -184,11 +658,15 @@ def _execute_optimization(excel_file, progress_callback=None):
 
         # 2. Parse Excel to Dictionary and save as temporary input JSON
         report_progress('parsing', 20, 'Parsing Excel sheets...')
-        parsed_data = parse_excel_to_dict(tmp_excel_path)
+        parsed_data = parse_excel_to_dict(
+            tmp_excel_path,
+            optimization_mode=optimization_mode,
+        )
         
         report_progress('parsing', 28, 'Serializing to JSON...')
         with open(input_json_path, 'w') as f:
             json.dump(parsed_data, f, cls=NpEncoder)
+        _debug_log_json_input("optimize_excel_input", parsed_data)
         print(f"[DEBUG] Created temporary input JSON: {input_json_path}")
 
         # 4. Run velora_final.exe with explicit input and output arguments
@@ -341,7 +819,8 @@ def run_optimization(request):
     if request.method == 'POST' and request.FILES.get('excel_file'):
         excel_file = request.FILES['excel_file']
         try:
-            _execute_optimization(excel_file)
+            optimization_mode = _parse_optimization_mode(request.POST.get('optimization_mode'))
+            _execute_optimization(excel_file, optimization_mode=optimization_mode)
             return HttpResponse("Optimization complete! Result saved to database.")
         except Exception as e:
             return HttpResponse(f"System Error: {str(e)}", status=500)
@@ -356,6 +835,10 @@ def api_optimize(request):
     excel_file = request.FILES.get('excel_file')
     if not excel_file:
         return JsonResponse({'error': 'No excel_file provided'}, status=400)
+    try:
+        optimization_mode = _parse_optimization_mode(request.POST.get('optimization_mode'))
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
 
     global _current_progress
     _current_progress = {'stage': 'starting', 'percentage': 0, 'message': 'Starting optimization...'}
@@ -365,7 +848,11 @@ def api_optimize(request):
             global _current_progress
             _current_progress = progress
         
-        saved_result, _, reports, evaluations = _execute_optimization(excel_file, progress_callback=progress_callback)
+        saved_result, _, reports, evaluations = _execute_optimization(
+            excel_file,
+            progress_callback=progress_callback,
+            optimization_mode=optimization_mode,
+        )
         
         # Mark as complete
         _current_progress = {'stage': 'complete', 'percentage': 100, 'message': 'Optimization complete!'}
@@ -377,6 +864,41 @@ def api_optimize(request):
         return JsonResponse(response_data, encoder=NpEncoder)
     except Exception as e:
         # Mark as failed
+        _current_progress = {'stage': 'error', 'percentage': 0, 'message': str(e)}
+        return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
+def api_optimize_dynamic(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        payload = json.loads(request.body or '{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON payload'}, status=400)
+
+    test_case_data = payload.get('testCaseData')
+    new_employees = payload.get('newEmployees')
+
+    global _current_progress
+    _current_progress = {'stage': 'starting', 'percentage': 0, 'message': 'Starting dynamic optimization...'}
+
+    try:
+        def progress_callback(progress):
+            global _current_progress
+            _current_progress = progress
+
+        response_data, reports, evaluations = _execute_dynamic_optimization(
+            test_case_data=test_case_data,
+            new_employees=new_employees,
+            progress_callback=progress_callback,
+        )
+        _current_progress = {'stage': 'complete', 'percentage': 100, 'message': 'Dynamic optimization complete!'}
+
+        response_data['reports'] = reports
+        response_data['evaluations'] = evaluations
+        return JsonResponse(response_data, encoder=NpEncoder)
+    except Exception as e:
         _current_progress = {'stage': 'error', 'percentage': 0, 'message': str(e)}
         return JsonResponse({'error': str(e)}, status=500)
 

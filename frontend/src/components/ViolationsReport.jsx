@@ -33,11 +33,15 @@ export default function ViolationsReport({ evaluations, mapMode }) {
             <div className="overflow-auto max-h-128">
                 <table className="w-full text-left" style={{ tableLayout: 'fixed', minWidth: '600px' }}>
                     <colgroup>
-                        <col style={{ width: '88px' }} />
-                        <col style={{ width: '176px' }} />
-                        <col style={{ width: '108px' }} />
-                        <col style={{ width: '100px' }} />
-                        <col /> {/* Detail takes remaining space */}
+                        {[
+                            '88px',
+                            '176px',
+                            '108px',
+                            '100px',
+                            null,
+                        ].map((width, idx) => (
+                            <col key={idx} style={width ? { width } : undefined} />
+                        ))}
                     </colgroup>
                     <thead className="bg-[#131620] sticky top-0 z-10 backdrop-blur-sm">
                         <tr>

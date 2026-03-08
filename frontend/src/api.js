@@ -209,6 +209,41 @@ export async function postDynamicOptimization(testCaseData, newEmployees) {
 }
 
 /**
+ * Update an existing testcase in localStorage (same id). Creates one if missing.
+ */
+export function upsertTestCaseLocally(testCaseId, testCaseData) {
+  try {
+    const cases = getTestCasesFromLocalStorage();
+    const targetId = testCaseId ?? Date.now();
+    const idx = cases.findIndex((c) => String(c.id) === String(targetId));
+    const existingCreatedAt = idx >= 0 ? cases[idx].created_at : new Date().toISOString();
+
+    const updatedCase = {
+      id: targetId,
+      filename: testCaseData.filename || "Test Case",
+      created_at: existingCreatedAt,
+      result_data: testCaseData.result_data,
+      result_data_noconstraints: testCaseData.result_data_noconstraints,
+      result_data_infeasible: testCaseData.result_data_infeasible,
+      computed_metrics: testCaseData.computed_metrics,
+      reports: testCaseData.reports || {},
+      evaluations: testCaseData.evaluations || null,
+    };
+
+    if (idx >= 0) {
+      cases[idx] = updatedCase;
+    } else {
+      cases.push(updatedCase);
+    }
+    localStorage.setItem(TESTCASES_STORAGE_KEY, JSON.stringify(cases));
+    return updatedCase;
+  } catch (err) {
+    console.error("[localStorage] Failed to upsert test case:", err);
+    throw err;
+  }
+}
+
+/**
  * Delete a test case from localStorage and attempt to delete from database
  */
 export function deleteResult(resultId) {
