@@ -1,95 +1,87 @@
-# Opti26 Backend + Frontend
+# Opti26 (Backend + Web + Mobile)
 
-Velora corporate mobility optimization system with:
-- Django backend (`velora_final.exe` orchestration + result APIs)
-- React + Vite frontend (Figma-inspired dashboard/test-cases/new-case flow)
+Corporate mobility optimization platform with:
+- Django backend (`optimizer/`) for Excel parsing, executable orchestration, route geometry and results APIs
+- React + Vite web app (`frontend/`)
+- Capacitor Android app wrapper (`Opti26_mobile/`) synced from current web UI
 
-## Project Structure
-- `optimizer/` Django app for Excel parsing and optimizer execution
-- `frontend/` React + Vite web UI
-- `results/` runtime temporary optimizer files (ignored in git)
+## Repository Layout
+- `manage.py`, `Opti26_Backend/` Django project entry/config
+- `optimizer/` backend app (Excel parser, optimization orchestration, evaluator, executables)
+- `frontend/` current web frontend
+- `Opti26_mobile/` mobile frontend + Android project (Capacitor)
 
-## Backend APIs
-- `POST /api/optimize` upload `.xlsx` and run optimization
-- `GET /api/results` list latest saved runs
-- `GET /api/results/<id>` get one result with full payload
-- `GET /api/results/latest` fetch most recent run
+## Backend API Endpoints
+- `POST /api/optimize` upload Excel (`excel_file`) and run optimization
+- `POST /api/optimize/dynamic` dynamic insertion flow for new employees
+- `GET /api/progress` optimization progress polling
+- `GET /api/results` list results
+- `GET /api/results/<id>` get one result
+- `DELETE /api/results/<id>` delete one result
+- `GET /api/results/latest` latest result
+- `GET /api/route-geometry?coordinates=lng,lat;...` OSRM geometry lookup
 
-## Run Locally
-1. Start backend:
+## Executables
+Executable binaries are resolved by OS from:
+- `optimizer/executables/win/`
+- `optimizer/executables/linux/`
+- `optimizer/executables/macos/`
+
+Standard optimization uses:
+- `velora_final`
+- `velora_noconstraints`
+- `velora_infeasiblehandling`
+
+Dynamic optimization uses:
+- `velora_final_dynamic`
+- `velora_noconstraints_dynamic`
+- `velora_infeasiblehandling_dynamic`
+
+## Local Run
+From repo root:
+
+1. Backend
 ```powershell
-cd Opti26_Backend
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python manage.py migrate
 python manage.py runserver
 ```
 
-2. Start frontend:
+2. Web frontend
 ```powershell
-cd Opti26_Backend\frontend
+cd frontend
 npm install
 npm run dev
 ```
 
-3. Open `http://localhost:5173`.
+3. Open:
+- Web: `http://localhost:5173`
+- Backend: `http://127.0.0.1:8000`
 
-## Notes
-- Frontend proxies `/api/*` to Django at `http://127.0.0.1:8000`.
-- `velora_final.exe` must exist in project root (`Opti26_Backend/velora_final.exe`).
-- Optional: `velora_noconstraints.exe` and `velora_infeasiblehandling.exe` for additional optimization views.
-- Only `.xlsx` input files are accepted.
+## Current Frontend API Base
+API base is hardcoded in client:
+- `frontend/src/api.js` -> `https://api.velora-opti26.xyz`
+- `Opti26_mobile/src/api.js` -> `https://api.velora-opti26.xyz`
 
-## Mobile App (Android APK)
-- Mobile wrapper project is included at `Opti26_mobile/` (Capacitor + Android).
-- It loads the hosted frontend URL configured in `Opti26_mobile/capacitor.config.json`.
-- Website URL update guide: [Change Website URL for Mobile App](#change-website-url-for-mobile-app)
+## Mobile Build (Android)
+From `Opti26_mobile/`:
 
-### Build APK (Release)
-1. Install mobile dependencies (one time):
 ```powershell
-cd Opti26_mobile
 npm install
+npm run mobile:build
 ```
 
-2. Sync Capacitor config/assets to Android:
+Then build release APK:
 ```powershell
-cd Opti26_mobile
-npx cap sync
+cd android
+.\gradlew.bat assembleRelease --no-daemon
 ```
 
-3. Build release APK:
-```powershell
-cd Opti26_mobile\android
-.\gradlew.bat assembleRelease
-```
-
-Release output:
+Release APK output:
 - `Opti26_mobile/android/app/build/outputs/apk/release/app-release.apk`
 
-### Build APK (Debug)
-```powershell
-cd Opti26_mobile\android
-.\gradlew.bat assembleDebug
-```
-
-Debug output:
-- `Opti26_mobile/android/app/build/outputs/apk/debug/app-debug.apk`
-
-### Change Website URL for Mobile App
-1. Open `Opti26_mobile/capacitor.config.json`.
-2. Update `server.url` to your hosted frontend URL.
-
-Example:
-```json
-"server": {
-	"url": "http://10.57.61.159:5173",
-	"cleartext": true
-}
-```
-
-3. Sync and rebuild:
-```powershell
-cd Opti26_mobile
-npx cap sync
-
-cd android
-.\gradlew.bat assembleRelease
-```
+Project-level copied APKs:
+- `Opti26_mobile/app-release.apk`
+- `Opti26_mobile/velora.apk`
