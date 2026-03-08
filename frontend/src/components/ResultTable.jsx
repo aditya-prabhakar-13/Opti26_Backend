@@ -823,7 +823,7 @@ function SummaryBar({ summary }) {
   return (
     <div style={{
       display: "grid",
-      gridTemplateColumns: "repeat(5, 1fr)",
+      gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))",
       gap: "10px",
     }}>
       {items.map(({ label, value, accent }) => (

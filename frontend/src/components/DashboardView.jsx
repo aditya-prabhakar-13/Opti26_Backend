@@ -486,7 +486,7 @@ export default function DashboardView({
               <MetricCard label="Baseline Cost"   value={formatCurrency(m.baseline_cost)}                                                   icon={I.cost} />
               <MetricCard label="Net Savings"     value={formatCurrency(m.net_savings)}                                                     icon={I.savings} accentColor="var(--color-green)" />
               <MetricCard label="Savings %"       value={m.savings_percentage != null ? `${formatNumber(m.savings_percentage)}%` : null}   icon={I.savings} accentColor="var(--color-green)" />
-              <MetricCard label="Optimized Time"  value={formatMinutes(m.optimized_travel_time_min)}                                        icon={I.clock}   accentColor="var(--color-amber)" />
+              <MetricCard label="Optimized Time"   value={formatMinutes(m.optimized_travel_time_min)}                                        icon={I.clock}   accentColor="var(--color-amber)" />
               <MetricCard label="Baseline Time"   value={formatMinutes(m.baseline_travel_time_min)}                                        icon={I.clock} />
             </div>
           </div>
