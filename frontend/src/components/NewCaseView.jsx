@@ -8,6 +8,8 @@ if (typeof document !== "undefined" && !document.getElementById("db-fonts")) {
   document.head.appendChild(link);
 }
 
+import { useState } from "react";
+
 function IconUpload() {
   return (
     <svg
@@ -130,6 +132,7 @@ export default function NewCaseView({
   onFileChange,
   onRunOptimization,
 }) {
+  const [optimizationMode, setOptimizationMode] = useState("instant");
   const step = selectedFile ? (loading ? 2 : 2) : 1;
   const isDone = !loading && selectedFile;
 
@@ -199,16 +202,15 @@ export default function NewCaseView({
               relative flex flex-col items-center justify-center gap-4
               px-8 py-10 cursor-pointer border-b border-slate-700/50
               transition-all duration-200 group
-              ${
-                selectedFile
-                  ? "bg-emerald-500/5 hover:bg-emerald-500/8"
-                  : "bg-slate-800/20 hover:bg-slate-700/30"
+              ${selectedFile
+                ? "bg-emerald-500/5 hover:bg-emerald-500/8"
+                : "bg-slate-800/20 hover:bg-slate-700/30"
               }
             `}>
             <input
               id="upload-input"
               type="file"
-              accept=".xlsx"
+              accept=".xlsx,.json"
               className="sr-only"
               onChange={(e) => onFileChange(e.target.files?.[0] || null)}
             />
@@ -217,11 +219,10 @@ export default function NewCaseView({
             <div
               className={`
               w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-200
-              ${
-                selectedFile
+              ${selectedFile
                   ? "bg-emerald-500/15 text-emerald-400 shadow-lg shadow-emerald-900/20"
                   : "bg-slate-700/80 text-slate-400 group-hover:bg-amber-500/15 group-hover:text-amber-400 group-hover:shadow-lg group-hover:shadow-amber-900/20"
-              }
+                }
             `}>
               {selectedFile ? <IconFile /> : <IconUpload />}
             </div>
@@ -246,7 +247,7 @@ export default function NewCaseView({
                   <span className="text-amber-400">browse</span>
                 </p>
                 <p className="text-slate-500 text-xs">
-                  Supported format: .xlsx
+                  Supported formats: .xlsx, .json
                 </p>
               </div>
             )}
@@ -259,10 +260,38 @@ export default function NewCaseView({
 
           {/* Action area */}
           <div className="px-8 py-6 space-y-4">
+
+            {/* Optimization Mode Select */}
+            {selectedFile && !selectedFile.name.endsWith('.json') && (
+              <div className="flex flex-col gap-3 mb-6">
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500 text-center">Optimization Mode</label>
+                <div className="flex items-center justify-center gap-2 flex-wrap">
+                  {[
+                    { id: 'instant', label: 'Instant' },
+                    { id: 'balanced', label: 'Balanced' },
+                    { id: 'deep', label: 'Deep' }
+                  ].map(mode => (
+                    <button
+                      key={mode.id}
+                      type="button"
+                      disabled={loading}
+                      onClick={() => setOptimizationMode(mode.id)}
+                      className={`px-5 py-2 rounded-xl text-xs font-bold tracking-wide transition-all ${optimizationMode === mode.id
+                        ? 'bg-amber-500/15 text-amber-400 border border-amber-500/50 shadow-sm shadow-amber-900/20'
+                        : 'bg-slate-800/50 text-slate-400 border border-slate-700/60 hover:bg-slate-700/50 hover:text-slate-200'
+                        }`}
+                    >
+                      {mode.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <button
               type="button"
               disabled={loading || !selectedFile}
-              onClick={onRunOptimization}
+              onClick={() => onRunOptimization(optimizationMode)}
               className="
                 w-full flex items-center justify-center gap-3
                 px-6 py-3.5 rounded-2xl
@@ -280,12 +309,12 @@ export default function NewCaseView({
               {loading ? (
                 <>
                   <IconSpinner />
-                  Running optimization…
+                  {selectedFile?.name.endsWith('.json') ? 'Loading…' : 'Running optimization…'}
                 </>
               ) : (
                 <>
-                  <IconRoute />
-                  Run Optimization
+                  {selectedFile?.name.endsWith('.json') ? <IconCheck /> : <IconRoute />}
+                  {selectedFile?.name.endsWith('.json') ? 'Load Test Case' : 'Run Optimization'}
                 </>
               )}
             </button>

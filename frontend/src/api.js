@@ -26,9 +26,10 @@ export async function getProgress() {
   return payload;
 }
 
-export async function optimizeExcelWithProgress(file, onProgress) {
+export async function optimizeExcelWithProgress(file, mode, onProgress) {
   const formData = new FormData();
   formData.append("excel_file", file);
+  if (mode) formData.append("optimization_mode", mode);
 
   // Start the optimization
   const optimizationPromise = fetch(`${API_BASE}/api/optimize`, {
@@ -51,7 +52,7 @@ export async function optimizeExcelWithProgress(file, onProgress) {
       try {
         attempts++;
         const progress = await getProgress();
-        
+
         if (onProgress) {
           onProgress(progress);
         }
@@ -86,7 +87,7 @@ export async function optimizeExcelWithProgress(file, onProgress) {
   const result = await optimizationPromise;
   // Wait a bit for progress polling to catch up
   await progressPollingPromise;
-  
+
   return result;
 }
 
@@ -183,6 +184,30 @@ export async function fetchResultDetail(resultId) {
   };
 }
 
+export async function postDynamicOptimization(testCaseData, newEmployees) {
+  const currentEnv = process.env.NODE_ENV || 'development';
+  let baseURL = currentEnv === 'development' ? 'http://localhost:8000' : 'https://api.velora-opti26.xyz';
+
+  const payload = {
+    testCaseData,
+    newEmployees
+  };
+
+  console.log("Payload:", payload);
+
+  const response = await fetch(`${baseURL}/api/optimize/dynamic`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    throw new Error(`Dynamic optimization failed: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
 /**
  * Delete a test case from localStorage and attempt to delete from database
  */
@@ -223,7 +248,7 @@ export function deleteAllTestCases() {
   try {
     // Get all cases before deletion to attempt DB cleanup
     const cases = getTestCasesFromLocalStorage();
-    
+
     // Delete from localStorage
     localStorage.removeItem(TESTCASES_STORAGE_KEY);
 
@@ -390,7 +415,7 @@ export async function fetchRoadGeometry(latLngPoints, maxRetries = 3) {
         `${API_BASE}/api/route-geometry?coordinates=${encodeURIComponent(encodedPath)}`,
       );
       const payload = await response.json();
-      
+
       if (!response.ok) {
         lastError = payload.error || `HTTP ${response.status}`;
         if (attempt < maxRetries - 1) {

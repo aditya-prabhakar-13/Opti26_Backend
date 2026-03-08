@@ -2,6 +2,10 @@ import MapPanel from "./MapPanel";
 import { formatCurrency, formatMinutes, formatNumber } from "../lib/transform";
 import ResultsTableView from "./ResultTable";
 import TripTimeline from "./TripTimeline";
+import AddEmployeeModal from "./AddEmployeeModal";
+import ViolationsReport from "./ViolationsReport";
+import { useState } from "react";
+import { postDynamicOptimization } from "../api";
 
 /* ── Google Fonts ── */
 if (typeof document !== "undefined" && !document.getElementById("db-fonts")) {
@@ -217,6 +221,37 @@ export default function DashboardView({
 }) {
   const m = metrics ?? {};
 
+  const [activeTab, setActiveTab] = useState("map");
+  const [selectedRouteId, setSelectedRouteId] = useState(null);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isAddEmployeeModalOpen, setIsAddEmployeeModalOpen] = useState(false);
+
+  const handleExportJson = () => {
+    if (!selectedResult || !selectedResult.id) return;
+    try {
+      const cases = JSON.parse(localStorage.getItem('velora_testcases') || '[]');
+      const tc = cases.find(c => String(c.id) === String(selectedResult.id));
+      if (!tc) {
+        alert("Could not find full testcase data in local storage.");
+        return;
+      }
+
+      const jsonStr = JSON.stringify(tc, null, 2);
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${tc.filename.replace('.xlsx', '')}_export.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to export JSON", err);
+      alert("Failed to export JSON data.");
+    }
+  };
+
   // Mode labels for metrics sections
   const modeLabels = {
     optimized: "Optimized Routes",
@@ -293,14 +328,40 @@ export default function DashboardView({
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={onNewCase}
-            className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl font-bold text-sm text-white transition-all duration-200 hover:-translate-y-0.5 shadow-lg shadow-amber-900/30 hover:shadow-amber-900/50"
-            style={{ background: "linear-gradient(135deg, #f59e0b, #ea580c)" }}>
-            {icons.plus}
-            New Test Case
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleExportJson}
+              title="Export Testcase as JSON"
+              className="cursor-pointer group flex items-center justify-center w-11 h-11 rounded-xl bg-slate-800/80 border border-slate-700/60 transition-all duration-300 hover:bg-slate-700/80 hover:border-slate-500/50 hover:-translate-y-0.5 shadow-lg shadow-black/20"
+            >
+              <svg
+                className="w-5 h-5 text-slate-400 group-hover:text-amber-400 transition-colors duration-300"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setIsAddEmployeeModalOpen(true)}
+              className="cursor-pointer group relative flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm tracking-wide text-white overflow-hidden transition-all duration-300 shadow-lg shadow-amber-900/20 hover:shadow-amber-900/40 hover:-translate-y-0.5"
+              style={{
+                background: "linear-gradient(135deg, #f59e0b, #ea580c)"
+              }}>
+              <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+              <svg
+                className="w-4 h-4 transition-transform duration-300 group-hover:rotate-180"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Add Employee
+            </button>
+          </div>
         </header>
 
         {/* ── Map Card ── */}
@@ -345,20 +406,19 @@ export default function DashboardView({
                       disabled={disabled}
                       className={`
                         px-2.5 sm:px-3 xl:px-4 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold tracking-wide transition-all duration-200 whitespace-nowrap flex-1 sm:flex-none flex-shrink-0
-                        ${
-                          active
-                            ? "text-slate-900 shadow-sm shadow-amber-900/30"
-                            : disabled
-                              ? "text-slate-600 cursor-not-allowed"
-                              : "text-slate-400 hover:text-slate-200"
+                        ${active
+                          ? "text-slate-900 shadow-sm shadow-amber-900/30"
+                          : disabled
+                            ? "text-slate-600 cursor-not-allowed"
+                            : "text-slate-400 hover:text-slate-200"
                         }
                       `}
                       style={
                         active
                           ? {
-                              background:
-                                "linear-gradient(135deg, #f59e0b, #ea580c)",
-                            }
+                            background:
+                              "linear-gradient(135deg, #f59e0b, #ea580c)",
+                          }
                           : {}
                       }>
                       <span className="hidden 2xl:inline">{label}</span>
@@ -537,11 +597,14 @@ export default function DashboardView({
             />
           </div>
         )}
-        {/* 
-        <div>
-          <SectionLabel>Infeasibility Report</SectionLabel>
-          <InfeasibilityReport report={reports.reportInfeasible} />
-        </div> */}
+        {selectedResult?.evaluations && (
+          <div>
+            <ViolationsReport
+              evaluations={selectedResult.evaluations}
+              mapMode={mapMode}
+            />
+          </div>
+        )}
 
         {/* ── Footer ── */}
         <footer className="flex items-center justify-center gap-3 pt-2 pb-8">
@@ -552,6 +615,21 @@ export default function DashboardView({
           <div className="h-px w-12 bg-slate-700/60" />
         </footer>
       </div>
+
+      <AddEmployeeModal
+        isOpen={isAddEmployeeModalOpen}
+        onClose={() => setIsAddEmployeeModalOpen(false)}
+        onSubmit={async (newEmployees) => {
+          setIsAddEmployeeModalOpen(false);
+          try {
+            await postDynamicOptimization(selectedResult, newEmployees);
+            // Wait a moment and then assume the polling caught it.
+          } catch (err) {
+            console.error(err);
+            alert("Failed to submit optimization");
+          }
+        }}
+      />
     </section>
   );
 }

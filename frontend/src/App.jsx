@@ -28,6 +28,22 @@ export default function App() {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 760);
   const [results, setResults] = useState([]);
   const [selectedResult, setSelectedResult] = useState(null);
+
+  // Ensure evaluations are loaded from local storage for the selected result
+  useEffect(() => {
+    if (selectedResult && !selectedResult.evaluations) {
+      try {
+        const cases = JSON.parse(localStorage.getItem('velora_testcases') || '[]');
+        const tc = cases.find(c => String(c.id) === String(selectedResult.id));
+        if (tc && tc.evaluations) {
+          setSelectedResult(prev => ({ ...prev, evaluations: tc.evaluations }));
+        }
+      } catch (err) {
+        console.error("Failed to load evaluations for selected result", err);
+      }
+    }
+  }, [selectedResult]);
+
   const [selectedFile, setSelectedFile] = useState(null);
   const [mapMode, setMapMode] = useState("optimized");
   const [vehicleFilter, setVehicleFilter] = useState("ALL");
@@ -235,52 +251,91 @@ export default function App() {
     setActiveNav("dashboard");
   }
 
-  async function runOptimization() {
+  async function runOptimization(mode) {
     if (!selectedFile) {
-      setError("Please select an .xlsx file first");
+      setError("Please select a file first");
       return;
     }
     setLoading(true);
     setError("");
-    setShowProgress(true);
-    setProgress({
-      stage: "starting",
-      percentage: 0,
-      message: "Starting optimization...",
-    });
 
     try {
-      const created = await optimizeExcelWithProgress(
-        selectedFile,
-        (progressUpdate) => {
-          setProgress(progressUpdate);
-        },
-      );
+      if (selectedFile.name.endsWith('.json')) {
+        // Handle JSON import bypass directly
+        const text = await selectedFile.text();
+        const importedData = JSON.parse(text);
 
-      // Save test case to localStorage (client-side only, no database)
-      const testCaseData = {
-        filename: selectedFile.name,
-        result_data: created.result,
-        result_data_noconstraints: created.result_noconstraints,
-        result_data_infeasible: created.result_infeasible,
-        computed_metrics: created.computed_metrics,
-        reports: created.reports, // Save the human-readable optimization reports
-        evaluations: created.evaluations || null, // Constraint evaluation data
-      };
-      const savedTestCase = saveTestCaseLocally(testCaseData);
+        // Basic validation
+        if (!importedData.result_data && !importedData.reports) {
+          throw new Error("Invalid Velora testcase JSON file format");
+        }
 
-      const normalized = normalizeOptimizationPayload({
-        ...created,
-        id: savedTestCase.id, // Use localStorage ID
-      });
-      setSelectedResult(normalized);
+        // Just pass to local storage; ensure it has the original filename or a default
+        importedData.filename = importedData.filename || selectedFile.name;
 
-      setVehicleFilter("ALL");
-      await refreshResults(normalized.id);
-      setActiveNav("dashboard");
+        // Remove 'id' if exists to force a new unique record local ID instead of conflict
+        delete importedData.id;
 
-      // Keep progress visible for a moment before hiding
-      setTimeout(() => setShowProgress(false), 1000);
+        const savedTestCase = saveTestCaseLocally(importedData);
+
+        const normalized = normalizeOptimizationPayload({
+          id: savedTestCase.id,
+          filename: savedTestCase.filename,
+          result: savedTestCase.result_data,
+          result_noconstraints: savedTestCase.result_data_noconstraints,
+          result_infeasible: savedTestCase.result_data_infeasible,
+          computed_metrics: savedTestCase.computed_metrics,
+          reports: savedTestCase.reports,
+          evaluations: savedTestCase.evaluations,
+        });
+
+        setSelectedResult(normalized);
+        setVehicleFilter("ALL");
+        await refreshResults(normalized.id);
+        setActiveNav("dashboard");
+        setTimeout(() => setShowProgress(false), 500);
+
+      } else {
+        // Standard Excel Flow
+        setShowProgress(true);
+        setProgress({
+          stage: "starting",
+          percentage: 0,
+          message: "Starting optimization...",
+        });
+        const created = await optimizeExcelWithProgress(
+          selectedFile,
+          mode,
+          (progressUpdate) => {
+            setProgress(progressUpdate);
+          },
+        );
+
+        // Save test case to localStorage (client-side only, no database)
+        const testCaseData = {
+          filename: selectedFile.name,
+          result_data: created.result,
+          result_data_noconstraints: created.result_noconstraints,
+          result_data_infeasible: created.result_infeasible,
+          computed_metrics: created.computed_metrics,
+          reports: created.reports, // Save the human-readable optimization reports
+          evaluations: created.evaluations || null, // Constraint evaluation data
+        };
+        const savedTestCase = saveTestCaseLocally(testCaseData);
+
+        const normalized = normalizeOptimizationPayload({
+          ...created,
+          id: savedTestCase.id, // Use localStorage ID
+        });
+        setSelectedResult(normalized);
+
+        setVehicleFilter("ALL");
+        await refreshResults(normalized.id);
+        setActiveNav("dashboard");
+
+        // Keep progress visible for a moment before hiding
+        setTimeout(() => setShowProgress(false), 1000);
+      }
     } catch (runErr) {
       setError(runErr.message || "Optimization failed");
       setShowProgress(false);
