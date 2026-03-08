@@ -669,7 +669,7 @@ export default function DashboardView({
                   icon={icons.route}
                 />
                 <MetricCard
-                  label="Total Cost"
+                  label="Total Objective Cost"
                   value={formatCurrency(m.total_cost)}
                   icon={icons.cost}
                   variant="gold"
