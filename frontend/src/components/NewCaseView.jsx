@@ -1,86 +1,123 @@
+/* ── Google Fonts (injected once) ── */
+if (typeof document !== "undefined" && !document.getElementById("db-fonts")) {
+  const link = document.createElement("link");
+  link.id = "db-fonts";
+  link.rel = "stylesheet";
+  link.href =
+    "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,400&display=swap";
+  document.head.appendChild(link);
+}
+
 import { useState } from "react";
 
-function IconUpload({ size = 20 }) {
+function IconUpload() {
   return (
-    <svg width={size} height={size} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+    <svg
+      className="w-6 h-6"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.6}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
+      />
     </svg>
   );
 }
 
-function IconFile({ size = 18 }) {
+function IconFile() {
   return (
-    <svg width={size} height={size} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+    <svg
+      className="w-5 h-5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.8}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
+      />
     </svg>
   );
 }
 
-function IconSpinner({ size = 14 }) {
+function IconSpinner() {
   return (
-    <svg width={size} height={size} className="animate-spin" fill="none" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" style={{ opacity: 0.2 }} />
-      <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" style={{ opacity: 0.8 }} />
+    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8v8H4z"
+      />
     </svg>
   );
 }
 
-function IconCheck({ size = 14 }) {
+function IconCheck() {
   return (
-    <svg width={size} height={size} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+    <svg
+      className="w-4 h-4"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2.5}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M4.5 12.75l6 6 9-13.5"
+      />
     </svg>
   );
 }
 
-function IconRoute({ size = 18 }) {
+function IconRoute() {
   return (
-    <svg width={size} height={size} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6-3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+    <svg
+      className="w-5 h-5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.6}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6-3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+      />
     </svg>
   );
 }
 
-/* ── Step dot ── */
+/* ── Step indicator ── */
 function Step({ number, label, active, done }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "7px", flexShrink: 0 }}>
-      <div style={{
-        width: "22px",
-        height: "22px",
-        borderRadius: "50%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: "0.6875rem",
-        fontWeight: 700,
-        flexShrink: 0,
-        transition: "all 200ms ease",
-        background: done
-          ? "var(--color-green)"
-          : active
-            ? "var(--color-accent)"
-            : "var(--color-surface-2)",
-        border: `1px solid ${done
-          ? "var(--color-green)"
-          : active
-            ? "var(--color-accent)"
-            : "var(--color-border-2)"}`,
-        color: done || active ? "#fff" : "var(--color-text-3)",
-      }}>
-        {done ? <IconCheck size={10} /> : number}
+    <div className="flex items-center gap-3">
+      <div
+        className={`
+        w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 transition-all
+        ${done ? "text-white shadow-sm shadow-emerald-900/40" : active ? "text-slate-900 shadow-sm shadow-amber-900/40" : "bg-slate-800 border border-slate-700 text-slate-500"}
+      `}
+        style={
+          done
+            ? { background: "linear-gradient(135deg, #10b981, #0d9488)" }
+            : active
+              ? { background: "linear-gradient(135deg, #f59e0b, #ea580c)" }
+              : {}
+        }>
+        {done ? <IconCheck /> : number}
       </div>
-      <span style={{
-        fontSize: "0.75rem",
-        fontWeight: done ? 600 : active ? 600 : 400,
-        color: done
-          ? "var(--color-green)"
-          : active
-            ? "var(--color-text)"
-            : "var(--color-text-3)",
-        whiteSpace: "nowrap",
-        transition: "color 200ms ease",
-      }}>
+      <span
+        className={`text-xs font-semibold ${active ? "text-white" : done ? "text-emerald-400" : "text-slate-500"}`}>
         {label}
       </span>
     </div>
@@ -96,180 +133,143 @@ export default function NewCaseView({
   onRunOptimization,
 }) {
   const [optimizationMode, setOptimizationMode] = useState("instant");
-  const [isDragOver, setIsDragOver] = useState(false);
-
-  const step = selectedFile ? 2 : 1;
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) onFileChange(file);
-  };
+  const step = selectedFile ? (loading ? 2 : 2) : 1;
+  const isDone = !loading && selectedFile;
 
   return (
-    <section style={{
-      minHeight: "100vh",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: "40px 16px",
-      background: "var(--color-bg)",
-      fontFamily: "'Inter Variable', 'Inter', system-ui, sans-serif",
-    }}>
-      <div style={{ width: "100%", maxWidth: "440px" }}>
+    <section
+      className="min-h-screen flex items-center justify-center px-4 py-12"
+      style={{
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
+        background:
+          "linear-gradient(135deg, #0f1623 0%, #111827 50%, #0c1420 100%)",
+      }}>
+      {/* Ambient glow */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <div
+          className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] rounded-full opacity-[0.07]"
+          style={{
+            background: "radial-gradient(ellipse, #f59e0b 0%, transparent 70%)",
+          }}
+        />
+      </div>
 
+      <div className="relative z-10 w-full max-w-lg">
         {/* ── Header ── */}
-        <div style={{ textAlign: "center", marginBottom: "32px" }}>
-          {/* Icon — simple, not gradient */}
-          <div style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: "48px",
-            height: "48px",
-            borderRadius: "12px",
-            background: "var(--color-surface)",
-            border: "1px solid var(--color-border-2)",
-            color: "var(--color-accent)",
-            marginBottom: "20px",
-          }}>
-            <IconRoute size={22} />
+        <div className="text-center mb-10 flex flex-col items-center gap-4">
+          <div
+            className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-5 shadow-xl shadow-amber-900/30"
+            style={{ background: "linear-gradient(135deg, #f59e0b, #ea580c)" }}>
+            <IconRoute />
           </div>
-
-          <h1 style={{
-            fontSize: "1.5rem",
-            fontWeight: 700,
-            color: "var(--color-text)",
-            letterSpacing: "-0.02em",
-            lineHeight: 1.2,
-            margin: "0 0 8px",
-          }}>
+          <h1
+            className="text-3xl font-bold text-white mb-2"
+            style={{ fontFamily: "'Fraunces', serif" }}>
             {hasCases ? "New Test Case" : "Welcome to Velora"}
           </h1>
-          <p style={{
-            fontSize: "0.875rem",
-            color: "var(--color-text-2)",
-            lineHeight: 1.6,
-            margin: 0,
-            maxWidth: "360px",
-            marginLeft: "auto",
-            marginRight: "auto",
-          }}>
+          <p className="text-slate-400 text-sm leading-relaxed max-w-sm mx-auto">
             {hasCases
-              ? "Upload a new Excel dataset to generate optimized fleet routes."
+              ? "Upload a new Excel dataset to generate and compare optimized fleet routes."
               : "Upload your Excel data to generate explainable, optimized commute routes for your fleet."}
           </p>
         </div>
 
         {/* ── Steps ── */}
-        <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "24px", padding: "0 4px" }}>
-          <Step number={1} label="Upload file" active={step === 1} done={step > 1} />
-          <div style={{ flex: 1, height: "1px", background: "var(--color-border)" }} />
-          <Step number={2} label="Run optimization" active={step === 2} done={false} />
-          <div style={{ flex: 1, height: "1px", background: "var(--color-border)" }} />
+        <div className="flex items-center gap-2 mb-8 px-1">
+          <Step
+            number={1}
+            label="Upload file"
+            active={step === 1}
+            done={step > 1}
+          />
+          <div className="flex-1 h-px bg-slate-700/60 mx-1" />
+          <Step
+            number={2}
+            label="Run optimization"
+            active={step === 2}
+            done={false}
+          />
+          <div className="flex-1 h-px bg-slate-700/60 mx-1" />
           <Step number={3} label="View results" active={false} done={false} />
         </div>
 
         {/* ── Card ── */}
-        <div style={{
-          background: "var(--color-surface)",
-          border: "1px solid var(--color-border)",
-          borderRadius: "var(--radius-xl)",
-          overflow: "hidden",
-        }}>
+        <div className="rounded-3xl border border-slate-700/60 bg-slate-800/40 backdrop-blur-sm shadow-2xl overflow-hidden">
           {/* Upload zone */}
           <label
             htmlFor="upload-input"
-            onDragOver={e => { e.preventDefault(); setIsDragOver(true); }}
-            onDragLeave={() => setIsDragOver(false)}
-            onDrop={handleDrop}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "12px",
-              padding: "32px 24px",
-              cursor: "pointer",
-              borderBottom: "1px solid var(--color-border)",
-              background: selectedFile
-                ? "rgba(34,197,94,0.04)"
-                : isDragOver
-                  ? "var(--color-accent-muted)"
-                  : "transparent",
-              transition: "background 120ms ease",
-              position: "relative",
-            }}
-          >
+            className={`
+              relative flex flex-col items-center justify-center gap-4
+              px-8 py-10 cursor-pointer border-b border-slate-700/50
+              transition-all duration-200 group
+              ${selectedFile
+                ? "bg-emerald-500/5 hover:bg-emerald-500/8"
+                : "bg-slate-800/20 hover:bg-slate-700/30"
+              }
+            `}>
             <input
               id="upload-input"
               type="file"
               accept=".xlsx,.json"
-              style={{ position: "absolute", width: 1, height: 1, opacity: 0 }}
-              onChange={e => onFileChange(e.target.files?.[0] || null)}
+              className="sr-only"
+              onChange={(e) => onFileChange(e.target.files?.[0] || null)}
             />
 
-            {/* Icon */}
-            <div style={{
-              width: "52px",
-              height: "52px",
-              borderRadius: "var(--radius-lg)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              border: `1px dashed ${selectedFile ? "var(--color-green)" : isDragOver ? "var(--color-accent)" : "var(--color-border-2)"}`,
-              color: selectedFile ? "var(--color-green)" : isDragOver ? "var(--color-accent)" : "var(--color-text-3)",
-              background: selectedFile ? "var(--color-green-muted)" : isDragOver ? "var(--color-accent-muted)" : "var(--color-surface-2)",
-              transition: "all 120ms ease",
-            }}>
-              {selectedFile ? <IconFile size={20} /> : <IconUpload size={20} />}
+            {/* Icon circle */}
+            <div
+              className={`
+              w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-200
+              ${selectedFile
+                  ? "bg-emerald-500/15 text-emerald-400 shadow-lg shadow-emerald-900/20"
+                  : "bg-slate-700/80 text-slate-400 group-hover:bg-amber-500/15 group-hover:text-amber-400 group-hover:shadow-lg group-hover:shadow-amber-900/20"
+                }
+            `}>
+              {selectedFile ? <IconFile /> : <IconUpload />}
             </div>
 
             {selectedFile ? (
-              <div style={{ textAlign: "center" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "6px", justifyContent: "center", marginBottom: "4px" }}>
-                  <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--color-green)", flexShrink: 0 }} />
-                  <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--color-green)" }}>File ready</span>
+              <div className="text-center">
+                <div className="flex items-center gap-2 justify-center mb-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  <p className="text-sm font-bold text-emerald-400">
+                    File ready
+                  </p>
                 </div>
-                <p style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--color-text)", margin: "0 0 2px" }}>
+                <p className="text-white font-semibold text-sm">
                   {selectedFile.name}
                 </p>
-                <p style={{ fontSize: "0.75rem", color: "var(--color-text-3)", margin: 0 }}>Click to replace</p>
+                <p className="text-slate-500 text-xs mt-1">Click to replace</p>
               </div>
             ) : (
-              <div style={{ textAlign: "center" }}>
-                <p style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--color-text)", margin: "0 0 4px" }}>
-                  Drop your file here, or <span style={{ color: "var(--color-accent)" }}>browse</span>
+              <div className="text-center">
+                <p className="text-white font-semibold text-sm mb-1">
+                  Drop your file here, or{" "}
+                  <span className="text-amber-400">browse</span>
                 </p>
-                <p style={{ fontSize: "0.75rem", color: "var(--color-text-3)", margin: 0 }}>
-                  Supported: .xlsx, .json
+                <p className="text-slate-500 text-xs">
+                  Supported formats: .xlsx, .json
                 </p>
               </div>
             )}
+
+            {/* Dashed border overlay */}
+            {!selectedFile && (
+              <div className="absolute inset-4 rounded-2xl border-2 border-dashed border-slate-600/50 group-hover:border-amber-500/30 transition-colors duration-200 pointer-events-none" />
+            )}
           </label>
 
-          {/* Actions */}
-          <div style={{ padding: "20px" }}>
-            {/* Optimization mode (Excel only) */}
-            {selectedFile && !selectedFile.name.endsWith(".json") && (
-              <div style={{ marginBottom: "16px" }}>
-                <p style={{
-                  fontSize: "0.6875rem",
-                  fontWeight: 700,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  color: "var(--color-text-3)",
-                  textAlign: "center",
-                  marginBottom: "10px",
-                }}>
-                  Optimization Mode
-                </p>
-                <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
+          {/* Action area */}
+          <div className="px-8 py-6 space-y-4">
+
+            {/* Optimization Mode Select */}
+            {selectedFile && !selectedFile.name.endsWith('.json') && (
+              <div className="flex flex-col gap-3 mb-6">
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500 text-center">Optimization Mode</label>
+                <div className="flex items-center justify-center gap-2 flex-wrap">
                   {[
-                    { id: '0', label: 'Instant Optimize' },
-                    { id: '1', label: 'Deep Optimize' },
-                    // { id: 'deep', label: 'Deep' }
+                    { id: 'instant', label: 'Instant' },
+                    { id: 'balanced', label: 'Balanced' },
+                    { id: 'deep', label: 'Deep' }
                   ].map(mode => (
                     <button
                       key={mode.id}
@@ -288,53 +288,50 @@ export default function NewCaseView({
               </div>
             )}
 
-            {/* CTA button */}
             <button
               type="button"
               disabled={loading || !selectedFile}
               onClick={() => onRunOptimization(optimizationMode)}
-              style={{
-                width: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "8px",
-                padding: "10px 20px",
-                borderRadius: "var(--radius-lg)",
-                border: "none",
-                background: loading || !selectedFile ? "var(--color-surface-2)" : "var(--color-accent)",
-                color: loading || !selectedFile ? "var(--color-text-3)" : "#fff",
-                fontSize: "0.875rem",
-                fontWeight: 600,
-                cursor: loading || !selectedFile ? "not-allowed" : "pointer",
-                transition: "background 120ms ease",
-              }}
-              onMouseEnter={e => {
-                if (!loading && selectedFile) e.currentTarget.style.background = "var(--color-accent-h)";
-              }}
-              onMouseLeave={e => {
-                if (!loading && selectedFile) e.currentTarget.style.background = "var(--color-accent)";
-              }}
-            >
+              className="
+                w-full flex items-center justify-center gap-3
+                px-6 py-3.5 rounded-2xl
+                font-bold text-sm text-white
+                transition-all duration-200
+                disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0
+                hover:-translate-y-0.5
+                shadow-lg shadow-amber-900/20 hover:shadow-amber-900/40
+              "
+              style={
+                !loading && selectedFile
+                  ? { background: "linear-gradient(135deg, #f59e0b, #ea580c)" }
+                  : { background: "rgba(100,116,139,0.3)", boxShadow: "none" }
+              }>
               {loading ? (
-                <><IconSpinner size={14} />{selectedFile?.name.endsWith(".json") ? "Loading…" : "Running optimization…"}</>
+                <>
+                  <IconSpinner />
+                  {selectedFile?.name.endsWith('.json') ? 'Loading…' : 'Running optimization…'}
+                </>
               ) : (
-                <>{selectedFile?.name.endsWith(".json") ? <IconCheck size={14} /> : <IconRoute size={14} />}
-                  {selectedFile?.name.endsWith(".json") ? "Load Test Case" : "Run Optimization"}</>
+                <>
+                  {selectedFile?.name.endsWith('.json') ? <IconCheck /> : <IconRoute />}
+                  {selectedFile?.name.endsWith('.json') ? 'Load Test Case' : 'Run Optimization'}
+                </>
               )}
             </button>
 
             {!selectedFile && (
-              <p style={{ textAlign: "center", fontSize: "0.75rem", color: "var(--color-text-3)", marginTop: "10px" }}>
+              <p className="text-center text-xs text-slate-600">
                 Upload an Excel file to continue
               </p>
             )}
           </div>
         </div>
 
+        {/* ── Footer hint ── */}
         {!hasCases && (
-          <p style={{ textAlign: "center", fontSize: "0.75rem", color: "var(--color-text-3)", marginTop: "16px" }}>
-            Your results will appear in the sidebar after optimization completes.
+          <p className="text-center text-xs text-slate-600 mt-6">
+            Your results will appear in the sidebar after optimization
+            completes.
           </p>
         )}
       </div>

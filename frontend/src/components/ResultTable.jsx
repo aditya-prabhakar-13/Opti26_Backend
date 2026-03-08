@@ -1,5 +1,14 @@
 import { useState, useMemo, useEffect } from "react";
 
+/* ── Fonts (injected once) ── */
+if (typeof document !== "undefined" && !document.getElementById("db-fonts")) {
+  const link = document.createElement("link");
+  link.id = "db-fonts";
+  link.rel = "stylesheet";
+  link.href =
+    "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,700&display=swap";
+  document.head.appendChild(link);
+}
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -334,8 +343,8 @@ function VehicleView({ vehicles, inputVehicles, selectedVehicleId }) {
       {filtered.map((vehicle) => {
         const palette =
           VEHICLE_PALETTE[
-            vehicles.findIndex((v) => v.vehicle_id === vehicle.vehicle_id) %
-              VEHICLE_PALETTE.length
+          vehicles.findIndex((v) => v.vehicle_id === vehicle.vehicle_id) %
+          VEHICLE_PALETTE.length
           ];
         const inputV = inputVehicles?.find(
           (v) => v.vehicle_id === vehicle.vehicle_id,
@@ -689,9 +698,9 @@ function EmployeeView({
             const palette = assignment?.palette;
             const rideDuration = assignment
               ? timeDiffMin(
-                  assignment.passenger.pickup_time,
-                  assignment.passenger.drop_time,
-                )
+                assignment.passenger.pickup_time,
+                assignment.passenger.drop_time,
+              )
               : null;
 
             return (
@@ -710,14 +719,14 @@ function EmployeeView({
                     style={
                       palette
                         ? {
-                            background: palette.soft,
-                            color: palette.text,
-                            border: `1px solid ${palette.border}`,
-                          }
+                          background: palette.soft,
+                          color: palette.text,
+                          border: `1px solid ${palette.border}`,
+                        }
                         : {
-                            background: "rgba(148,163,184,0.1)",
-                            color: "#94a3b8",
-                          }
+                          background: "rgba(148,163,184,0.1)",
+                          color: "#94a3b8",
+                        }
                     }>
                     {empId}
                   </span>
@@ -814,47 +823,48 @@ function EmployeeView({
 
 function SummaryBar({ summary }) {
   const items = [
-    { label: "Employees Routed", value: `${summary.employees_routed} / ${summary.total_employees}`, accent: "var(--color-text)" },
-    { label: "Optimized Cost",   value: fmtCost(summary.total_optimized_cost),                       accent: "var(--color-amber)" },
-    { label: "Baseline Cost",    value: fmtCost(summary.total_baseline_cost),                        accent: "var(--color-text-2)" },
-    { label: "Net Savings",      value: fmtCost(summary.net_savings),                                accent: "var(--color-green)" },
-    { label: "Savings %",        value: `${Number(summary.savings_percentage).toFixed(1)}%`,         accent: "var(--color-green)" },
+    {
+      label: "Employees Routed",
+      value: `${summary.employees_routed} / ${summary.total_employees}`,
+      color: "#34d399",
+    },
+    {
+      label: "Optimized Cost",
+      value: fmtCost(summary.total_optimized_cost),
+      color: "#f59e0b",
+    },
+    {
+      label: "Baseline Cost",
+      value: fmtCost(summary.total_baseline_cost),
+      color: "rgba(148,163,184,0.6)",
+    },
+    {
+      label: "Net Savings",
+      value: fmtCost(summary.net_savings),
+      color: "#34d399",
+    },
+    {
+      label: "Savings %",
+      value: `${Number(summary.savings_percentage).toFixed(1)}%`,
+      color: "#34d399",
+    },
   ];
   return (
-    <div style={{
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))",
-      gap: "10px",
-    }}>
-      {items.map(({ label, value, accent }) => (
+    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+      {items.map(({ label, value, color }) => (
         <div
           key={label}
+          className="rounded-xl px-4 py-3"
           style={{
-            background: "var(--color-surface)",
-            border: "1px solid var(--color-border)",
-            borderRadius: "8px",
-            padding: "12px 14px",
-          }}
-        >
-          <p style={{
-            margin: 0,
-            fontSize: "0.625rem",
-            fontWeight: 600,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            color: "var(--color-text-3)",
-            marginBottom: "6px",
+            background: "rgba(15,23,42,0.6)",
+            border: "1px solid rgba(148,163,184,0.1)",
           }}>
+          <p
+            className="text-[10px] font-bold uppercase tracking-widest mb-1"
+            style={{ color: "rgba(148,163,184,0.4)" }}>
             {label}
           </p>
-          <p style={{
-            margin: 0,
-            fontSize: "1rem",
-            fontWeight: 700,
-            letterSpacing: "-0.02em",
-            lineHeight: 1,
-            color: accent,
-          }}>
+          <p className="text-base font-bold" style={{ color }}>
             {value}
           </p>
         </div>
@@ -879,17 +889,21 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
 
   const result =
     selectedResult?.[
-      mapMode === "optimized"
-        ? "result"
-        : mapMode === "infeasible"
-          ? "resultInfeasible"
-          : "resultNoConstraints"
+    mapMode === "optimized"
+      ? "result"
+      : mapMode === "infeasible"
+        ? "resultInfeasible"
+        : "resultNoConstraints"
     ];
 
   if (!result) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <p style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--color-text-3)" }}>
+      <div
+        className="flex items-center justify-center py-24"
+        style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+        <p
+          className="text-sm font-semibold"
+          style={{ color: "rgba(148,163,184,0.4)" }}>
           No result data available.
         </p>
       </div>
@@ -934,35 +948,29 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
   return (
     <div
       className="space-y-6"
-      style={{ fontFamily: "'Inter Variable', 'Inter', system-ui, sans-serif" }}>
+      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div style={{ width: "3px", height: "14px", borderRadius: "2px", background: "var(--color-accent)", flexShrink: 0 }} />
-          <span style={{
-            fontSize: "0.6875rem",
-            fontWeight: 700,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-            color: "var(--color-text-2)",
-          }}>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <p
+            className="text-[11px] font-bold uppercase tracking-[0.2em]"
+            style={{ color: "#f59e0b" }}>
+            Optimization Results
+          </p>
+          <h2
+            className="text-2xl font-bold text-white mt-0.5"
+            style={{ fontFamily: "'Fraunces', serif" }}>
             Route Breakdown
-          </span>
-          <div style={{ height: "1px", width: "48px", background: "var(--color-border)" }} />
+          </h2>
         </div>
-        <div style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "6px",
-          padding: "4px 10px",
-          borderRadius: "6px",
-          fontSize: "0.6875rem",
-          fontWeight: 600,
-          background: "var(--color-surface)",
-          border: "1px solid var(--color-border-2)",
-          color: "var(--color-text-2)",
-        }}>
-          <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--color-accent)", flexShrink: 0 }} />
+        <div
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold self-start"
+          style={{
+            background: "rgba(245,158,11,0.12)",
+            border: "1px solid rgba(245,158,11,0.3)",
+            color: "#fbbf24",
+          }}>
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
           Constrained Optimization
         </div>
       </div>
@@ -972,63 +980,47 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
 
       {/* Filter bar */}
       <div
+        className="rounded-2xl px-5 py-4 space-y-4"
         style={{
-          borderRadius: "var(--radius-lg)",
-          padding: "16px",
-          background: "var(--color-surface)",
-          border: "1px solid var(--color-border)",
-          display: "flex",
-          flexDirection: "column",
-          gap: "14px",
+          background: "rgba(15,23,42,0.6)",
+          border: "1px solid rgba(148,163,184,0.1)",
         }}>
         {/* Mode toggle */}
-        <div style={{
-          display: "inline-flex",
-          alignItems: "center",
-          padding: "3px",
-          borderRadius: "var(--radius-md)",
-          gap: "2px",
-          background: "var(--color-bg)",
-          border: "1px solid var(--color-border)",
-        }}>
+        <div
+          className="flex items-center p-1 rounded-xl gap-1 w-fit"
+          style={{
+            background: "rgba(15,23,42,0.7)",
+            border: "1px solid rgba(148,163,184,0.1)",
+          }}>
           {[
-            { key: "vehicle",  label: "By Vehicle" },
+            { key: "vehicle", label: "By Vehicle" },
             { key: "employee", label: "By Employee" },
           ].map(({ key, label }) => (
             <button
               key={key}
               type="button"
               onClick={() => setFilterMode(key)}
-              style={{
-                padding: "5px 14px",
-                borderRadius: "5px",
-                border: filterMode === key ? "1px solid var(--color-border)" : "1px solid transparent",
-                background: filterMode === key ? "var(--color-surface)" : "transparent",
-                color: filterMode === key ? "var(--color-text)" : "var(--color-text-3)",
-                fontSize: "0.75rem",
-                fontWeight: 600,
-                cursor: "pointer",
-                transition: "all 120ms ease",
-                boxShadow: filterMode === key ? "var(--shadow-sm)" : "none",
-              }}
-            >
+              className="px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-200"
+              style={
+                filterMode === key
+                  ? {
+                    background: "linear-gradient(135deg, #f59e0b, #ea580c)",
+                    color: "#0f172a",
+                    boxShadow: "0 0 16px rgba(245,158,11,0.3)",
+                  }
+                  : { color: "rgba(148,163,184,0.5)" }
+              }>
               {label}
             </button>
           ))}
         </div>
 
-        {/* Filter: items */}
+        {/* Filter control — auto chips vs dropdown */}
         <div>
-          <span style={{
-            fontSize: "0.625rem",
-            fontWeight: 600,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            color: "var(--color-text-3)",
-            display: "block",
-            marginBottom: "10px",
-          }}>
-            Filter
+          <span
+            className="text-[10px] font-bold uppercase tracking-widest mb-2.5 block"
+            style={{ color: "rgba(148,163,184,0.35)" }}>
+            Filter:
           </span>
 
           {filterMode === "vehicle" && (
