@@ -435,11 +435,8 @@ export default function App() {
   return (
     <div
       className="flex h-screen overflow-hidden"
-      style={{
-        fontFamily: "'Plus Jakarta Sans', sans-serif",
-        background:
-          "linear-gradient(135deg, #0f1623 0%, #111827 50%, #0c1420 100%)",
-      }}>
+      style={{ fontFamily: "'Inter Variable', 'Inter', system-ui, sans-serif" }}
+    >
       <ProgressBar
         progress={progress}
         isVisible={showProgress}
@@ -449,7 +446,7 @@ export default function App() {
       {hasCases && (
         <>
           {/* Desktop sidebar */}
-          <div className="hidden md:flex flex-col w-64 flex-shrink-0">
+          <div className="hidden md:flex flex-col flex-shrink-0" style={{ width: "256px" }}>
             <Sidebar
               results={results}
               selectedResult={selectedResult}
@@ -464,29 +461,18 @@ export default function App() {
           {/* Mobile top bar */}
           {isMobile && (
             <header
-              className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 md:hidden"
+              className="fixed top-0 left-0 right-0 flex items-center justify-between px-4 py-3 md:hidden"
               style={{
-                background: "rgba(15,22,35,0.95)",
-                borderBottom: "1px solid rgba(148,163,184,0.08)",
-                backdropFilter: "blur(12px)",
-              }}>
+                background: "var(--color-surface)",
+                borderBottom: "1px solid var(--color-border)",
+                zIndex: 2000,
+              }}
+            >
               {/* Brand */}
               <div className="flex items-center gap-2.5">
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{
-                    background: "linear-gradient(135deg, #f59e0b, #ea580c)",
-                  }}>
-                  <img
-                    src="/favicon.svg"
-                    alt=""
-                    className="w-4 h-4 brightness-0 invert"
-                  />
-                </div>
-                <span
-                  className="text-white font-bold text-base tracking-wide"
-                  style={{ fontFamily: "'Fraunces', serif" }}>
-                  VELORA
+                <img src="/favicon.svg" alt="" style={{ height: "26px" }} />
+                <span style={{ fontWeight: 700, fontSize: "0.9375rem", color: "var(--color-text)", letterSpacing: "0.01em" }}>
+                  Velora
                 </span>
               </div>
 
@@ -494,16 +480,33 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setSidebarOpen((o) => !o)}
-                className="w-9 h-9 flex flex-col items-center justify-center gap-1.5 rounded-xl bg-slate-800/80 border border-slate-700/60">
-                <span
-                  className={`block w-4 h-[2px] bg-slate-300 rounded-full transition-all duration-200 ${sidebarOpen ? "rotate-45 translate-y-[7px]" : ""}`}
-                />
-                <span
-                  className={`block w-4 h-[2px] bg-slate-300 rounded-full transition-all duration-200 ${sidebarOpen ? "opacity-0" : ""}`}
-                />
-                <span
-                  className={`block w-4 h-[2px] bg-slate-300 rounded-full transition-all duration-200 ${sidebarOpen ? "-rotate-45 -translate-y-[7px]" : ""}`}
-                />
+                style={{
+                  width: "34px",
+                  height: "34px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "4px",
+                  border: "1px solid var(--color-border-2)",
+                  borderRadius: "6px",
+                  background: "var(--color-surface-2)",
+                  cursor: "pointer",
+                }}>
+                {[0, 1, 2].map(i => (
+                  <span key={i} style={{
+                    display: "block",
+                    width: "14px",
+                    height: "1.5px",
+                    borderRadius: "999px",
+                    background: "var(--color-text-2)",
+                    transition: "transform 0.2s ease, opacity 0.2s ease",
+                    transform: sidebarOpen && i === 0 ? "translateY(5.5px) rotate(45deg)"
+                      : sidebarOpen && i === 2 ? "translateY(-5.5px) rotate(-45deg)"
+                      : "none",
+                    opacity: sidebarOpen && i === 1 ? 0 : 1,
+                  }} />
+                ))}
               </button>
             </header>
           )}
@@ -512,10 +515,11 @@ export default function App() {
           {isMobile && sidebarOpen && (
             <>
               <div
-                className="fixed inset-0 z-40 bg-slate-950/70 backdrop-blur-sm"
+                className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm"
+                style={{ zIndex: 1800 }}
                 onClick={() => setSidebarOpen(false)}
               />
-              <div className="fixed top-0 left-0 bottom-0 z-50 w-72 flex flex-col">
+              <div className="fixed top-0 left-0 bottom-0 w-72 flex flex-col" style={{ zIndex: 1900 }}>
                 <Sidebar
                   results={results}
                   selectedResult={selectedResult}
@@ -538,7 +542,16 @@ export default function App() {
       <main
         className={`flex-1 overflow-y-auto ${isMobile && hasCases ? "pt-14" : ""}`}>
         {error && (
-          <div className="mx-4 mt-4 px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-sm font-semibold">
+          <div style={{
+            margin: "12px 16px 0",
+            padding: "10px 14px",
+            borderRadius: "8px",
+            background: "var(--color-red-muted)",
+            border: "1px solid rgba(239,68,68,0.25)",
+            color: "#fca5a5",
+            fontSize: "0.8125rem",
+            fontWeight: 600,
+          }}>
             {error}
           </div>
         )}
