@@ -100,7 +100,7 @@ export default function TestCasesView({
               value={`${formatNumber(metrics.total_distance_km)} km`}
             />
             <StatCard
-              label="TOTAL COST"
+              label="TOTAL OBJECTIVE COST"
               value={formatCurrency(metrics.total_cost)}
             />
           </div>

@@ -433,7 +433,7 @@ function VehicleView({ vehicles, inputVehicles, selectedVehicleId }) {
                   <p
                     className="text-[10px] font-bold uppercase tracking-widest"
                     style={{ color: palette.text }}>
-                    Total Cost
+                    Total Objective Cost
                   </p>
                   <p className="text-xl font-bold text-white">
                     {fmtCost(vehicle.total_cost)}

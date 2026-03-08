@@ -144,7 +144,7 @@ export const TestcasePDF = ({ result, mapMode, metrics, mapImage }) => {
                         <Text style={styles.value}>{formatDist(metrics?.total_distance_km)}</Text>
                     </View>
                     <View style={styles.row}>
-                        <Text style={styles.label}>Total Cost:</Text>
+                        <Text style={styles.label}>Total Objective Cost:</Text>
                         <Text style={styles.value}>{formatCurrency(metrics?.total_cost)}</Text>
                     </View>
                     <View style={styles.row}>
