@@ -159,27 +159,51 @@ function Tooltip({ trip, color, anchorRect, containerRect }) {
   const distance = trip.distanceKm ?? trip.distance_km ?? trip.distance ?? null;
   const stops = trip.stops ?? trip.stop_count ?? null;
 
-  // Position: prefer above, fall back below
   const tipW = 220;
-  const clipLeft = anchorRect.left - containerRect.left;
-  const clipRight = anchorRect.right - containerRect.left;
-  const centerX = (clipLeft + clipRight) / 2;
-  let left = centerX - tipW / 2;
-  left = Math.max(8, Math.min(left, containerRect.width - tipW - 8));
+  const tipH = 180; // Estimated height of tooltip
+  const padding = 12;
 
-  const aboveY = anchorRect.top - containerRect.top - 8;
-  const belowY = anchorRect.bottom - containerRect.top + 8;
-  const showAbove = aboveY > 120;
-  const top = showAbove ? aboveY : belowY;
+  // Relative coordinates to the container
+  const localAnchorTop = anchorRect.top - containerRect.top;
+  const localAnchorBottom = anchorRect.bottom - containerRect.top;
+  const localAnchorLeft = anchorRect.left - containerRect.left;
+  const localAnchorRight = anchorRect.right - containerRect.left;
+  const localAnchorCenterY = (localAnchorTop + localAnchorBottom) / 2;
+
+  // Decide mode: Top -> Bottom -> Side
+  let mode = "above";
+  const fitsAbove = localAnchorTop > tipH + padding;
+  const fitsBelow = (containerRect.height - localAnchorBottom) > tipH + padding;
+
+  if (!fitsAbove) {
+    if (fitsBelow) mode = "below";
+    else mode = "side";
+  }
+
+  const centerX = (localAnchorLeft + localAnchorRight) / 2;
+  let left, top, transform;
+
+  if (mode === "side") {
+    // Show beside the anchor
+    const fitsRight = (containerRect.width - localAnchorRight) > tipW + padding;
+    left = fitsRight ? localAnchorRight + 8 : localAnchorLeft - tipW - 8;
+    top = localAnchorCenterY;
+    transform = "translateY(-50%)";
+  } else {
+    // Show above or below centered
+    left = Math.max(8, Math.min(centerX - tipW / 2, containerRect.width - tipW - 8));
+    top = mode === "above" ? localAnchorTop - 8 : localAnchorBottom + 8;
+    transform = mode === "above" ? "translateY(-100%)" : "none";
+  }
 
   return (
     <div
-      className="absolute z-500 pointer-events-none"
+      className="absolute z-[1000] pointer-events-none"
       style={{
         left,
         top,
         width: tipW,
-        transform: showAbove ? "translateY(-100%)" : "none",
+        transform,
       }}>
       <div
         className="rounded-md border text-xs shadow-2xl overflow-hidden"
@@ -226,14 +250,18 @@ function Tooltip({ trip, color, anchorRect, containerRect }) {
         </div>
       </div>
 
-      {/* Arrow */}
-      {showAbove && (
+      {/* Arrow - only for Top/Bottom modes */}
+      {mode !== "side" && (
         <div
-          className="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-full w-0 h-0"
+          className="absolute left-1/2 -translate-x-1/2 w-0 h-0"
           style={{
+            left: Math.max(20, Math.min(centerX - left, tipW - 20)), // Pin arrow to anchor center relative to tooltip left
+            bottom: mode === "above" ? 0 : "auto",
+            top: mode === "below" ? 0 : "auto",
+            transform: mode === "above" ? "translateY(100%)" : "translateY(-100%)",
             borderLeft: "6px solid transparent",
             borderRight: "6px solid transparent",
-            borderTop: `6px solid ${color.border}`,
+            [mode === "above" ? "borderTop" : "borderBottom"]: `6px solid ${color.border}`,
           }}
         />
       )}
@@ -384,7 +412,8 @@ export default function TripTimeline({ trips = [], title = "Trip Timeline" }) {
 
   return (
     <div
-      className="rounded-md border border-slate-700/60 bg-[#0a0c10] backdrop-blur-sm shadow-2xl overflow-hidden"
+      ref={containerRef}
+      className="relative rounded-md border border-slate-700/60 bg-[#0a0c10] backdrop-blur-sm shadow-2xl"
       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       {/* ── Header ── */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700/50 bg-[#0c0e12]">
@@ -445,8 +474,7 @@ export default function TripTimeline({ trips = [], title = "Trip Timeline" }) {
 
       {/* ── Timeline body ── */}
       <div
-        ref={containerRef}
-        className="relative overflow-x-auto overflow-y-visible"
+        className="relative overflow-x-auto overflow-y-visible z-10"
         style={{ minHeight: vehicles.length * ROW_H + 64 }}>
         {/* Label column + track area side by side */}
         <div className="flex min-w-[520px]">
@@ -598,21 +626,22 @@ export default function TripTimeline({ trips = [], title = "Trip Timeline" }) {
           </div>
         </div>
 
-        {/* Floating tooltip */}
-        {hovered && (
-          <Tooltip
-            trip={hovered.trip}
-            color={vehicleColor(
-              vehicles.find(
-                (v) =>
-                  v.id === (hovered.trip.vehicleId ?? hovered.trip.vehicle_id),
-              )?.colorIndex ?? 0,
-            )}
-            anchorRect={hovered.anchorRect}
-            containerRect={hovered.containerRect}
-          />
-        )}
       </div>
+
+      {/* Floating tooltip - Rendered at root level to bypass scroll clipping */}
+      {hovered && (
+        <Tooltip
+          trip={hovered.trip}
+          color={vehicleColor(
+            vehicles.find(
+              (v) =>
+                v.id === (hovered.trip.vehicleId ?? hovered.trip.vehicle_id),
+            )?.colorIndex ?? 0,
+          )}
+          anchorRect={hovered.anchorRect}
+          containerRect={containerRef.current?.getBoundingClientRect()}
+        />
+      )}
 
       {/* ── Footer summary bar ── */}
       <div className="px-6 py-3 border-t border-slate-700/50 bg-slate-900/30 flex items-center gap-6 flex-wrap">
