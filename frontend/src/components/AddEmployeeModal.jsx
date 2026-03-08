@@ -61,16 +61,15 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }) {
             alignItems: 'center',
             justifyContent: 'center',
             padding: '20px',
-            backgroundColor: 'rgba(11, 15, 25, 0.85)',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
             backdropFilter: 'blur(8px)',
-            fontFamily: "'Inter Variable', 'Inter', system-ui, sans-serif"
         }}>
             <div style={{
                 width: '100%',
                 maxWidth: '1200px',
-                backgroundColor: 'var(--color-bg)',
+                backgroundColor: '#0a0c10',
                 border: '1px solid var(--color-border)',
-                borderRadius: '16px',
+                borderRadius: '6px',
                 boxShadow: '0 24px 48px -12px rgba(0, 0, 0, 0.5)',
                 display: 'flex',
                 flexDirection: 'column',
@@ -78,9 +77,9 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }) {
                 overflow: 'hidden'
             }}>
                 <div style={{
-                    padding: '20px 24px',
+                    padding: '16px 24px',
                     borderBottom: '1px solid var(--color-border)',
-                    backgroundColor: 'var(--color-surface)',
+                    backgroundColor: '#0c0e12',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center'
@@ -137,7 +136,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }) {
                                 position: 'sticky',
                                 top: 0,
                                 zIndex: 10,
-                                backgroundColor: 'var(--color-surface)',
+                                backgroundColor: '#131620',
                                 borderBottom: '1px solid var(--color-border)'
                             }}>
                                 <tr>
@@ -159,15 +158,16 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }) {
                                     const inputStyle = {
                                         width: '100%',
                                         minWidth: '80px',
-                                        backgroundColor: 'var(--color-surface-2)',
+                                        backgroundColor: '#1a1d26',
                                         border: '1px solid var(--color-border)',
-                                        borderRadius: '6px',
+                                        borderRadius: '4px',
                                         padding: '8px 12px',
                                         fontSize: '0.8125rem',
                                         fontWeight: 500,
                                         color: 'var(--color-text)',
                                         outline: 'none',
-                                        transition: 'border-color 150ms ease'
+                                        transition: 'border-color 150ms ease',
+                                        fontFamily: 'var(--font-data)'
                                     };
                                     const wrapStyle = { padding: '12px 16px', borderBottom: '1px solid var(--color-border)' };
 
@@ -220,9 +220,9 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }) {
                     </div>
 
                     <div style={{
-                        padding: '16px 24px',
+                        padding: '12px 24px',
                         borderTop: '1px solid var(--color-border)',
-                        backgroundColor: 'var(--color-surface)',
+                        backgroundColor: '#0c0e12',
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center'
@@ -231,8 +231,8 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }) {
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '6px',
-                            padding: '8px 16px',
-                            borderRadius: '6px',
+                            padding: '6px 16px',
+                            borderRadius: '4px',
                             backgroundColor: 'var(--color-surface-2)',
                             border: '1px solid var(--color-border)',
                             color: 'var(--color-text)',
@@ -255,8 +255,8 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }) {
 
                         <div style={{ display: 'flex', gap: '12px' }}>
                             <button type="button" onClick={onClose} style={{
-                                padding: '8px 16px',
-                                borderRadius: '6px',
+                                padding: '6px 16px',
+                                borderRadius: '4px',
                                 backgroundColor: 'transparent',
                                 border: '1px solid transparent',
                                 color: 'var(--color-text-2)',
@@ -273,8 +273,8 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }) {
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 gap: '6px',
-                                padding: '8px 24px',
-                                borderRadius: '6px',
+                                padding: '6px 24px',
+                                borderRadius: '4px',
                                 background: 'var(--color-accent)',
                                 border: 'none',
                                 color: '#fff',
@@ -286,7 +286,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }) {
                             }}
                                 onMouseEnter={e => e.currentTarget.style.background = 'var(--color-accent-h)'}
                                 onMouseLeave={e => e.currentTarget.style.background = 'var(--color-accent)'}>
-                                Process Dynamic Optimization
+                                Process
                             </button>
                         </div>
                     </div>

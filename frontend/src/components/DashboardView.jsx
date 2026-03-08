@@ -6,16 +6,10 @@ import AddEmployeeModal from "./AddEmployeeModal";
 import ViolationsReport from "./ViolationsReport";
 import { useState, useRef } from "react";
 import { postDynamicOptimization } from "../api";
+import domtoimage from 'dom-to-image';
+import { pdf } from '@react-pdf/renderer';
+import { TestcasePDF } from './PDFReport';
 
-/* ── Google Fonts ── */
-if (typeof document !== "undefined" && !document.getElementById("db-fonts")) {
-  const link = document.createElement("link");
-  link.id = "db-fonts";
-  link.rel = "stylesheet";
-  link.href =
-    "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,400&display=swap";
-  document.head.appendChild(link);
-}
 
 /* ── Icons ── */
 const icons = {
@@ -167,7 +161,7 @@ function MetricCard({ label, value, variant = "default", icon }) {
           </div>
         )}
       </div>
-      <p className={`text-[1.6rem] font-bold leading-none tracking-tight pl-2 ${v.value}`}>
+      <p className={`text-[1.6rem] font-extrabold leading-none tracking-tight pl-2 ${v.value}`}>
         {value ?? <span className="text-[var(--color-text-3)] font-normal text-xl">—</span>}
       </p>
     </div>
@@ -459,8 +453,8 @@ export default function DashboardView({
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div style={{ position: "relative" }}>
+          <div className="flex items-center gap-3 self-end">
+            <div style={{ position: "relative" }} >
               <button
                 onClick={() => setIsDownloadMenuOpen(!isDownloadMenuOpen)}
                 title="Download Export"
@@ -530,13 +524,13 @@ export default function DashboardView({
         {/* ── Map Card ── */}
         <div className="rounded-lg border overflow-hidden" style={{ background: "var(--color-surface)", borderColor: "var(--color-border)" }}>
           {/* Toolbar */}
-          <div className="flex flex-row flex-wrap sm:flex-nowrap items-center justify-between gap-4 px-6 py-4 border-b overflow-x-auto no-scrollbar" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}>
+          <div className="flex flex-row flex-wrap sm:flex-nowrap items-center justify-between gap-4 px-6 py-4 border-b  no-scrollbar" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}>
             <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0 w-full sm:w-auto">
               <span className="hidden lg:inline text-[11px] font-bold text-slate-500 uppercase tracking-widest flex-shrink-0">
                 Map View
               </span>
               {/* Toggle group */}
-              <div className="flex items-center rounded-md p-1 gap-0.5 border w-full sm:w-auto" style={{ background: "var(--color-bg)", borderColor: "var(--color-border)" }}>
+              <div className="flex items-center rounded-md p-1 gap-0.5 border w-full sm:w-auto overflow-x-auto" style={{ background: "var(--color-bg)", borderColor: "var(--color-border)" }}>
                 {[
                   {
                     key: "initial",
@@ -545,7 +539,7 @@ export default function DashboardView({
                   },
                   {
                     key: "optimized",
-                    label: "Optimized Routes",
+                    label: "All Constraints",
                     shortLabel: "Optimized",
                   },
                   {
@@ -568,7 +562,7 @@ export default function DashboardView({
                       onClick={() => !disabled && setMapMode(key)}
                       disabled={disabled}
                       className={`
-                        px-2.5 sm:px-3 xl:px-4 py-1.5 rounded-md text-[10px] sm:text-xs font-bold tracking-wide transition-all duration-200 whitespace-nowrap flex-1 sm:flex-none flex-shrink-0
+                        px-2.5 sm:px-3 xl:px-4 py-1.5 rounded-md text-[10px] sm:text-xs font-semibold tracking-tight transition-all duration-200 whitespace-nowrap flex-1 sm:flex-none flex-shrink-0
                         ${active
                           ? "text-white"
                           : disabled
@@ -580,8 +574,8 @@ export default function DashboardView({
                         color: active ? "#fff" : disabled ? "var(--color-text-3)" : "var(--color-text-2)",
                         background: active ? "var(--color-accent)" : "transparent",
                       }}>
-                      <span className="hidden 2xl:inline">{label}</span>
-                      <span className="2xl:hidden">{shortLabel}</span>
+                      <span className="hidden lg:inline">{label}</span>
+                      <span className="lg:hidden">{shortLabel}</span>
                     </button>
                   );
                 })}

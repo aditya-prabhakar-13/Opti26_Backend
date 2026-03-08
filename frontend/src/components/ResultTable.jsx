@@ -1,14 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 
 /* ── Fonts (injected once) ── */
-if (typeof document !== "undefined" && !document.getElementById("db-fonts")) {
-  const link = document.createElement("link");
-  link.id = "db-fonts";
-  link.rel = "stylesheet";
-  link.href =
-    "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,700&display=swap";
-  document.head.appendChild(link);
-}
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -963,7 +955,7 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
             Route Breakdown
           </h2>
         </div>
-        <div
+        {/* <div
           className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-xs font-bold self-start"
           style={{
             background: "rgba(245,158,11,0.12)",
@@ -972,11 +964,11 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
           }}>
           <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
           Constrained Optimization
-        </div>
+        </div> */}
       </div>
 
       {/* Summary */}
-      <SummaryBar summary={summary} />
+      {/* <SummaryBar summary={summary} /> */}
 
       {/* Filter bar */}
       <div

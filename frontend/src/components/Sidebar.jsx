@@ -1,13 +1,3 @@
-/* ── Google Fonts (injected once) ── */
-if (typeof document !== "undefined" && !document.getElementById("db-fonts")) {
-  const link = document.createElement("link");
-  link.id = "db-fonts";
-  link.rel = "stylesheet";
-  link.href =
-    "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,400&display=swap";
-  document.head.appendChild(link);
-}
-
 /* ── Icons ── */
 function IconPlus() {
   return (
@@ -74,7 +64,7 @@ function TestCaseRow({ result, isActive, isDeleting, onOpen, onDelete }) {
   return (
     <div
       className={`
-        group relative flex items-center gap-3 px-3 py-3 rounded-lg cursor-pointer
+        group relative flex items-center gap-3 px-3 py-3 rounded-md cursor-pointer
         transition-all duration-200
         ${isActive
           ? "bg-amber-500/15 border border-amber-500/30"
@@ -90,7 +80,7 @@ function TestCaseRow({ result, isActive, isDeleting, onOpen, onDelete }) {
       {/* Icon */}
       <div
         className={`
-        flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center
+        flex-shrink-0 w-8 h-8 rounded-md flex items-center justify-center
         ${isActive ? "bg-amber-500/20 text-amber-400" : "bg-slate-700/80 text-slate-400 group-hover:bg-slate-600/80"}
         transition-colors duration-200
       `}>
@@ -120,7 +110,7 @@ function TestCaseRow({ result, isActive, isDeleting, onOpen, onDelete }) {
         }}
         className="
           flex-shrink-0 opacity-0 group-hover:opacity-100
-          w-6 h-6 rounded-lg flex items-center justify-center
+          w-6 h-6 rounded-md flex items-center justify-center
           text-slate-500 hover:text-rose-400 hover:bg-rose-400/10
           transition-all duration-150
           disabled:opacity-30
@@ -158,11 +148,7 @@ export default function Sidebar({
       }}>
       {/* ── Brand ── */}
       <div className="flex items-center gap-3 px-5 py-6">
-        {/* <div
-          className="w-9 h-9 rounded-lg flex items-center justify-center shadow-lg shadow-amber-900/40 flex-shrink-0"
-          style={{ background: "linear-gradient(135deg, #f59e0b, #ea580c)" }}> */}
         <img src="/favicon.svg" alt="" className="h-8" />
-        {/* </div> */}
         <div>
           <p
             className="text-base font-bold text-white leading-none tracking-wide"
@@ -185,7 +171,7 @@ export default function Sidebar({
           onClick={onNewCase}
           className="
             w-full flex items-center justify-center gap-2.5
-            px-4 py-2.5 rounded-lg
+            px-4 py-2.5 rounded-md
             font-bold text-sm text-white
             transition-all duration-200
             hover:-translate-y-0.5
@@ -217,7 +203,7 @@ export default function Sidebar({
       <div className="flex-1 overflow-y-auto px-3 pb-4 space-y-1 scrollbar-thin">
         {results.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-10 px-4 text-center">
-            <div className="w-10 h-10 rounded-lg bg-slate-800/80 flex items-center justify-center text-slate-600">
+            <div className="w-10 h-10 rounded-md bg-slate-800/80 flex items-center justify-center text-slate-600">
               <IconRoute />
             </div>
             <p className="text-xs text-slate-500 leading-relaxed">
@@ -257,7 +243,7 @@ export default function Sidebar({
             }}
             className="
               w-full text-[10px] font-semibold
-              px-3 py-2 rounded-lg
+              px-3 py-2 rounded-md
               text-rose-400 hover:bg-rose-500/10
               transition-colors duration-200
             "

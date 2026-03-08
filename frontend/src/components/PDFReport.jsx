@@ -307,48 +307,52 @@ export const TestcasePDF = ({ result, mapMode, metrics, mapImage }) => {
                         })}
                     </View>
                 )}
+            </Page>
 
-                {violations.length > 0 && (
+            <Page size="A4" style={styles.page}>
+                <Text style={styles.title}>Constraint Analysis Report</Text>
+
+                {violations.length > 0 ? (
                     <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Constraint Violations ({violations.length})</Text>
+                        <Text style={styles.sectionTitle}>Recorded Violations ({violations.length})</Text>
                         <View style={styles.table}>
                             <View style={styles.tableRow}>
                                 <View style={{ ...styles.tableColHeader, width: '15%' }}>
                                     <Text style={styles.tableCellHeader}>Severity</Text>
                                 </View>
-                                <View style={{ ...styles.tableColHeader, width: '35%' }}>
+                                <View style={{ ...styles.tableColHeader, width: '30%' }}>
                                     <Text style={styles.tableCellHeader}>Constraint</Text>
                                 </View>
                                 <View style={{ ...styles.tableColHeader, width: '15%' }}>
                                     <Text style={styles.tableCellHeader}>Emp ID</Text>
                                 </View>
-                                <View style={{ ...styles.tableColHeader, width: '35%' }}>
+                                <View style={{ ...styles.tableColHeader, width: '40%' }}>
                                     <Text style={styles.tableCellHeader}>Detail</Text>
                                 </View>
                             </View>
 
-                            {violations.slice(0, 20).map((v, i) => (
+                            {violations.map((v, i) => (
                                 <View style={styles.tableRow} key={i}>
-                                    <View style={{ ...styles.tableCol, width: '15%' }}>
-                                        <Text style={styles.tableCell}>{v.severity}</Text>
+                                    <View style={{ ...styles.tableCol, width: '15%', backgroundColor: v.severity === 'HARD' ? '#fecaca' : '#fef3c7' }}>
+                                        <Text style={{ ...styles.tableCell, fontWeight: 'bold', color: v.severity === 'HARD' ? '#991b1b' : '#92400e' }}>{v.severity}</Text>
                                     </View>
-                                    <View style={{ ...styles.tableCol, width: '35%' }}>
+                                    <View style={{ ...styles.tableCol, width: '30%' }}>
                                         <Text style={styles.tableCell}>{v.constraint_name}</Text>
                                     </View>
                                     <View style={{ ...styles.tableCol, width: '15%' }}>
                                         <Text style={styles.tableCell}>{v.employee_id || '-'}</Text>
                                     </View>
-                                    <View style={{ ...styles.tableCol, width: '35%' }}>
+                                    <View style={{ ...styles.tableCol, width: '40%' }}>
                                         <Text style={styles.tableCell}>{v.detail}</Text>
                                     </View>
                                 </View>
                             ))}
                         </View>
-                        {violations.length > 20 && (
-                            <Text style={{ fontSize: 10, color: '#64748b', marginTop: 5, fontStyle: 'italic' }}>
-                                * Showing top 20 violations out of {violations.length}.
-                            </Text>
-                        )}
+                    </View>
+                ) : (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Compliance Status</Text>
+                        <Text style={styles.tableCell}>No constraint violations found. The optimization plan fully adheres to all defined fleet rules and safety standards.</Text>
                     </View>
                 )}
             </Page>

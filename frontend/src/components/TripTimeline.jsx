@@ -3,14 +3,6 @@ import { useRef, useState, useEffect, useCallback } from "react";
 /* ─────────────────────────────────────────────
    Fonts (shared with rest of app)
 ───────────────────────────────────────────── */
-if (typeof document !== "undefined" && !document.getElementById("db-fonts")) {
-  const link = document.createElement("link");
-  link.id = "db-fonts";
-  link.rel = "stylesheet";
-  link.href =
-    "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,700&display=swap";
-  document.head.appendChild(link);
-}
 
 /* ─────────────────────────────────────────────
    Colour palette — matches map vehicle colours

@@ -1,8 +1,7 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto:wght@500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,400&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/inter";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -69,6 +68,11 @@
   --sidebar-accent-foreground: #e8ecf0;
   --sidebar-border: #1c2030;
   --sidebar-ring: #c9960e;
+
+  /* ── Typography Tokens ── */
+  --font-ui: "Plus Jakarta Sans", sans-serif;
+  --font-data: "Inter", sans-serif;
+  --font-serif: "Fraunces", serif;
 }
 
 * {
@@ -77,10 +81,12 @@
 
 body {
   margin: 0;
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-ui);
   background: var(--color-bg);
   color: var(--color-text);
   overflow-y: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 h1,
