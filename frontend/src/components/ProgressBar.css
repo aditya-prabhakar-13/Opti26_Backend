@@ -10,7 +10,7 @@
   justify-content: center;
   z-index: 9999;
   backdrop-filter: blur(2px);
-}
+} 
 
 .progress-container {
   background: #0d1117;
