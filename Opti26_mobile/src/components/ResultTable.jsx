@@ -976,7 +976,7 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
       </div>
 
       {/* Summary */}
-      <SummaryBar summary={summary} />
+      {/* <SummaryBar summary={summary} /> */}
 
       {/* Filter bar */}
       <div

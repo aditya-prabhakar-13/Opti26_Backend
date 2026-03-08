@@ -11,14 +11,14 @@ export default function ProgressBar({ progress, isVisible, onComplete }) {
   if (!isVisible) return null;
 
   const stageMessages = {
-    starting: '🚀 Initializing...',
-    setup: '📁 Setting up directories...',
-    parsing: '📊 Parsing Excel file...',
-    routing: '🗺️ Calculating road distances...',
-    optimizing: '⚙️ Running optimization algorithm...',
-    processing: '📈 Processing results...',
-    saving: '💾 Saving to database...',
-    complete: '✅ Complete!',
+    starting: 'Initializing...',
+    setup: 'Setting up directories...',
+    parsing: 'Parsing Excel file...',
+    routing: 'Calculating road distances...',
+    optimizing: 'Running optimization algorithm...',
+    processing: 'Processing results...',
+    saving: 'Saving to database...',
+    complete: 'Complete!',
   };
 
   const message = stageMessages[progress.stage] || progress.message || 'Processing...';
@@ -30,14 +30,14 @@ export default function ProgressBar({ progress, isVisible, onComplete }) {
         <div className="progress-header">
           <h3>Optimization in Progress</h3>
         </div>
-        
+
         <div className="progress-content">
           <div className="progress-message">{message}</div>
-          
+
           <div className="progress-bar-container">
             <div className="progress-bar-background">
-              <div 
-                className="progress-bar-fill" 
+              <div
+                className="progress-bar-fill"
                 style={{ width: `${percentage}%` }}
               >
                 <div className="progress-bar-animated"></div>

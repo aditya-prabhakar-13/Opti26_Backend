@@ -558,37 +558,32 @@ export default function App() {
           {/* Mobile top bar */}
           {isMobile && (
             <header
-              className="fixed top-0 left-0 right-0 flex items-center justify-between px-4 py-3 md:hidden"
+              className="fixed top-0 left-0 right-0 flex items-center justify-between px-4 py-3 md:hidden z-1000"
               style={{
                 background: "var(--color-surface)",
                 borderBottom: "1px solid var(--color-border)",
                 backdropFilter: "blur(8px)",
               }}>
               {/* Brand */}
-              <div className="flex items-center gap-2.5">
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{
-                    background: "linear-gradient(135deg, #f59e0b, #ea580c)",
-                  }}>
-                  <img
-                    src="/favicon.svg"
-                    alt=""
-                    className="w-4 h-4 brightness-0 invert"
-                  />
+              <div className="flex items-center gap-3">
+                <img src="/favicon.svg" alt="" className="h-8" />
+                <div>
+                  <p
+                    className="text-base font-bold text-white leading-none tracking-wide"
+                    style={{ fontFamily: "'Fraunces', serif" }}>
+                    VELORA
+                  </p>
+                  <p className="text-[10px] text-amber-500/80 font-semibold tracking-widest uppercase mt-0.5">
+                    Driven by Possibility
+                  </p>
                 </div>
-                <span
-                  className="text-white font-bold text-base tracking-wide"
-                  style={{ fontFamily: "'Fraunces', serif" }}>
-                  VELORA
-                </span>
               </div>
 
               {/* Hamburger */}
               <button
                 type="button"
                 onClick={() => setSidebarOpen((o) => !o)}
-                className="w-9 h-9 flex flex-col items-center justify-center gap-1.5 rounded-xl bg-slate-800/80 border border-slate-700/60">
+                className="w-9 h-9 flex flex-col items-center justify-center gap-1.5 rounded-md bg-slate-800/80 border border-slate-700/60">
                 <span
                   className={`block w-4 h-[2px] bg-slate-300 rounded-full transition-all duration-200 ${sidebarOpen ? "rotate-45 translate-y-[7px]" : ""}`}
                 />
@@ -633,7 +628,7 @@ export default function App() {
       <main
         className={`flex-1 overflow-y-auto ${isMobile && hasCases ? "pt-14" : ""}`}>
         {error && (
-          <div className="mx-4 mt-4 px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-sm font-semibold">
+          <div className="mx-4 mt-4 px-4 py-3 rounded-md bg-rose-500/10 border border-rose-500/30 text-rose-400 text-sm font-semibold">
             {error}
           </div>
         )}
