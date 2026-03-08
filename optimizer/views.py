@@ -20,16 +20,14 @@ from .executables.evaluator import evaluate as run_constraint_evaluation
 _progress_store = {}
 _current_progress = {'stage': 'idle', 'percentage': 0, 'message': ''}
 
-def _load_json_file_strict(path, label):
-    if not os.path.exists(path):
-        raise RuntimeError(f"{label} output file not found: {path}")
-    if os.path.getsize(path) == 0:
-        raise RuntimeError(f"{label} output file is empty: {path}")
+def _debug_log_json_input(label, data):
+    # Temporary debug logger: prints full JSON payload sent to executables.
     try:
-        with open(path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except json.JSONDecodeError as exc:
-        raise RuntimeError(f"{label} output is not valid JSON: {exc}") from exc
+        print(f"[DEBUG_JSON_INPUT_START] {label}")
+        print(json.dumps(data, cls=NpEncoder, ensure_ascii=False, indent=2))
+        print(f"[DEBUG_JSON_INPUT_END] {label}")
+    except Exception as exc:
+        print(f"[DEBUG_JSON_INPUT_ERROR] {label}: {exc}")
 
 def _parse_optimization_mode(raw_value):
     if raw_value in (None, ''):
@@ -395,9 +393,6 @@ def _build_new_employees_payload(base_result, new_employees):
 
     payload = {'new_employees': {}}
 
-    # Accept both:
-    # 1) frontend array format: [{id, ...}, ...]
-    # 2) direct dynamic format: {"new_employees": {"E11": {...}}}
     if isinstance(new_employees, dict) and isinstance(new_employees.get('new_employees'), dict):
         iterable = []
         for employee_id, data in new_employees['new_employees'].items():
@@ -465,7 +460,6 @@ def _execute_dynamic_optimization(test_case_data, new_employees, progress_callba
             break
 
     if primary_input is None:
-        # Attempt auto-repair: backfill employees missing from route/passenger IDs.
         repaired_inputs = {}
         repaired_consistency = {}
         repaired_notes = {}
@@ -526,6 +520,7 @@ def _execute_dynamic_optimization(test_case_data, new_employees, progress_callba
         new_employees_path = os.path.join(tmp_dir, 'new_employee_data.json')
         with open(new_employees_path, 'w', encoding='utf-8') as f:
             json.dump(new_employees_payload, f, cls=NpEncoder)
+        _debug_log_json_input("dynamic_new_employees_payload", new_employees_payload)
 
         mode_order = [('optimized', 30), ('noconstraints', 55), ('infeasible', 75)]
         for mode, pct in mode_order:
@@ -537,6 +532,7 @@ def _execute_dynamic_optimization(test_case_data, new_employees, progress_callba
             solved_path = os.path.join(tmp_dir, f'{mode}_solved.json')
             with open(solved_path, 'w', encoding='utf-8') as f:
                 json.dump(mode_input, f, cls=NpEncoder)
+            _debug_log_json_input(f"dynamic_{mode}_solved_input", mode_input)
 
             if progress_callback:
                 progress_callback({
@@ -548,26 +544,25 @@ def _execute_dynamic_optimization(test_case_data, new_employees, progress_callba
             exe_path = get_exe_path(exe_by_mode[mode])
             result = subprocess.run(
                 [exe_path, solved_path, new_employees_path],
-                capture_output=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
                 text=True,
                 cwd=tmp_dir,
             )
 
-            report_key = 'report_optimized' if mode == 'optimized' else (
-                'report_noconstraints' if mode == 'noconstraints' else 'report_infeasible'
-            )
-            reports[report_key] = result.stdout
+            # Execution stdout is now muted to prevent Railway log rate limits
+            reports[f'report_{mode}'] = None
 
             if result.returncode != 0:
                 if mode == 'optimized':
-                    raise RuntimeError(result.stderr or result.stdout or "Dynamic optimized run failed")
+                    raise RuntimeError(result.stderr or "Dynamic optimized run failed")
                 outputs[mode] = None
                 continue
 
             updated_output_path = os.path.join(tmp_dir, 'updated_output.json')
-            if not os.path.exists(updated_output_path):
+            if not os.path.exists(updated_output_path) or os.path.getsize(updated_output_path) == 0:
                 if mode == 'optimized':
-                    raise RuntimeError("Dynamic optimized run did not produce updated_output.json")
+                    raise RuntimeError("Dynamic optimized run did not produce a valid updated_output.json")
                 outputs[mode] = None
                 continue
 
@@ -666,9 +661,10 @@ def _execute_optimization(excel_file, progress_callback=None, optimization_mode=
         report_progress('parsing', 28, 'Serializing to JSON...')
         with open(input_json_path, 'w') as f:
             json.dump(parsed_data, f, cls=NpEncoder)
+        _debug_log_json_input("optimize_excel_input", parsed_data)
         print(f"[DEBUG] Created temporary input JSON: {input_json_path}")
 
-        # 4. Run velora_final.exe with explicit input and output arguments
+        # 3. Run velora_final.exe with explicit input and output arguments
         report_progress('routing', 35, 'Calculating road distances with OSMnx...')
         exe_path = get_exe_path("velora_final")
         
@@ -676,14 +672,14 @@ def _execute_optimization(excel_file, progress_callback=None, optimization_mode=
         print(f"[DEBUG] Executing: {exe_path} {input_json_path} {output_json_path}")
         result = subprocess.run(
             [exe_path, input_json_path, output_json_path],
-            capture_output=True,
+            stdout=subprocess.DEVNULL,  # Suppress C++ logging to prevent Railway crashes
+            stderr=subprocess.PIPE,
             text=True
         )
-        report_optimized = result.stdout
-        print(f"[STDOUT] {result.stdout}")
+        report_optimized = None
         if result.returncode != 0:
             print(f"[STDERR] {result.stderr}")
-            raise RuntimeError(f"Optimizer failed with code {result.returncode}: {result.stderr or result.stdout}")
+            raise RuntimeError(f"Optimizer failed with code {result.returncode}: {result.stderr}")
         print("[SUCCESS] Optimized routes algorithm completed")
 
         # 4. Run velora_noconstraints.exe
@@ -694,11 +690,10 @@ def _execute_optimization(excel_file, progress_callback=None, optimization_mode=
             print(f"[DEBUG] Executing: {exe_path_noconstraints} {input_json_path} {output_json_path_noconstraints}")
             result_noconstraints = subprocess.run(
                 [exe_path_noconstraints, input_json_path, output_json_path_noconstraints],
-                capture_output=True,
+                stdout=subprocess.DEVNULL,  # Suppress C++ logging
+                stderr=subprocess.PIPE,
                 text=True
             )
-            report_noconstraints = result_noconstraints.stdout
-            print(f"[STDOUT] {result_noconstraints.stdout}")
             if result_noconstraints.returncode != 0:
                 print(f"[WARNING] No constraints optimizer failed: {result_noconstraints.stderr}")
             else:
@@ -714,11 +709,10 @@ def _execute_optimization(excel_file, progress_callback=None, optimization_mode=
             print(f"[DEBUG] Executing: {exe_path_infeasible} {input_json_path} {output_json_path_infeasible}")
             result_infeasible = subprocess.run(
                 [exe_path_infeasible, input_json_path, output_json_path_infeasible],
-                capture_output=True,
+                stdout=subprocess.DEVNULL,  # Suppress C++ logging
+                stderr=subprocess.PIPE,
                 text=True
             )
-            report_infeasible = result_infeasible.stdout
-            print(f"[STDOUT] {result_infeasible.stdout}")
             if result_infeasible.returncode != 0:
                 print(f"[WARNING] Infeasible handling optimizer failed: {result_infeasible.stderr}")
             else:
@@ -728,24 +722,29 @@ def _execute_optimization(excel_file, progress_callback=None, optimization_mode=
 
         # 6. Check if the output files were created and read them
         report_progress('processing', 70, 'Processing optimization results...')
-        if not os.path.exists(output_json_path):
-            raise RuntimeError(f"Output file not created. CLI Output: {result.stdout}")
+        
+        # Add getsize() checks to ensure the C++ executable actually wrote data to the files
+        if not os.path.exists(output_json_path) or os.path.getsize(output_json_path) == 0:
+            raise RuntimeError("Primary output file is missing or empty. The C++ optimizer crashed without writing data.")
         
         print(f"[DEBUG] Reading output JSON: {output_json_path}")
-        final_data = _load_json_file_strict(output_json_path, "optimized")
+        with open(output_json_path, 'r') as f:
+            final_data = json.load(f)
         print(f"[DEBUG] Loaded final_data with {len(final_data.get('vehicles', []))} vehicles")
 
         # Read additional results if they exist
         final_data_noconstraints = None
-        if os.path.exists(output_json_path_noconstraints):
+        if os.path.exists(output_json_path_noconstraints) and os.path.getsize(output_json_path_noconstraints) > 0:
             print(f"[DEBUG] Reading no constraints result: {output_json_path_noconstraints}")
-            final_data_noconstraints = _load_json_file_strict(output_json_path_noconstraints, "noconstraints")
+            with open(output_json_path_noconstraints, 'r') as f:
+                final_data_noconstraints = json.load(f)
             print(f"[DEBUG] Loaded no constraints data with {len(final_data_noconstraints.get('vehicles', []))} vehicles")
 
         final_data_infeasible = None
-        if os.path.exists(output_json_path_infeasible):
+        if os.path.exists(output_json_path_infeasible) and os.path.getsize(output_json_path_infeasible) > 0:
             print(f"[DEBUG] Reading infeasible result: {output_json_path_infeasible}")
-            final_data_infeasible = _load_json_file_strict(output_json_path_infeasible, "infeasible")
+            with open(output_json_path_infeasible, 'r') as f:
+                final_data_infeasible = json.load(f)
             print(f"[DEBUG] Loaded infeasible data with {len(final_data_infeasible.get('vehicles', []))} vehicles")
 
         # 7. Run constraint evaluator on each output
