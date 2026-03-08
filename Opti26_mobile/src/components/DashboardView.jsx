@@ -2,16 +2,14 @@ import MapPanel from "./MapPanel";
 import { formatCurrency, formatMinutes, formatNumber } from "../lib/transform";
 import ResultsTableView from "./ResultTable";
 import TripTimeline from "./TripTimeline";
+import AddEmployeeModal from "./AddEmployeeModal";
+import ViolationsReport from "./ViolationsReport";
+import { useState, useRef } from "react";
+import { postDynamicOptimization } from "../api";
+import domtoimage from 'dom-to-image';
+import { pdf } from '@react-pdf/renderer';
+import { TestcasePDF } from './PDFReport';
 
-/* ── Google Fonts ── */
-if (typeof document !== "undefined" && !document.getElementById("db-fonts")) {
-  const link = document.createElement("link");
-  link.id = "db-fonts";
-  link.rel = "stylesheet";
-  link.href =
-    "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,400&display=swap";
-  document.head.appendChild(link);
-}
 
 /* ── Icons ── */
 const icons = {
@@ -125,58 +123,46 @@ const icons = {
 function MetricCard({ label, value, variant = "default", icon }) {
   const v = {
     default: {
-      wrap: "bg-slate-800/60 border-slate-700/60 hover:border-slate-600/80 hover:bg-slate-800/90",
-      label: "text-slate-400",
-      value: "text-white",
-      iconWrap: "bg-slate-700/80 text-slate-300",
-      glow: "",
-      accent: "bg-gradient-to-r from-slate-600 to-transparent",
+      wrap: "border-[var(--color-border)] hover:border-[var(--color-border-2)] hover:bg-[var(--color-surface-2)]",
+      label: "text-[var(--color-text-2)]",
+      value: "text-[var(--color-text)]",
+      iconWrap: "bg-[var(--color-surface-2)] text-[var(--color-text-2)]",
+      leftBorder: "bg-[var(--color-border-2)]",
     },
     gold: {
-      wrap: "bg-amber-500/10 border-amber-500/30 hover:border-amber-400/60 hover:bg-amber-500/15",
-      label: "text-amber-400",
-      value: "text-amber-300",
-      iconWrap: "bg-amber-500/20 text-amber-400",
-      glow: "shadow-amber-900/30",
-      accent: "bg-gradient-to-r from-amber-400 to-orange-400",
+      wrap: "border-amber-900/50 hover:border-amber-700/50 hover:bg-amber-950/20",
+      label: "text-amber-500",
+      value: "text-amber-400",
+      iconWrap: "bg-amber-950/40 text-amber-500",
+      leftBorder: "bg-amber-500",
     },
     green: {
-      wrap: "bg-emerald-500/10 border-emerald-500/30 hover:border-emerald-400/60 hover:bg-emerald-500/15",
-      label: "text-emerald-400",
-      value: "text-emerald-300",
-      iconWrap: "bg-emerald-500/20 text-emerald-400",
-      glow: "shadow-emerald-900/30",
-      accent: "bg-gradient-to-r from-emerald-400 to-teal-400",
+      wrap: "border-emerald-900/50 hover:border-emerald-700/50 hover:bg-emerald-950/20",
+      label: "text-emerald-500",
+      value: "text-emerald-400",
+      iconWrap: "bg-emerald-950/40 text-emerald-500",
+      leftBorder: "bg-emerald-500",
     },
   }[variant];
 
   return (
     <div
-      className={`relative rounded-2xl border p-5 flex flex-col gap-3 shadow-lg ${v.wrap} ${v.glow} transition-all duration-250 group overflow-hidden`}>
-      {/* top accent bar */}
-      <div
-        className={`absolute top-0 left-0 right-0 h-[2px] ${v.accent} opacity-80`}
-      />
+      className={`relative rounded-md border p-5 pt-3 flex flex-col gap-3 bg-[var(--color-surface)] ${v.wrap} transition-all duration-200 group overflow-hidden`}>
+      {/* Left accent border */}
+      <div className={`absolute top-0 left-0 bottom-0 w-[3px] ${v.leftBorder} opacity-70 rounded-l-xl`} />
 
-      {/* decorative circle */}
-      <div className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full border border-white/5 opacity-60" />
-      <div className="absolute -right-2 -bottom-2 w-12 h-12 rounded-full border border-white/5 opacity-40" />
-
-      <div className="flex items-center justify-between">
-        <p
-          className={`text-[11px] font-bold uppercase tracking-widest ${v.label}`}>
+      <div className="flex items-center justify-between pl-2">
+        <p className={`text-[11px] font-bold uppercase tracking-widest ${v.label}`}>
           {label}
         </p>
         {icon && (
-          <div
-            className={`w-7 h-7 rounded-lg flex items-center justify-center ${v.iconWrap}`}>
+          <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${v.iconWrap}`}>
             {icon}
           </div>
         )}
       </div>
-      <p
-        className={`text-[1.6rem] font-bold leading-none tracking-tight ${v.value}`}>
-        {value ?? <span className="text-slate-600 font-normal text-xl">—</span>}
+      <p className={`text-[1.6rem] font-extrabold leading-none tracking-tight pl-2 ${v.value}`}>
+        {value ?? <span className="text-[var(--color-text-3)] font-normal text-xl">—</span>}
       </p>
     </div>
   );
@@ -186,22 +172,54 @@ function MetricCard({ label, value, variant = "default", icon }) {
 function SectionLabel({ children }) {
   return (
     <div className="flex items-center gap-3 mb-4">
-      <div className="w-[3px] h-4 rounded-full bg-gradient-to-b from-amber-400 to-orange-400" />
-      <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
+      <div className="w-[3px] h-4 rounded-full bg-[var(--color-accent)]" />
+      <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--color-text-2)]">
         {children}
       </span>
-      <div className="flex-1 h-px bg-slate-700/60" />
+      <div className="flex-1 h-px bg-[var(--color-border-2)]" />
     </div>
   );
 }
 
-/* ── Main Dashboard ── */
+/* ─── StatusBadge ────────────────────────────────────────────── */
+function StatusBadge({ children }) {
+  return (
+    <div style={{
+      display: "inline-flex",
+      alignItems: "center",
+      gap: "5px",
+      padding: "3px 9px",
+      borderRadius: "999px",
+      fontSize: "0.6875rem",
+      fontWeight: 600,
+      background: "rgba(34,197,94,0.1)",
+      border: "1px solid rgba(34,197,94,0.2)",
+      color: "var(--color-green)",
+    }}>
+      <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "var(--color-green)" }} />
+      {children}
+    </div>
+  );
+}
+
+/* ─── Main Dashboard ─────────────────────────────────────────── */
 export default function DashboardView({
-  mapData,
+  results,
+  selectedResult,
+  onSelectResult,
   mapMode,
   setMapMode,
   vehicleFilter,
   setVehicleFilter,
+  selectedFile,
+  setSelectedFile,
+  onProcess,
+  loading,
+  error,
+  progress,
+  showProgress,
+  onDelete,
+  mapData,
   routeGeometries,
   isRouteLoading,
   routesLoadedCount,
@@ -209,13 +227,177 @@ export default function DashboardView({
   legendVisible,
   setLegendVisible,
   visibleTrips,
-  metrics,
   hasCases,
-  selectedResult,
   onNewCase,
   reports,
+  metrics,
+  onDynamicOptimize,
 }) {
-  const m = metrics ?? {};
+  const mapRef = useRef(null);
+  const m = metrics || {};
+
+  const [activeTab, setActiveTab] = useState("map");
+  const [selectedRouteId, setSelectedRouteId] = useState(null);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isAddEmployeeModalOpen, setIsAddEmployeeModalOpen] = useState(false);
+  const [fitBoundsToggle, setFitBoundsToggle] = useState(0);
+  const [isDownloadMenuOpen, setIsDownloadMenuOpen] = useState(false);
+
+  const handleExportJson = () => {
+    if (!selectedResult || !selectedResult.id) return;
+    try {
+      const cases = JSON.parse(localStorage.getItem('velora_testcases') || '[]');
+      const tc = cases.find(c => String(c.id) === String(selectedResult.id));
+      if (!tc) {
+        alert("Could not find full testcase data in local storage.");
+        return;
+      }
+
+      const jsonStr = JSON.stringify(tc, null, 2);
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${tc.filename.replace('.xlsx', '')}_export.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to export JSON", err);
+      alert("Failed to export JSON data.");
+    }
+  };
+
+  // const handleExportPdf = async () => {
+  //   if (!selectedResult || !selectedResult.id) return;
+  //   try {
+  //     let mapImage = null;
+  //     if (mapRef.current) {
+  //       try {
+  //         // Force map to re-center bounds to ensure all routes are in view
+  //         setFitBoundsToggle(prev => prev + 1);
+  //         await new Promise(r => setTimeout(r, 600)); // wait for Leaflet animation to finish
+
+  //         const mapEl = mapRef.current;
+
+  //         // Higher resolution scale
+  //         const scale = 2;
+  //         const style = {
+  //           transform: `scale(${scale})`,
+  //           transformOrigin: 'top left',
+  //           width: `${mapEl.offsetWidth}px`,
+  //           height: `${mapEl.offsetHeight}px`
+  //         };
+
+  //         const filter = (node) => {
+  //           // Exclude Leaflet zoom controls and the Legend UI
+  //           if (node.classList) {
+  //             if (node.classList.contains('leaflet-control-container')) return false;
+  //             if (node.classList.contains('legend-container')) return false;
+  //           }
+  //           return true;
+  //         };
+
+  //         mapImage = await domtoimage.toPng(mapEl, {
+  //           quality: 1,
+  //           bgcolor: '#ffffff',
+  //           width: mapEl.offsetWidth * scale,
+  //           height: mapEl.offsetHeight * scale,
+  //           style,
+  //           filter
+  //         });
+  //       } catch (e) {
+  //         console.error("Failed to capture map", e);
+  //       }
+  //     }
+
+  //     const doc = <TestcasePDF result={selectedResult} mapMode={mapMode} metrics={m} mapImage={mapImage} />;
+  //     const asPdf = pdf([]);
+  //     asPdf.updateContainer(doc);
+  //     const blob = await asPdf.toBlob();
+
+  //     const url = URL.createObjectURL(blob);
+  //     const a = document.createElement('a');
+  //     a.href = url;
+  //     const basename = typeof selectedResult.original_filename === 'string'
+  //       ? selectedResult.original_filename
+  //       : (typeof selectedResult.filename === 'string' ? selectedResult.filename : 'testcase');
+  //     a.download = `${basename.replace('.xlsx', '').replace('.json', '')}_report.pdf`;
+  //     document.body.appendChild(a);
+  //     a.click();
+  //     document.body.removeChild(a);
+  //     URL.revokeObjectURL(url);
+  //   } catch (err) {
+  //     console.error("Failed to generate PDF", err);
+  //     alert("Failed to export PDF report.");
+  //   }
+  // };
+
+  const handleExportPdf = async () => {
+    if (!selectedResult || !selectedResult.id) return;
+    try {
+      let mapImage = null;
+      if (mapRef.current) {
+        try {
+          // Force map to re-center bounds to ensure all routes are in view
+          setFitBoundsToggle(prev => prev + 1);
+          await new Promise(r => setTimeout(r, 600)); // wait for Leaflet animation to finish
+
+          const mapEl = mapRef.current;
+
+          // Higher resolution scale
+          const scale = 2;
+          const style = {
+            transform: `scale(${scale})`,
+            transformOrigin: 'top left',
+            width: `${mapEl.offsetWidth}px`,
+            height: `${mapEl.offsetHeight}px`
+          };
+
+          const filter = (node) => {
+            // Exclude Leaflet zoom controls and the Legend UI
+            if (node.classList) {
+              if (node.classList.contains('leaflet-control-container')) return false;
+              if (node.classList.contains('legend-container')) return false;
+            }
+            return true;
+          };
+
+          mapImage = await domtoimage.toPng(mapEl, {
+            quality: 1,
+            bgcolor: '#ffffff',
+            width: mapEl.offsetWidth * scale,
+            height: mapEl.offsetHeight * scale,
+            style,
+            filter
+          });
+        } catch (e) {
+          console.error("Failed to capture map", e);
+        }
+      }
+
+      const doc = <TestcasePDF result={selectedResult} mapMode={mapMode} metrics={m} mapImage={mapImage} />;
+      const asPdf = pdf([]);
+      asPdf.updateContainer(doc);
+      const blob = await asPdf.toBlob();
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const basename = typeof selectedResult.original_filename === 'string'
+        ? selectedResult.original_filename
+        : (typeof selectedResult.filename === 'string' ? selectedResult.filename : 'testcase');
+      a.download = `${basename.replace('.xlsx', '').replace('.json', '')}_report.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to generate PDF", err);
+      alert("Failed to export PDF report.");
+    }
+  };
 
   // Mode labels for metrics sections
   const modeLabels = {
@@ -233,30 +415,8 @@ export default function DashboardView({
       className="min-h-screen"
       style={{
         fontFamily: "'Plus Jakarta Sans', sans-serif",
-        background:
-          "linear-gradient(135deg, #0f1623 0%, #111827 50%, #0c1420 100%)",
+        background: "var(--color-bg)",
       }}>
-      {/* Mesh glow blobs */}
-      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <div
-          className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full opacity-[0.06]"
-          style={{
-            background: "radial-gradient(circle, #f59e0b 0%, transparent 70%)",
-          }}
-        />
-        <div
-          className="absolute top-1/2 -right-60 w-[500px] h-[500px] rounded-full opacity-[0.05]"
-          style={{
-            background: "radial-gradient(circle, #f59e0b 0%, transparent 70%)",
-          }}
-        />
-        <div
-          className="absolute -bottom-40 left-1/3 w-[400px] h-[400px] rounded-full opacity-[0.04]"
-          style={{
-            background: "radial-gradient(circle, #34d399 0%, transparent 70%)",
-          }}
-        />
-      </div>
 
       <div className="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-8 space-y-8">
         {/* ── Header ── */}
@@ -264,9 +424,9 @@ export default function DashboardView({
           <div className="flex items-center gap-4">
             {/* Logo badge */}
             <div
-              className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-900/40 flex-shrink-0"
+              className="w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0"
               style={{
-                background: "linear-gradient(135deg, #f59e0b, #ea580c)",
+                background: "var(--color-accent)",
               }}>
               <svg
                 className="w-5 h-5 text-white"
@@ -293,26 +453,84 @@ export default function DashboardView({
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={onNewCase}
-            className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl font-bold text-sm text-white transition-all duration-200 hover:-translate-y-0.5 shadow-lg shadow-amber-900/30 hover:shadow-amber-900/50"
-            style={{ background: "linear-gradient(135deg, #f59e0b, #ea580c)" }}>
-            {icons.plus}
-            New Test Case
-          </button>
+          <div className="flex items-center gap-3 self-end">
+            <div style={{ position: "relative" }} >
+              <button
+                onClick={() => setIsDownloadMenuOpen(!isDownloadMenuOpen)}
+                title="Download Export"
+                className="cursor-pointer group flex items-center justify-center w-11 h-11 rounded-md bg-slate-800/80 border border-slate-700/60 transition-all duration-300 hover:bg-slate-700/80 hover:border-slate-500/50 hover:-translate-y-0.5 shadow-lg shadow-black/20"
+              >
+                <svg
+                  className="w-5 h-5 text-slate-400 group-hover:text-amber-400 transition-colors duration-300"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              </button>
+
+              {isDownloadMenuOpen && (
+                <>
+                  <div
+                    style={{ position: "fixed", inset: 0, zIndex: 40 }}
+                    onClick={() => setIsDownloadMenuOpen(false)}
+                  />
+                  <div className="absolute right-0 top-[calc(100%+8px)] bg-slate-800 border border-slate-700/60 rounded-md shadow-xl p-1.5 min-w-[170px] z-50 flex flex-col gap-1">
+                    <button
+                      onClick={() => {
+                        setIsDownloadMenuOpen(false);
+                        handleExportPdf();
+                      }}
+                      className="w-full text-left px-3 py-2.5 rounded-lg bg-transparent border-none text-[13px] font-medium text-slate-300 cursor-pointer transition-colors hover:bg-slate-700/80 hover:text-white"
+                    >
+                      Export as PDF
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsDownloadMenuOpen(false);
+                        handleExportJson();
+                      }}
+                      className="w-full text-left px-3 py-2.5 rounded-lg bg-transparent border-none text-[13px] font-medium text-slate-300 cursor-pointer transition-colors hover:bg-slate-700/80 hover:text-white"
+                    >
+                      Export as JSON
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <button
+              onClick={() => setIsAddEmployeeModalOpen(true)}
+              className="cursor-pointer group relative flex items-center justify-center gap-2 px-6 py-2.5 rounded-md font-bold text-sm tracking-wide text-white overflow-hidden transition-all duration-300 shadow-lg shadow-amber-900/20 hover:shadow-amber-900/40 hover:-translate-y-0.5"
+              style={{
+                background: "var(--color-accent)"
+              }}>
+              <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+              <svg
+                className="w-4 h-4 transition-transform duration-300 group-hover:rotate-180"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Add Employee
+            </button>
+          </div>
         </header>
 
         {/* ── Map Card ── */}
-        <div className="rounded-3xl border border-slate-700/60 bg-slate-800/40 backdrop-blur-sm shadow-2xl overflow-hidden">
+        <div className="rounded-lg border overflow-hidden" style={{ background: "var(--color-surface)", borderColor: "var(--color-border)" }}>
           {/* Toolbar */}
-          <div className="flex flex-row flex-wrap sm:flex-nowrap items-center justify-between gap-4 px-6 py-4 border-b border-slate-700/50 bg-slate-800/40 no-scrollbar">
-            <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0 w-full sm:w-auto ">
+          <div className="flex flex-row flex-wrap sm:flex-nowrap items-center justify-between gap-4 px-6 py-4 border-b  no-scrollbar" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}>
+            <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0 w-full sm:w-auto">
               <span className="hidden lg:inline text-[11px] font-bold text-slate-500 uppercase tracking-widest flex-shrink-0">
                 Map View
               </span>
               {/* Toggle group */}
-              <div className="flex items-center bg-slate-900/70 rounded-xl p-1 gap-0.5 border border-slate-700/50 w-full sm:w-auto ">
+              <div className="flex items-center rounded-md p-1 gap-0.5 border w-full sm:w-auto overflow-x-auto" style={{ background: "var(--color-bg)", borderColor: "var(--color-border)" }}>
                 {[
                   {
                     key: "initial",
@@ -321,7 +539,7 @@ export default function DashboardView({
                   },
                   {
                     key: "optimized",
-                    label: "Optimized Routes",
+                    label: "All Constraints",
                     shortLabel: "Optimized",
                   },
                   {
@@ -344,37 +562,33 @@ export default function DashboardView({
                       onClick={() => !disabled && setMapMode(key)}
                       disabled={disabled}
                       className={`
-                        px-2.5 sm:px-3 xl:px-4 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold tracking-wide transition-all duration-200 whitespace-nowrap flex-1 sm:flex-none flex-shrink-0
+                        px-2.5 sm:px-3 xl:px-4 py-1.5 rounded-md text-[10px] sm:text-xs font-semibold tracking-tight transition-all duration-200 whitespace-nowrap flex-1 sm:flex-none flex-shrink-0
                         ${active
-                          ? "text-slate-900 shadow-sm shadow-amber-900/30"
+                          ? "text-white"
                           : disabled
-                            ? "text-slate-600 cursor-not-allowed"
-                            : "text-slate-400 hover:text-slate-200"
+                            ? "cursor-not-allowed"
+                            : "hover:text-white"
                         }
                       `}
-                      style={
-                        active
-                          ? {
-                            background:
-                              "linear-gradient(135deg, #f59e0b, #ea580c)",
-                          }
-                          : {}
-                      }>
-                      <span className="hidden 2xl:inline">{label}</span>
-                      <span className="2xl:hidden">{shortLabel}</span>
+                      style={{
+                        color: active ? "#fff" : disabled ? "var(--color-text-3)" : "var(--color-text-2)",
+                        background: active ? "var(--color-accent)" : "transparent",
+                      }}>
+                      <span className="hidden lg:inline">{label}</span>
+                      <span className="lg:hidden">{shortLabel}</span>
                     </button>
                   );
                 })}
               </div>
             </div>
 
-            {/* Vehicle select desktop - only for very large screens */}
             <div className="relative hidden 2xl:block flex-shrink-0">
               <select
                 value={vehicleFilter}
                 onChange={(e) => setVehicleFilter(e.target.value)}
                 disabled={!selectedResult}
-                className="appearance-none pl-4 pr-9 py-2 rounded-xl bg-slate-900/70 border border-slate-700/60 text-slate-300 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all">
+                className="appearance-none pl-4 pr-9 py-2 rounded-xl border text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/50 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all"
+                style={{ background: "var(--color-bg)", borderColor: "var(--color-border)", color: "var(--color-text-2)" }}>
                 <option value="ALL">Combined View</option>
                 {(mapData?.vehicles ?? []).map((v) => (
                   <option key={v} value={v}>
@@ -382,21 +596,31 @@ export default function DashboardView({
                   </option>
                 ))}
               </select>
-              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500">
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "var(--color-text-3)" }}>
                 {icons.chevron}
               </span>
             </div>
           </div>
 
           {/* Map */}
-          <div className="relative" style={{ minHeight: 460 }}>
+          <div ref={mapRef} className="relative" style={{ minHeight: 460 }}>
             {isRouteLoading && (
-              <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="w-10 h-10 rounded-full border-[3px] border-amber-900/40 border-t-amber-400 animate-spin" />
-                  <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                    Optimizing routes…
-                  </p>
+              <div className="map-loading-overlay">
+                <div className="map-loading-card">
+                  <div className="map-loading-spinner" />
+                  <strong>Rendering road geometry…</strong>
+                  {totalRoutesCount > 0 && (
+                    <>
+                      <div className="map-loading-progress-bar">
+                        <div className="map-loading-progress-fill"
+                          style={{ width: `${(routesLoadedCount / totalRoutesCount) * 100}%` }} />
+                      </div>
+                      <small className="map-loading-count">
+                        {routesLoadedCount} / {totalRoutesCount} routes
+                      </small>
+                    </>
+                  )}
+                  {totalRoutesCount === 0 && <small>Please wait…</small>}
                 </div>
               </div>
             )}
@@ -411,28 +635,8 @@ export default function DashboardView({
               legendVisible={legendVisible}
               setLegendVisible={setLegendVisible}
               visibleTrips={visibleTrips}
+              fitBoundsToggle={fitBoundsToggle}
             />
-          </div>
-
-          {/* Bottom vehicle select (for all but 2xl screens) */}
-          <div className="2xl:hidden px-5 py-4 border-t border-slate-700/50 bg-slate-800/40">
-            <div className="relative">
-              <select
-                value={vehicleFilter}
-                onChange={(e) => setVehicleFilter(e.target.value)}
-                disabled={!selectedResult}
-                className="w-full appearance-none px-4 py-2.5 rounded-xl bg-slate-900/70 border border-slate-700/60 text-slate-300 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500/50 disabled:opacity-30">
-                <option value="ALL">Combined View</option>
-                {(mapData?.vehicles ?? []).map((v) => (
-                  <option key={v} value={v}>
-                    {v}
-                  </option>
-                ))}
-              </select>
-              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500">
-                {icons.chevron}
-              </span>
-            </div>
           </div>
         </div>
 
@@ -444,7 +648,7 @@ export default function DashboardView({
                 Fleet Overview{" "}
                 <span className="text-amber-500">· {currentModeLabel}</span>
               </SectionLabel>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <MetricCard
                   label="Vehicles Used"
                   value={formatNumber(m.vehicles_used)}
@@ -474,83 +678,75 @@ export default function DashboardView({
             </div>
           )}
 
+          {/* ── Savings Analysis ── */}
           {showMetrics && (
             <div>
-              <SectionLabel>
-                Savings Analysis{" "}
-                <span className="text-amber-500">· {currentModeLabel}</span>
-              </SectionLabel>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                <MetricCard
-                  label="Baseline Cost"
-                  value={formatCurrency(m.baseline_cost)}
-                  icon={icons.cost}
-                />
-                <MetricCard
-                  label="Net Savings"
-                  value={formatCurrency(m.net_savings)}
-                  icon={icons.savings}
-                  variant="green"
-                />
-                <MetricCard
-                  label="Savings %"
-                  value={
-                    m.savings_percentage != null
-                      ? `${formatNumber(m.savings_percentage)}%`
-                      : null
-                  }
-                  icon={icons.savings}
-                  variant="green"
-                />
-                <MetricCard
-                  label="Optimized Time"
-                  value={formatMinutes(m.optimized_travel_time_min)}
-                  icon={icons.clock}
-                  variant="gold"
-                />
-                <MetricCard
-                  label="Baseline Time"
-                  value={formatMinutes(m.baseline_travel_time_min)}
-                  icon={icons.clock}
-                />
+              <SectionLabel>Savings Analysis — {currentModeLabel}</SectionLabel>
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <MetricCard label="Baseline Cost" value={formatCurrency(m.baseline_cost)} icon={icons.cost} />
+                <MetricCard label="Net Savings" value={formatCurrency(m.net_savings)} icon={icons.savings} variant="green" />
+                <MetricCard label="Savings %" value={m.savings_percentage != null ? `${formatNumber(m.savings_percentage)}%` : null} icon={icons.savings} variant="green" />
+                <MetricCard label="Optimized Time" value={formatMinutes(m.optimized_travel_time_min)} icon={icons.clock} variant="gold" />
+                <MetricCard label="Baseline Time" value={formatMinutes(m.baseline_travel_time_min)} icon={icons.clock} />
               </div>
             </div>
           )}
-        </div>
 
-        {selectedResult && (
-          <ResultsTableView
-            key={selectedResult.id}
-            selectedResult={selectedResult}
-            mapMode={mapMode}
-          />
-        )}
-
-        {/* ── Trip Timeline ── */}
-        {visibleTrips?.length > 0 && (
-          <div>
-            <SectionLabel>Trip Timeline</SectionLabel>
-            <TripTimeline
-              trips={mapData.trips}
-              title={vehicleFilter === "ALL" ? "All Vehicles" : vehicleFilter}
+          {selectedResult && (
+            <ResultsTableView
+              key={selectedResult.id}
+              selectedResult={selectedResult}
+              mapMode={mapMode}
             />
-          </div>
-        )}
-        {/* 
-        <div>
-          <SectionLabel>Infeasibility Report</SectionLabel>
-          <InfeasibilityReport report={reports.reportInfeasible} />
-        </div> */}
+          )}
 
-        {/* ── Footer ── */}
-        <footer className="flex items-center justify-center gap-3 pt-2 pb-8">
-          <div className="h-px w-12 bg-slate-700/60" />
-          <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-600">
-            Route Optimizer · Fleet Intelligence
-          </span>
-          <div className="h-px w-12 bg-slate-700/60" />
-        </footer>
+          {/* ── Trip Timeline ── */}
+          {visibleTrips?.length > 0 && (
+            <div>
+              <SectionLabel>Trip Timeline</SectionLabel>
+              <TripTimeline
+                trips={mapData.trips}
+                title={vehicleFilter === "ALL" ? "All Vehicles" : vehicleFilter}
+              />
+            </div>
+          )}
+          {selectedResult?.evaluations && (
+            <div>
+              <ViolationsReport
+                evaluations={selectedResult.evaluations}
+                mapMode={mapMode}
+              />
+            </div>
+          )}
+
+          {/* ── Footer ── */}
+          <footer className="flex items-center justify-center gap-3 pt-2 pb-8">
+            <div className="h-px w-12 bg-slate-700/60" />
+            <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-600">
+              Route Optimizer · Fleet Intelligence
+            </span>
+            <div className="h-px w-12 bg-slate-700/60" />
+          </footer>
+        </div>
       </div>
+
+      <AddEmployeeModal
+        isOpen={isAddEmployeeModalOpen}
+        onClose={() => setIsAddEmployeeModalOpen(false)}
+        onSubmit={async (newEmployees) => {
+          setIsAddEmployeeModalOpen(false);
+          try {
+            if (onDynamicOptimize) {
+              await onDynamicOptimize(newEmployees);
+            }
+          } catch (err) {
+            console.error(err);
+            if (err?.showAlert) {
+              alert(err.message);
+            }
+          }
+        }}
+      />
     </section>
   );
 }

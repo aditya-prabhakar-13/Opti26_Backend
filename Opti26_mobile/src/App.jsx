@@ -2,12 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   deleteResult,
   deleteAllTestCases,
-  fetchLatestResult,
   fetchResultDetail,
   fetchResults,
   fetchRoadGeometry,
   optimizeExcelWithProgress,
+  postDynamicOptimization,
   saveTestCaseLocally,
+  upsertTestCaseLocally,
 } from "./api";
 import {
   buildMapData,
@@ -28,6 +29,22 @@ export default function App() {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 760);
   const [results, setResults] = useState([]);
   const [selectedResult, setSelectedResult] = useState(null);
+
+  // Ensure evaluations are loaded from local storage for the selected result
+  useEffect(() => {
+    if (selectedResult && !selectedResult.evaluations) {
+      try {
+        const cases = JSON.parse(localStorage.getItem('velora_testcases') || '[]');
+        const tc = cases.find(c => String(c.id) === String(selectedResult.id));
+        if (tc && tc.evaluations) {
+          setSelectedResult(prev => ({ ...prev, evaluations: tc.evaluations }));
+        }
+      } catch (err) {
+        console.error("Failed to load evaluations for selected result", err);
+      }
+    }
+  }, [selectedResult]);
+
   const [selectedFile, setSelectedFile] = useState(null);
   const [mapMode, setMapMode] = useState("optimized");
   const [vehicleFilter, setVehicleFilter] = useState("ALL");
@@ -59,10 +76,7 @@ export default function App() {
 
     async function init() {
       try {
-        const [rowsPayload, latestPayload] = await Promise.all([
-          fetchResults(),
-          fetchLatestResult(),
-        ]);
+        const rowsPayload = await Promise.resolve(fetchResults());
         if (!mounted) return;
 
         const rows = toResultsListRows(rowsPayload);
@@ -75,12 +89,9 @@ export default function App() {
 
         setActiveNav("dashboard");
 
-        if (latestPayload?.result) {
-          setSelectedResult(normalizeOptimizationPayload(latestPayload));
-        } else {
-          const detail = await fetchResultDetail(rows[0].id);
-          if (mounted) setSelectedResult(normalizeOptimizationPayload(detail));
-        }
+        const detail = await fetchResultDetail(rows[0].id);
+        if (mounted) setSelectedResult(normalizeOptimizationPayload(detail));
+
       } catch (initErr) {
         if (mounted) {
           setError(initErr.message || "Unable to load existing results");
@@ -235,55 +246,187 @@ export default function App() {
     setActiveNav("dashboard");
   }
 
-  async function runOptimization() {
+  async function runOptimization(mode) {
     if (!selectedFile) {
-      setError("Please select an .xlsx file first");
+      setError("Please select a file first");
       return;
     }
     setLoading(true);
     setError("");
-    setShowProgress(true);
-    setProgress({
-      stage: "starting",
-      percentage: 0,
-      message: "Starting optimization...",
-    });
 
     try {
-      const created = await optimizeExcelWithProgress(
-        selectedFile,
-        (progressUpdate) => {
-          setProgress(progressUpdate);
-        },
-      );
+      if (selectedFile.name.endsWith('.json')) {
+        // Handle JSON import bypass directly
+        const text = await selectedFile.text();
+        const importedData = JSON.parse(text);
 
-      // Save test case to localStorage (client-side only, no database)
+        // Basic validation
+        if (!importedData.result_data && !importedData.reports) {
+          throw new Error("Invalid Velora testcase JSON file format");
+        }
+
+        // Just pass to local storage; ensure it has the original filename or a default
+        importedData.filename = importedData.filename || selectedFile.name;
+
+        // Remove 'id' if exists to force a new unique record local ID instead of conflict
+        delete importedData.id;
+
+        const savedTestCase = saveTestCaseLocally(importedData);
+
+        const normalized = normalizeOptimizationPayload({
+          id: savedTestCase.id,
+          filename: savedTestCase.filename,
+          result: savedTestCase.result_data,
+          result_noconstraints: savedTestCase.result_data_noconstraints,
+          result_infeasible: savedTestCase.result_data_infeasible,
+          computed_metrics: savedTestCase.computed_metrics,
+          reports: savedTestCase.reports,
+          evaluations: savedTestCase.evaluations,
+        });
+
+        setSelectedResult(normalized);
+        setVehicleFilter("ALL");
+        await refreshResults(normalized.id);
+        setActiveNav("dashboard");
+        setTimeout(() => setShowProgress(false), 500);
+
+      } else {
+        // Standard Excel Flow
+        setShowProgress(true);
+        setProgress({
+          stage: "starting",
+          percentage: 0,
+          message: "Starting optimization...",
+        });
+        const created = await optimizeExcelWithProgress(
+          selectedFile,
+          mode,
+          (progressUpdate) => {
+            setProgress(progressUpdate);
+          },
+        );
+
+        // Save test case to localStorage (client-side only, no database)
+        const testCaseData = {
+          filename: selectedFile.name,
+          result_data: created.result,
+          result_data_noconstraints: created.result_noconstraints,
+          result_data_infeasible: created.result_infeasible,
+          computed_metrics: created.computed_metrics,
+          reports: created.reports, // Save the human-readable optimization reports
+          evaluations: created.evaluations || null, // Constraint evaluation data
+        };
+        const savedTestCase = saveTestCaseLocally(testCaseData);
+
+        const normalized = normalizeOptimizationPayload({
+          ...created,
+          id: savedTestCase.id, // Use localStorage ID
+        });
+        setSelectedResult(normalized);
+
+        setVehicleFilter("ALL");
+        await refreshResults(normalized.id);
+        setActiveNav("dashboard");
+
+        // Keep progress visible for a moment before hiding
+        setTimeout(() => setShowProgress(false), 1000);
+      }
+    } catch (runErr) {
+      setError(runErr.message || "Optimization failed");
+      setShowProgress(false);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function runDynamicOptimization(newEmployees) {
+    if (!selectedResult) {
+      setError("No active testcase selected");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    try {
+      const created = await postDynamicOptimization(selectedResult, newEmployees);
+
+      const collectRoutedIds = (resultData) => {
+        const ids = new Set();
+        (resultData?.vehicles || []).forEach((vehicle) => {
+          (vehicle?.trips || []).forEach((trip) => {
+            (trip?.passengers || []).forEach((p) => {
+              if (p?.employee_id) ids.add(String(p.employee_id));
+            });
+          });
+        });
+        return ids;
+      };
+
+      const collectUnroutedIds = (resultData) => {
+        const ids = new Set();
+        (resultData?.unrouted_employees || []).forEach((item) => {
+          if (item?.employee_id) ids.add(String(item.employee_id));
+        });
+        return ids;
+      };
+
+      const addedIds = (() => {
+        if (Array.isArray(newEmployees)) {
+          return new Set(newEmployees.map((e) => String(e?.id || "").trim()).filter(Boolean));
+        }
+        const fromObject = newEmployees?.new_employees;
+        if (fromObject && typeof fromObject === "object") {
+          return new Set(Object.keys(fromObject).map((id) => String(id).trim()).filter(Boolean));
+        }
+        return new Set();
+      })();
+
+      const prevRouted = collectRoutedIds(selectedResult?.result);
+      const nextUnrouted = collectUnroutedIds(created?.result);
+      const blockedIds = new Set();
+
+      nextUnrouted.forEach((empId) => {
+        if (addedIds.has(empId) || prevRouted.has(empId)) {
+          blockedIds.add(empId);
+        }
+      });
+
+      if (blockedIds.size > 0) {
+        const ids = [...blockedIds].sort().join(", ");
+        const err = new Error(`No vehicles available to route ${ids}`);
+        err.showAlert = true;
+        throw err;
+      }
+
       const testCaseData = {
-        filename: selectedFile.name,
+        filename: created.filename || selectedResult.filename || "Dynamic Test Case",
         result_data: created.result,
         result_data_noconstraints: created.result_noconstraints,
         result_data_infeasible: created.result_infeasible,
         computed_metrics: created.computed_metrics,
-        reports: created.reports, // Save the human-readable optimization reports
-        evaluations: created.evaluations || null, // Constraint evaluation data
+        reports: created.reports || {},
+        evaluations: created.evaluations || null,
       };
-      const savedTestCase = saveTestCaseLocally(testCaseData);
 
+      const savedTestCase = upsertTestCaseLocally(selectedResult.id, testCaseData);
       const normalized = normalizeOptimizationPayload({
         ...created,
-        id: savedTestCase.id, // Use localStorage ID
+        id: savedTestCase.id,
       });
-      setSelectedResult(normalized);
 
+      // Force-refresh from storage so UI always reflects latest persisted testcase state.
+      const rowsPayload = fetchResults();
+      const rows = toResultsListRows(rowsPayload);
+      setResults(rows);
+
+      const refreshedDetail = await fetchResultDetail(savedTestCase.id);
+      setSelectedResult(normalizeOptimizationPayload(refreshedDetail));
       setVehicleFilter("ALL");
-      await refreshResults(normalized.id);
+      setMapMode("optimized");
       setActiveNav("dashboard");
-
-      // Keep progress visible for a moment before hiding
-      setTimeout(() => setShowProgress(false), 1000);
-    } catch (runErr) {
-      setError(runErr.message || "Optimization failed");
-      setShowProgress(false);
+    } catch (err) {
+      setError(err.message || "Dynamic optimization failed");
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -389,8 +532,7 @@ export default function App() {
       className="flex h-screen overflow-hidden"
       style={{
         fontFamily: "'Plus Jakarta Sans', sans-serif",
-        background:
-          "linear-gradient(135deg, #0f1623 0%, #111827 50%, #0c1420 100%)",
+        background: "var(--color-bg)",
       }}>
       <ProgressBar
         progress={progress}
@@ -416,37 +558,32 @@ export default function App() {
           {/* Mobile top bar */}
           {isMobile && (
             <header
-              className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 md:hidden"
+              className="fixed top-0 left-0 right-0 flex items-center justify-between px-4 py-3 md:hidden z-1000"
               style={{
-                background: "rgba(15,22,35,0.95)",
-                borderBottom: "1px solid rgba(148,163,184,0.08)",
-                backdropFilter: "blur(12px)",
+                background: "var(--color-surface)",
+                borderBottom: "1px solid var(--color-border)",
+                backdropFilter: "blur(8px)",
               }}>
               {/* Brand */}
-              <div className="flex items-center gap-2.5">
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{
-                    background: "linear-gradient(135deg, #f59e0b, #ea580c)",
-                  }}>
-                  <img
-                    src="/favicon.svg"
-                    alt=""
-                    className="w-4 h-4 brightness-0 invert"
-                  />
+              <div className="flex items-center gap-3">
+                <img src="/favicon.svg" alt="" className="h-8" />
+                <div>
+                  <p
+                    className="text-base font-bold text-white leading-none tracking-wide"
+                    style={{ fontFamily: "'Fraunces', serif" }}>
+                    VELORA
+                  </p>
+                  <p className="text-[10px] text-amber-500/80 font-semibold tracking-widest uppercase mt-0.5">
+                    Driven by Possibility
+                  </p>
                 </div>
-                <span
-                  className="text-white font-bold text-base tracking-wide"
-                  style={{ fontFamily: "'Fraunces', serif" }}>
-                  VELORA
-                </span>
               </div>
 
               {/* Hamburger */}
               <button
                 type="button"
                 onClick={() => setSidebarOpen((o) => !o)}
-                className="w-9 h-9 flex flex-col items-center justify-center gap-1.5 rounded-xl bg-slate-800/80 border border-slate-700/60">
+                className="w-9 h-9 flex flex-col items-center justify-center gap-1.5 rounded-md bg-slate-800/80 border border-slate-700/60">
                 <span
                   className={`block w-4 h-[2px] bg-slate-300 rounded-full transition-all duration-200 ${sidebarOpen ? "rotate-45 translate-y-[7px]" : ""}`}
                 />
@@ -464,10 +601,11 @@ export default function App() {
           {isMobile && sidebarOpen && (
             <>
               <div
-                className="fixed inset-0 z-40 bg-slate-950/70 backdrop-blur-sm"
+                className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm"
+                style={{ zIndex: 1800 }}
                 onClick={() => setSidebarOpen(false)}
               />
-              <div className="fixed top-0 left-0 bottom-0 z-50 w-72 flex flex-col">
+              <div className="fixed top-0 left-0 bottom-0 w-72 flex flex-col" style={{ zIndex: 1900 }}>
                 <Sidebar
                   results={results}
                   selectedResult={selectedResult}
@@ -490,7 +628,7 @@ export default function App() {
       <main
         className={`flex-1 overflow-y-auto ${isMobile && hasCases ? "pt-14" : ""}`}>
         {error && (
-          <div className="mx-4 mt-4 px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-sm font-semibold">
+          <div className="mx-4 mt-4 px-4 py-3 rounded-md bg-rose-500/10 border border-rose-500/30 text-rose-400 text-sm font-semibold">
             {error}
           </div>
         )}
@@ -502,6 +640,7 @@ export default function App() {
             setMapMode={setMapMode}
             onNewCase={() => setActiveNav("new")}
             reports={selectedResult?.reports || []}
+            onDynamicOptimize={runDynamicOptimization}
           />
         )}
 

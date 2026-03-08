@@ -3,14 +3,6 @@ import { useRef, useState, useEffect, useCallback } from "react";
 /* ─────────────────────────────────────────────
    Fonts (shared with rest of app)
 ───────────────────────────────────────────── */
-if (typeof document !== "undefined" && !document.getElementById("db-fonts")) {
-  const link = document.createElement("link");
-  link.id = "db-fonts";
-  link.rel = "stylesheet";
-  link.href =
-    "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,700&display=swap";
-  document.head.appendChild(link);
-}
 
 /* ─────────────────────────────────────────────
    Colour palette — matches map vehicle colours
@@ -167,30 +159,54 @@ function Tooltip({ trip, color, anchorRect, containerRect }) {
   const distance = trip.distanceKm ?? trip.distance_km ?? trip.distance ?? null;
   const stops = trip.stops ?? trip.stop_count ?? null;
 
-  // Position: prefer above, fall back below
   const tipW = 220;
-  const clipLeft = anchorRect.left - containerRect.left;
-  const clipRight = anchorRect.right - containerRect.left;
-  const centerX = (clipLeft + clipRight) / 2;
-  let left = centerX - tipW / 2;
-  left = Math.max(8, Math.min(left, containerRect.width - tipW - 8));
+  const tipH = 180; // Estimated height of tooltip
+  const padding = 12;
 
-  const aboveY = anchorRect.top - containerRect.top - 8;
-  const belowY = anchorRect.bottom - containerRect.top + 8;
-  const showAbove = aboveY > 120;
-  const top = showAbove ? aboveY : belowY;
+  // Relative coordinates to the container
+  const localAnchorTop = anchorRect.top - containerRect.top;
+  const localAnchorBottom = anchorRect.bottom - containerRect.top;
+  const localAnchorLeft = anchorRect.left - containerRect.left;
+  const localAnchorRight = anchorRect.right - containerRect.left;
+  const localAnchorCenterY = (localAnchorTop + localAnchorBottom) / 2;
+
+  // Decide mode: Top -> Bottom -> Side
+  let mode = "above";
+  const fitsAbove = localAnchorTop > tipH + padding;
+  const fitsBelow = (containerRect.height - localAnchorBottom) > tipH + padding;
+
+  if (!fitsAbove) {
+    if (fitsBelow) mode = "below";
+    else mode = "side";
+  }
+
+  const centerX = (localAnchorLeft + localAnchorRight) / 2;
+  let left, top, transform;
+
+  if (mode === "side") {
+    // Show beside the anchor
+    const fitsRight = (containerRect.width - localAnchorRight) > tipW + padding;
+    left = fitsRight ? localAnchorRight + 8 : localAnchorLeft - tipW - 8;
+    top = localAnchorCenterY;
+    transform = "translateY(-50%)";
+  } else {
+    // Show above or below centered
+    left = Math.max(8, Math.min(centerX - tipW / 2, containerRect.width - tipW - 8));
+    top = mode === "above" ? localAnchorTop - 8 : localAnchorBottom + 8;
+    transform = mode === "above" ? "translateY(-100%)" : "none";
+  }
 
   return (
     <div
-      className="absolute z-50 pointer-events-none"
+      className="absolute z-[1000] pointer-events-none"
       style={{
         left,
         top,
         width: tipW,
-        transform: showAbove ? "translateY(-100%)" : "none",
+        transform,
       }}>
       <div
-        className="rounded-2xl border text-xs shadow-2xl overflow-hidden"
+        className="rounded-md border text-xs shadow-2xl overflow-hidden"
         style={{
           background: "rgba(15,22,35,0.97)",
           borderColor: color.border,
@@ -234,14 +250,18 @@ function Tooltip({ trip, color, anchorRect, containerRect }) {
         </div>
       </div>
 
-      {/* Arrow */}
-      {showAbove && (
+      {/* Arrow - only for Top/Bottom modes */}
+      {mode !== "side" && (
         <div
-          className="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-full w-0 h-0"
+          className="absolute left-1/2 -translate-x-1/2 w-0 h-0"
           style={{
+            left: Math.max(20, Math.min(centerX - left, tipW - 20)), // Pin arrow to anchor center relative to tooltip left
+            bottom: mode === "above" ? 0 : "auto",
+            top: mode === "below" ? 0 : "auto",
+            transform: mode === "above" ? "translateY(100%)" : "translateY(-100%)",
             borderLeft: "6px solid transparent",
             borderRight: "6px solid transparent",
-            borderTop: `6px solid ${color.border}`,
+            [mode === "above" ? "borderTop" : "borderBottom"]: `6px solid ${color.border}`,
           }}
         />
       )}
@@ -271,8 +291,8 @@ function Playhead({ pct }) {
         style={{ background: "rgba(245,158,11,0.7)" }}
       />
       <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-amber-400"
-        style={{ background: "#0f1623" }}
+        className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-amber-500"
+        style={{ background: "#06080a" }}
       />
     </div>
   );
@@ -364,9 +384,9 @@ export default function TripTimeline({ trips = [], title = "Trip Timeline" }) {
   if (!vehicles.length) {
     return (
       <div
-        className="rounded-3xl border border-slate-700/60 bg-slate-800/40 p-10 flex flex-col items-center gap-3"
+        className="rounded-md border border-slate-700/60 bg-[#0a0c10] p-10 flex flex-col items-center gap-3"
         style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-        <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center text-slate-600">
+        <div className="w-12 h-12 rounded-md bg-slate-800 flex items-center justify-center text-slate-600">
           <svg
             className="w-6 h-6"
             fill="none"
@@ -392,14 +412,15 @@ export default function TripTimeline({ trips = [], title = "Trip Timeline" }) {
 
   return (
     <div
-      className="rounded-3xl border border-slate-700/60 bg-slate-800/40 backdrop-blur-sm shadow-2xl overflow-hidden"
+      ref={containerRef}
+      className="relative rounded-md border border-slate-700/60 bg-[#0a0c10] backdrop-blur-sm shadow-2xl"
       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       {/* ── Header ── */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700/50 bg-slate-800/40">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700/50 bg-[#0c0e12]">
         <div className="flex items-center gap-3">
           <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center"
-            style={{ background: "linear-gradient(135deg, #f59e0b, #ea580c)" }}>
+            className="w-8 h-8 rounded-md flex items-center justify-center"
+            style={{ background: "var(--color-accent)" }}>
             <svg
               className="w-4 h-4 text-white"
               fill="none"
@@ -453,8 +474,7 @@ export default function TripTimeline({ trips = [], title = "Trip Timeline" }) {
 
       {/* ── Timeline body ── */}
       <div
-        ref={containerRef}
-        className="relative overflow-x-auto overflow-y-visible"
+        className="relative overflow-x-auto overflow-y-visible z-10"
         style={{ minHeight: vehicles.length * ROW_H + 64 }}>
         {/* Label column + track area side by side */}
         <div className="flex min-w-[520px]">
@@ -562,14 +582,14 @@ export default function TripTimeline({ trips = [], title = "Trip Timeline" }) {
                     return (
                       <div
                         key={trip.id ?? `${trip._start}-${trip._end}`}
-                        className="absolute top-1/2 rounded-lg cursor-pointer transition-all duration-150"
+                        className="absolute top-1/2 rounded-md cursor-pointer transition-all duration-150"
                         style={{
                           left: `${left}%`,
                           width: `${width}%`,
                           height: ROW_H * 0.9,
                           background: isHovered
                             ? c.bg
-                            : `linear-gradient(135deg, ${c.bg}cc, ${c.bg}88)`,
+                            : `${c.bg}73`, // ~45% opacity for better visibility while flat
                           border: `1px solid ${isHovered ? c.bg : c.border}`,
                           boxShadow: isHovered
                             ? `0 0 16px ${c.bg}66, 0 2px 8px rgba(0,0,0,0.4)`
@@ -592,8 +612,7 @@ export default function TripTimeline({ trips = [], title = "Trip Timeline" }) {
                         {width > 4 && (
                           <div className="absolute inset-0 flex items-center px-2 overflow-hidden pointer-events-none">
                             <span
-                              className="text-[10px] font-bold truncate"
-                              style={{ color: "rgba(15,22,35,0.9)" }}>
+                              className="text-[10px] font-bold truncate text-white">
                               {fmtDur(trip._end - trip._start)}
                             </span>
                           </div>
@@ -607,21 +626,22 @@ export default function TripTimeline({ trips = [], title = "Trip Timeline" }) {
           </div>
         </div>
 
-        {/* Floating tooltip */}
-        {hovered && (
-          <Tooltip
-            trip={hovered.trip}
-            color={vehicleColor(
-              vehicles.find(
-                (v) =>
-                  v.id === (hovered.trip.vehicleId ?? hovered.trip.vehicle_id),
-              )?.colorIndex ?? 0,
-            )}
-            anchorRect={hovered.anchorRect}
-            containerRect={hovered.containerRect}
-          />
-        )}
       </div>
+
+      {/* Floating tooltip - Rendered at root level to bypass scroll clipping */}
+      {hovered && (
+        <Tooltip
+          trip={hovered.trip}
+          color={vehicleColor(
+            vehicles.find(
+              (v) =>
+                v.id === (hovered.trip.vehicleId ?? hovered.trip.vehicle_id),
+            )?.colorIndex ?? 0,
+          )}
+          anchorRect={hovered.anchorRect}
+          containerRect={containerRef.current?.getBoundingClientRect()}
+        />
+      )}
 
       {/* ── Footer summary bar ── */}
       <div className="px-6 py-3 border-t border-slate-700/50 bg-slate-900/30 flex items-center gap-6 flex-wrap">

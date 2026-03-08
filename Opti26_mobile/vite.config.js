@@ -9,6 +9,16 @@ export default defineConfig({
     outDir: "www",
     emptyOutDir: true,
   },
+  server: {
+    host: true,
+    port: 5173,
+    proxy: {
+      "/api": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+      },
+    },
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

@@ -17,7 +17,8 @@ function asNumber(value) {
 export function normalizeOptimizationPayload(apiPayload) {
   return {
     id: apiPayload?.id,
-    filename: apiPayload?.filename,
+    filename: apiPayload?.original_filename || apiPayload?.filename,
+    original_filename: apiPayload?.original_filename || apiPayload?.filename,
     createdAt: apiPayload?.created_at,
     computedMetrics: apiPayload?.computed_metrics || null,
     result: apiPayload?.result || null,
@@ -204,22 +205,22 @@ export function buildMapData(resultPayload, mode = 'optimized') {
           if (token === 'START') {
             return vehicleStart
               ? {
-                  type: 'start',
-                  token,
-                  position: vehicleStart,
-                  tooltip: `${vehicle.vehicle_id} T${tripNumber} START\n${trip.start_time || ''}`,
-                }
+                type: 'start',
+                token,
+                position: vehicleStart,
+                tooltip: `${vehicle.vehicle_id} T${tripNumber} START\n${trip.start_time || ''}`,
+              }
               : null;
           }
 
           if (token === 'END') {
             return office
               ? {
-                  type: 'end',
-                  token,
-                  position: office,
-                  tooltip: `${vehicle.vehicle_id} T${tripNumber} END\n${trip.end_time || ''}`,
-                }
+                type: 'end',
+                token,
+                position: office,
+                tooltip: `${vehicle.vehicle_id} T${tripNumber} END\n${trip.end_time || ''}`,
+              }
               : null;
           }
 
@@ -264,9 +265,9 @@ export function buildMapData(resultPayload, mode = 'optimized') {
 
   const center = points.length
     ? [
-        points.reduce((acc, [lat]) => acc + lat, 0) / points.length,
-        points.reduce((acc, [, lng]) => acc + lng, 0) / points.length,
-      ]
+      points.reduce((acc, [lat]) => acc + lat, 0) / points.length,
+      points.reduce((acc, [, lng]) => acc + lng, 0) / points.length,
+    ]
     : [12.9716, 77.5946];
 
   const vehicles = [...new Set(trips.map((trip) => trip.vehicleId))];

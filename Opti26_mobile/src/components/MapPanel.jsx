@@ -7,7 +7,51 @@ import {
   Popup,
   TileLayer,
   Tooltip,
+  useMap,
 } from "react-leaflet";
+import L from "leaflet";
+
+function BoundsFitter({
+  mode,
+  filteredInitialMarkers,
+  visibleTrips,
+  routeGeometries,
+  fitBoundsToggle,
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    let bounds = L.latLngBounds([]);
+    let hasPoints = false;
+
+    if (mode === "initial") {
+      filteredInitialMarkers.forEach((marker) => {
+        if (marker.position && marker.position.length === 2) {
+          bounds.extend(marker.position);
+          hasPoints = true;
+        }
+      });
+    } else {
+      visibleTrips.forEach((trip) => {
+        const coords = routeGeometries?.[trip.id] || trip.path;
+        if (coords && coords.length > 0) {
+          coords.forEach((coord) => {
+            if (coord && coord.length === 2) {
+              bounds.extend(coord);
+              hasPoints = true;
+            }
+          });
+        }
+      });
+    }
+
+    if (hasPoints && bounds.isValid()) {
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+    }
+  }, [map, mode, filteredInitialMarkers, visibleTrips, routeGeometries, fitBoundsToggle]);
+
+  return null;
+}
 
 export default function MapPanel({
   mapData,
@@ -20,6 +64,7 @@ export default function MapPanel({
   legendVisible,
   setLegendVisible,
   visibleTrips,
+  fitBoundsToggle,
 }) {
   const legendRef = useRef(null);
   const normalizeVehicleId = (value) =>
@@ -93,6 +138,15 @@ export default function MapPanel({
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          crossOrigin="anonymous"
+        />
+
+        <BoundsFitter
+          mode={mode}
+          filteredInitialMarkers={filteredInitialMarkers}
+          visibleTrips={visibleTrips}
+          routeGeometries={modeGeometries}
+          fitBoundsToggle={fitBoundsToggle}
         />
 
         {mode === "initial" &&

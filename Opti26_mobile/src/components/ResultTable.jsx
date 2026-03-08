@@ -1,14 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 
 /* ── Fonts (injected once) ── */
-if (typeof document !== "undefined" && !document.getElementById("db-fonts")) {
-  const link = document.createElement("link");
-  link.id = "db-fonts";
-  link.rel = "stylesheet";
-  link.href =
-    "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,700&display=swap";
-  document.head.appendChild(link);
-}
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -324,7 +316,7 @@ function VehicleView({ vehicles, inputVehicles, selectedVehicleId }) {
   if (filtered.length === 0) {
     return (
       <div
-        className="flex items-center justify-center py-16 rounded-2xl"
+        className="flex items-center justify-center py-16 rounded-md"
         style={{
           border: "1px solid rgba(148,163,184,0.1)",
           background: "rgba(15,23,42,0.4)",
@@ -353,7 +345,7 @@ function VehicleView({ vehicles, inputVehicles, selectedVehicleId }) {
         return (
           <div
             key={vehicle.vehicle_id}
-            className="rounded-2xl overflow-hidden"
+            className="rounded-md overflow-hidden"
             style={{
               border: `1px solid ${palette.border}`,
               background: "rgba(15,23,42,0.5)",
@@ -640,7 +632,7 @@ function EmployeeView({
   if (displayed.length === 0) {
     return (
       <div
-        className="flex items-center justify-center py-16 rounded-2xl"
+        className="flex items-center justify-center py-16 rounded-md"
         style={{
           border: "1px solid rgba(148,163,184,0.1)",
           background: "rgba(15,23,42,0.4)",
@@ -656,7 +648,7 @@ function EmployeeView({
 
   return (
     <div
-      className="overflow-x-auto rounded-2xl"
+      className="overflow-x-auto rounded-md"
       style={{ border: "1px solid rgba(148,163,184,0.1)" }}>
       <table className="w-full min-w-[860px] text-sm">
         <thead>
@@ -963,7 +955,7 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
             Route Breakdown
           </h2>
         </div>
-        <div
+        {/* <div
           className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-xs font-bold self-start"
           style={{
             background: "rgba(245,158,11,0.12)",
@@ -972,7 +964,7 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
           }}>
           <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
           Constrained Optimization
-        </div>
+        </div> */}
       </div>
 
       {/* Summary */}
@@ -980,7 +972,7 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
 
       {/* Filter bar */}
       <div
-        className="rounded-2xl px-5 py-4 space-y-4"
+        className="rounded-md px-5 py-4 space-y-4"
         style={{
           background: "rgba(15,23,42,0.6)",
           border: "1px solid rgba(148,163,184,0.1)",
@@ -1004,9 +996,9 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
               style={
                 filterMode === key
                   ? {
-                    background: "linear-gradient(135deg, #f59e0b, #ea580c)",
+                    background: "var(--color-accent)",
                     color: "#0f172a",
-                    boxShadow: "0 0 16px rgba(245,158,11,0.3)",
+                    boxShadow: "0 0 16px rgba(245,158,11,0.1)",
                   }
                   : { color: "rgba(148,163,184,0.5)" }
               }>
