@@ -1,4 +1,22 @@
-const API_BASE = import.meta.env.VITE_API_URL || '';
+const API_BASE = "https://api.velora-opti26.xyz";
+
+async function parseJsonOrThrow(response, fallbackMessage) {
+  const raw = await response.text();
+  let payload = null;
+  try {
+    payload = raw ? JSON.parse(raw) : {};
+  } catch {
+    const preview = raw.slice(0, 80).replace(/\s+/g, " ");
+    throw new Error(
+      `Invalid server response (expected JSON). Check backend URL. Got: ${preview}`
+    );
+  }
+
+  if (!response.ok) {
+    throw new Error(payload?.error || fallbackMessage);
+  }
+  return payload;
+}
 
 export async function optimizeExcel(file) {
   const formData = new FormData();
@@ -8,22 +26,12 @@ export async function optimizeExcel(file) {
     method: "POST",
     body: formData,
   });
-
-  const payload = await response.json();
-  if (!response.ok) {
-    throw new Error(payload.error || "Optimization failed");
-  }
-
-  return payload;
+  return parseJsonOrThrow(response, "Optimization failed");
 }
 
 export async function getProgress() {
   const response = await fetch(`${API_BASE}/api/progress`);
-  const payload = await response.json();
-  if (!response.ok) {
-    throw new Error(payload.error || "Failed to fetch progress");
-  }
-  return payload;
+  return parseJsonOrThrow(response, "Failed to fetch progress");
 }
 
 export async function optimizeExcelWithProgress(file, mode, onProgress) {
@@ -35,13 +43,7 @@ export async function optimizeExcelWithProgress(file, mode, onProgress) {
   const optimizationPromise = fetch(`${API_BASE}/api/optimize`, {
     method: "POST",
     body: formData,
-  }).then(async (response) => {
-    const payload = await response.json();
-    if (!response.ok) {
-      throw new Error(payload.error || "Optimization failed");
-    }
-    return payload;
-  });
+  }).then((response) => parseJsonOrThrow(response, "Optimization failed"));
 
   // Start polling for progress updates
   const maxAttempts = 300; // 5 minutes of polling at 500ms intervals
@@ -93,11 +95,7 @@ export async function optimizeExcelWithProgress(file, mode, onProgress) {
 
 export async function fetchLatestResult() {
   const response = await fetch(`${API_BASE}/api/results/latest`);
-  const payload = await response.json();
-  if (!response.ok) {
-    throw new Error(payload.error || "Failed to fetch latest result");
-  }
-  return payload;
+  return parseJsonOrThrow(response, "Failed to fetch latest result");
 }
 
 // ─── localStorage Test Cases Management ─────────────────────────────────────
@@ -185,9 +183,6 @@ export async function fetchResultDetail(resultId) {
 }
 
 export async function postDynamicOptimization(testCaseData, newEmployees) {
-  const currentEnv = process.env.NODE_ENV || 'development';
-  let baseURL = currentEnv === 'development' ? 'http://localhost:8000' : 'https://api.velora-opti26.xyz';
-
   const payload = {
     testCaseData,
     newEmployees
@@ -195,17 +190,12 @@ export async function postDynamicOptimization(testCaseData, newEmployees) {
 
   console.log("Payload:", payload);
 
-  const response = await fetch(`${baseURL}/api/optimize/dynamic`, {
+  const response = await fetch(`${API_BASE}/api/optimize/dynamic`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   });
-
-  if (!response.ok) {
-    throw new Error(`Dynamic optimization failed: ${response.statusText}`);
-  }
-
-  return response.json();
+  return parseJsonOrThrow(response, "Dynamic optimization failed");
 }
 
 /**
