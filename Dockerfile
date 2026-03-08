@@ -26,4 +26,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN chmod +x optimizer/executables/linux/*
 
 # Start Gunicorn (Railway provides the $PORT variable automatically)
-CMD gunicorn Opti26_Backend.wsgi --bind 0.0.0.0:$PORT --timeout 3600
+CMD gunicorn Opti26_Backend.wsgi --bind 0.0.0.0:$PORT --timeout 600
