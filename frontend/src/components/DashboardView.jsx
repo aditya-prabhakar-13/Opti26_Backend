@@ -196,14 +196,22 @@ export default function DashboardView({
       <div style={{
         maxWidth: "1400px",
         margin: "0 auto",
-        padding: "28px 24px 64px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "28px",
+        padding: "28px 20px 64px",
       }}>
+        <style>{`
+          @media (max-width: 767px) {
+            .db-page-wrap { padding-top: 68px !important; }
+            .db-desktop-header { display: none !important; }
+            .db-map-canvas { min-height: 280px !important; max-height: 60vh !important; }
+          }
+        `}</style>
+        <div
+          className="db-page-wrap"
+          style={{ display: "flex", flexDirection: "column", gap: "24px" }}
+        >
 
         {/* ── Header ── */}
-        <header style={{
+        <header className="db-desktop-header" style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -295,6 +303,7 @@ export default function DashboardView({
             </button>
           </div>
         </header>
+
 
         {/* ── Map Card ── */}
         <div style={{
@@ -412,7 +421,7 @@ export default function DashboardView({
           </div>
 
           {/* Map canvas */}
-          <div style={{ position: "relative", minHeight: "480px" }}>
+          <div className="db-map-canvas" style={{ position: "relative", minHeight: "480px" }}>
             {isRouteLoading && (
               <div className="map-loading-overlay">
                 <div className="map-loading-card">
@@ -454,7 +463,7 @@ export default function DashboardView({
             <SectionLabel>Fleet Overview — {currentModeLabel}</SectionLabel>
             <div style={{
               display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
+              gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
               gap: "12px",
             }}>
               <MetricCard label="Vehicles Used"     value={formatNumber(m.vehicles_used)}         icon={I.vehicle} />
@@ -471,7 +480,7 @@ export default function DashboardView({
             <SectionLabel>Savings Analysis — {currentModeLabel}</SectionLabel>
             <div style={{
               display: "grid",
-              gridTemplateColumns: "repeat(5, 1fr)",
+              gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
               gap: "12px",
             }}>
               <MetricCard label="Baseline Cost"   value={formatCurrency(m.baseline_cost)}                                                   icon={I.cost} />
@@ -511,7 +520,8 @@ export default function DashboardView({
           />
         )}
 
-      </div>
+        </div>{/* /db-page-wrap */}
+      </div>{/* /maxWidth wrapper */}
 
       <AddEmployeeModal
         isOpen={isAddEmployeeModalOpen}

@@ -468,10 +468,11 @@ export default function App() {
           {/* Mobile top bar */}
           {isMobile && (
             <header
-              className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 md:hidden"
+              className="fixed top-0 left-0 right-0 flex items-center justify-between px-4 py-3 md:hidden"
               style={{
                 background: "var(--color-surface)",
                 borderBottom: "1px solid var(--color-border)",
+                zIndex: 2000,
               }}
             >
               {/* Brand */}
@@ -521,10 +522,11 @@ export default function App() {
           {isMobile && sidebarOpen && (
             <>
               <div
-                className="fixed inset-0 z-40 bg-slate-950/70 backdrop-blur-sm"
+                className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm"
+                style={{ zIndex: 1800 }}
                 onClick={() => setSidebarOpen(false)}
               />
-              <div className="fixed top-0 left-0 bottom-0 z-50 w-72 flex flex-col">
+              <div className="fixed top-0 left-0 bottom-0 w-72 flex flex-col" style={{ zIndex: 1900 }}>
                 <Sidebar
                   results={results}
                   selectedResult={selectedResult}
