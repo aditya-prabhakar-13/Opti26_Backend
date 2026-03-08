@@ -132,7 +132,7 @@ export default function NewCaseView({
   onFileChange,
   onRunOptimization,
 }) {
-  const [optimizationMode, setOptimizationMode] = useState("instant");
+  const [optimizationMode, setOptimizationMode] = useState("0");
   const step = selectedFile ? (loading ? 2 : 2) : 1;
   const isDone = !loading && selectedFile;
 
@@ -257,9 +257,8 @@ export default function NewCaseView({
                 <label className="text-xs font-bold uppercase tracking-widest text-slate-500 text-center">Optimization Mode</label>
                 <div className="flex items-center justify-center gap-2 flex-wrap">
                   {[
-                    { id: 'instant', label: 'Instant' },
-                    { id: 'balanced', label: 'Balanced' },
-                    { id: 'deep', label: 'Deep' }
+                    { id: '0', label: 'Balanced Optimize' },
+                    { id: '1', label: 'Deep Optimize' },
                   ].map(mode => (
                     <button
                       key={mode.id}
