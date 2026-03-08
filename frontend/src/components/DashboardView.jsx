@@ -567,7 +567,7 @@ export default function DashboardView({
                       onClick={() => !disabled && setMapMode(key)}
                       disabled={disabled}
                       className={`
-                        px-2.5 sm:px-3 xl:px-4 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold tracking-wide transition-all duration-200 whitespace-nowrap flex-1 sm:flex-none flex-shrink-0
+                        px-2.5 sm:px-3 xl:px-4 py-1.5 rounded-md text-[10px] sm:text-xs font-bold tracking-wide transition-all duration-200 whitespace-nowrap flex-1 sm:flex-none flex-shrink-0
                         ${active
                           ? "text-white"
                           : disabled
