@@ -4,8 +4,12 @@ import ResultsTableView from "./ResultTable";
 import TripTimeline from "./TripTimeline";
 import AddEmployeeModal from "./AddEmployeeModal";
 import ViolationsReport from "./ViolationsReport";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { postDynamicOptimization } from "../api";
+import { pdf } from '@react-pdf/renderer';
+import domtoimage from "dom-to-image";
+import { Download, UploadCloud, RefreshCw, Trash2, Map } from "lucide-react";
+import { TestcasePDF } from './PDFReport';
 
 /* ── Google Fonts ── */
 if (typeof document !== "undefined" && !document.getElementById("db-fonts")) {
@@ -201,11 +205,22 @@ function SectionLabel({ children }) {
 
 /* ── Main Dashboard ── */
 export default function DashboardView({
-  mapData,
+  results,
+  selectedResult,
+  onSelectResult,
   mapMode,
   setMapMode,
   vehicleFilter,
   setVehicleFilter,
+  selectedFile,
+  setSelectedFile,
+  onProcess,
+  loading,
+  error,
+  progress,
+  showProgress,
+  onDelete,
+  mapData,
   routeGeometries,
   isRouteLoading,
   routesLoadedCount,
@@ -213,18 +228,19 @@ export default function DashboardView({
   legendVisible,
   setLegendVisible,
   visibleTrips,
-  metrics,
   hasCases,
-  selectedResult,
   onNewCase,
   reports,
+  metrics,
 }) {
-  const m = metrics ?? {};
+  const mapRef = useRef(null);
+  const m = metrics || {};
 
   const [activeTab, setActiveTab] = useState("map");
   const [selectedRouteId, setSelectedRouteId] = useState(null);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isAddEmployeeModalOpen, setIsAddEmployeeModalOpen] = useState(false);
+  const [fitBoundsToggle, setFitBoundsToggle] = useState(0);
 
   const handleExportJson = () => {
     if (!selectedResult || !selectedResult.id) return;
@@ -249,6 +265,71 @@ export default function DashboardView({
     } catch (err) {
       console.error("Failed to export JSON", err);
       alert("Failed to export JSON data.");
+    }
+  };
+
+  const handleExportPdf = async () => {
+    if (!selectedResult || !selectedResult.id) return;
+    try {
+      let mapImage = null;
+      if (mapRef.current) {
+        try {
+          // Force map to re-center bounds to ensure all routes are in view
+          setFitBoundsToggle(prev => prev + 1);
+          await new Promise(r => setTimeout(r, 600)); // wait for Leaflet animation to finish
+
+          const mapEl = mapRef.current;
+
+          // Higher resolution scale
+          const scale = 2;
+          const style = {
+            transform: `scale(${scale})`,
+            transformOrigin: 'top left',
+            width: `${mapEl.offsetWidth}px`,
+            height: `${mapEl.offsetHeight}px`
+          };
+
+          const filter = (node) => {
+            // Exclude Leaflet zoom controls and the Legend UI
+            if (node.classList) {
+              if (node.classList.contains('leaflet-control-container')) return false;
+              if (node.classList.contains('legend-container')) return false;
+            }
+            return true;
+          };
+
+          mapImage = await domtoimage.toPng(mapEl, {
+            quality: 1,
+            bgcolor: '#ffffff',
+            width: mapEl.offsetWidth * scale,
+            height: mapEl.offsetHeight * scale,
+            style,
+            filter
+          });
+        } catch (e) {
+          console.error("Failed to capture map", e);
+        }
+      }
+
+      const doc = <TestcasePDF result={selectedResult} mapMode={mapMode} metrics={m} mapImage={mapImage} />;
+      const asPdf = pdf([]);
+      asPdf.updateContainer(doc);
+      const blob = await asPdf.toBlob();
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const basename = typeof selectedResult.original_filename === 'string'
+        ? selectedResult.original_filename
+        : (typeof selectedResult.filename === 'string' ? selectedResult.filename : 'testcase');
+      a.download = `${basename.replace('.xlsx', '').replace('.json', '')}_report.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to generate PDF", err);
+      alert("Failed to export PDF report.");
     }
   };
 
@@ -329,6 +410,22 @@ export default function DashboardView({
           </div>
 
           <div className="flex items-center gap-3">
+            <button
+              onClick={handleExportPdf}
+              title="Export Report as PDF"
+              className="cursor-pointer group flex items-center justify-center w-11 h-11 rounded-xl bg-slate-800/80 border border-slate-700/60 transition-all duration-300 hover:bg-slate-700/80 hover:border-slate-500/50 hover:-translate-y-0.5 shadow-lg shadow-black/20"
+            >
+              <svg
+                className="w-5 h-5 text-slate-400 group-hover:text-rose-400 transition-colors duration-300"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 11v6m-3-3l3 3 3-3" />
+              </svg>
+            </button>
             <button
               onClick={handleExportJson}
               title="Export Testcase as JSON"
@@ -450,7 +547,7 @@ export default function DashboardView({
           </div>
 
           {/* Map */}
-          <div className="relative" style={{ minHeight: 460 }}>
+          <div ref={mapRef} className="relative" style={{ minHeight: 460 }}>
             {isRouteLoading && (
               <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm">
                 <div className="flex flex-col items-center gap-4">
@@ -472,6 +569,7 @@ export default function DashboardView({
               legendVisible={legendVisible}
               setLegendVisible={setLegendVisible}
               visibleTrips={visibleTrips}
+              fitBoundsToggle={fitBoundsToggle}
             />
           </div>
 

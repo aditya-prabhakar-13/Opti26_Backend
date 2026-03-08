@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   deleteResult,
   deleteAllTestCases,
-  fetchLatestResult,
   fetchResultDetail,
   fetchResults,
   fetchRoadGeometry,
@@ -75,10 +74,7 @@ export default function App() {
 
     async function init() {
       try {
-        const [rowsPayload, latestPayload] = await Promise.all([
-          fetchResults(),
-          fetchLatestResult(),
-        ]);
+        const rowsPayload = await Promise.resolve(fetchResults());
         if (!mounted) return;
 
         const rows = toResultsListRows(rowsPayload);
@@ -91,12 +87,9 @@ export default function App() {
 
         setActiveNav("dashboard");
 
-        if (latestPayload?.result) {
-          setSelectedResult(normalizeOptimizationPayload(latestPayload));
-        } else {
-          const detail = await fetchResultDetail(rows[0].id);
-          if (mounted) setSelectedResult(normalizeOptimizationPayload(detail));
-        }
+        const detail = await fetchResultDetail(rows[0].id);
+        if (mounted) setSelectedResult(normalizeOptimizationPayload(detail));
+
       } catch (initErr) {
         if (mounted) {
           setError(initErr.message || "Unable to load existing results");

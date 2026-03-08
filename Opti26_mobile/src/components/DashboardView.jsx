@@ -306,13 +306,13 @@ export default function DashboardView({
         {/* ── Map Card ── */}
         <div className="rounded-3xl border border-slate-700/60 bg-slate-800/40 backdrop-blur-sm shadow-2xl overflow-hidden">
           {/* Toolbar */}
-          <div className="flex flex-row flex-wrap sm:flex-nowrap items-center justify-between gap-4 px-6 py-4 border-b border-slate-700/50 bg-slate-800/40 overflow-x-auto no-scrollbar">
-            <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0 w-full sm:w-auto">
+          <div className="flex flex-row flex-wrap sm:flex-nowrap items-center justify-between gap-4 px-6 py-4 border-b border-slate-700/50 bg-slate-800/40 no-scrollbar">
+            <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0 w-full sm:w-auto ">
               <span className="hidden lg:inline text-[11px] font-bold text-slate-500 uppercase tracking-widest flex-shrink-0">
                 Map View
               </span>
               {/* Toggle group */}
-              <div className="flex items-center bg-slate-900/70 rounded-xl p-1 gap-0.5 border border-slate-700/50 w-full sm:w-auto">
+              <div className="flex items-center bg-slate-900/70 rounded-xl p-1 gap-0.5 border border-slate-700/50 w-full sm:w-auto ">
                 {[
                   {
                     key: "initial",
@@ -345,20 +345,19 @@ export default function DashboardView({
                       disabled={disabled}
                       className={`
                         px-2.5 sm:px-3 xl:px-4 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold tracking-wide transition-all duration-200 whitespace-nowrap flex-1 sm:flex-none flex-shrink-0
-                        ${
-                          active
-                            ? "text-slate-900 shadow-sm shadow-amber-900/30"
-                            : disabled
-                              ? "text-slate-600 cursor-not-allowed"
-                              : "text-slate-400 hover:text-slate-200"
+                        ${active
+                          ? "text-slate-900 shadow-sm shadow-amber-900/30"
+                          : disabled
+                            ? "text-slate-600 cursor-not-allowed"
+                            : "text-slate-400 hover:text-slate-200"
                         }
                       `}
                       style={
                         active
                           ? {
-                              background:
-                                "linear-gradient(135deg, #f59e0b, #ea580c)",
-                            }
+                            background:
+                              "linear-gradient(135deg, #f59e0b, #ea580c)",
+                          }
                           : {}
                       }>
                       <span className="hidden 2xl:inline">{label}</span>

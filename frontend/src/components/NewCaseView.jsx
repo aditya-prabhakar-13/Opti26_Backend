@@ -267,9 +267,9 @@ export default function NewCaseView({
                 <label className="text-xs font-bold uppercase tracking-widest text-slate-500 text-center">Optimization Mode</label>
                 <div className="flex items-center justify-center gap-2 flex-wrap">
                   {[
-                    { id: 'instant', label: 'Instant' },
-                    { id: 'balanced', label: 'Balanced' },
-                    { id: 'deep', label: 'Deep' }
+                    { id: '0', label: 'Instant Optimize' },
+                    { id: '1', label: 'Deep Optimize' },
+                    // { id: 'deep', label: 'Deep' }
                   ].map(mode => (
                     <button
                       key={mode.id}
