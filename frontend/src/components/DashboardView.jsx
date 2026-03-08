@@ -540,7 +540,7 @@ export default function DashboardView({
                   {
                     key: "optimized",
                     label: "All Constraints",
-                    shortLabel: "Optimized",
+                    shortLabel: "All Const.",
                   },
                   {
                     key: "noconstraints",

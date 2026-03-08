@@ -36,7 +36,7 @@
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
 
   /* ── shadcn/ui tokens (dark mode values) ── */
-  --background: #0d0f14;
+  --background: #0d0f14; 
   --foreground: #e8ecf0; 
   --card: #131620;
   --card-foreground: #e8ecf0;
