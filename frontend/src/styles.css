@@ -4,7 +4,7 @@
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
-
+ 
 :root {
   /* ── Legacy palette (kept for old component references) ── */
   --bg-main: #0d0f14;
