@@ -1,34 +1,4 @@
 /* ── Icons ── */
-function IconPlus() {
-  return (
-    <svg
-      className="w-4 h-4"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={2.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-    </svg>
-  );
-}
-
-function IconRoute() {
-  return (
-    <svg
-      className="w-3.5 h-3.5"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={1.8}>
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6-3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
-      />
-    </svg>
-  );
-}
-
 function IconTrash() {
   return (
     <svg
@@ -36,7 +6,7 @@ function IconTrash() {
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"
-      strokeWidth={1.8}>
+      strokeWidth={1.6}>
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -46,15 +16,15 @@ function IconTrash() {
   );
 }
 
-function IconChevron() {
+function IconPlus() {
   return (
     <svg
-      className="w-4 h-4"
+      className="w-3.5 h-3.5"
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"
-      strokeWidth={2.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+      strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
     </svg>
   );
 }
@@ -63,44 +33,28 @@ function IconChevron() {
 function TestCaseRow({ result, isActive, isDeleting, onOpen, onDelete }) {
   return (
     <div
-      className={`
-        group relative flex items-center gap-3 px-3 py-3 rounded-md cursor-pointer
-        transition-all duration-200
-        ${isActive
-          ? "bg-amber-500/15 border border-amber-500/30"
-          : "hover:bg-slate-700/50 border border-transparent hover:border-slate-600/40"
-        }
-      `}
-      onClick={() => onOpen(result.id)}>
-      {/* Active indicator */}
-      {isActive && (
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r-full bg-amber-500" />
-      )}
+      className="group relative flex items-center gap-2 pl-6 pr-3 py-2.5 cursor-pointer transition-colors duration-150"
+      style={{
+        borderLeft: isActive ? "2px solid #c9a047" : "2px solid transparent",
+        background: isActive ? "rgba(201,160,71,0.04)" : "transparent",
+      }}
+      onClick={() => onOpen(result.id)}
+      onMouseEnter={(e) => {
+        if (!isActive) e.currentTarget.style.background = "rgba(255,255,255,0.025)";
+      }}
+      onMouseLeave={(e) => {
+        if (!isActive) e.currentTarget.style.background = "transparent";
+      }}>
+      <p
+        className="flex-1 min-w-0 truncate text-[13px] tracking-wide"
+        style={{
+          color: isActive ? "#f5f5f5" : "rgba(255,255,255,0.55)",
+          fontWeight: isActive ? 500 : 400,
+        }}
+        title={result.filename ?? `Case #${result.id}`}>
+        {result.filename ?? `Case #${result.id}`}
+      </p>
 
-      {/* Icon */}
-      <div
-        className={`
-        flex-shrink-0 w-8 h-8 rounded-md flex items-center justify-center
-        ${isActive ? "bg-amber-500/20 text-amber-400" : "bg-slate-700/80 text-slate-400 group-hover:bg-slate-600/80"}
-        transition-colors duration-200
-      `}>
-        <IconRoute />
-      </div>
-
-      {/* Label */}
-      <div className="flex-1 min-w-0">
-        <p
-          className={`text-xs font-semibold truncate leading-tight ${isActive ? "text-amber-300" : "text-slate-300 group-hover:text-white"} transition-colors`}>
-          {result.filename ?? `Case #${result.id}`}
-        </p>
-        {result.createdAt && (
-          <p className="text-[10px] text-slate-500 mt-0.5 truncate">
-            {result.createdAt}
-          </p>
-        )}
-      </div>
-
-      {/* Delete button */}
       <button
         type="button"
         disabled={isDeleting}
@@ -108,16 +62,19 @@ function TestCaseRow({ result, isActive, isDeleting, onOpen, onDelete }) {
           e.stopPropagation();
           onDelete(result.id);
         }}
-        className="
-          flex-shrink-0 opacity-0 group-hover:opacity-100
-          w-6 h-6 rounded-md flex items-center justify-center
-          text-slate-500 hover:text-rose-400 hover:bg-rose-400/10
-          transition-all duration-150
-          disabled:opacity-30
-        "
+        className="flex-shrink-0 opacity-0 group-hover:opacity-100 w-6 h-6 rounded flex items-center justify-center transition-all duration-150 disabled:opacity-30"
+        style={{ color: "rgba(255,255,255,0.4)" }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.color = "#c9a047";
+          e.currentTarget.style.background = "rgba(201,160,71,0.08)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = "rgba(255,255,255,0.4)";
+          e.currentTarget.style.background = "transparent";
+        }}
         title="Delete">
         {isDeleting ? (
-          <div className="w-3 h-3 border border-slate-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
         ) : (
           <IconTrash />
         )}
@@ -143,73 +100,67 @@ export default function Sidebar({
       className="flex flex-col h-full"
       style={{
         fontFamily: "'Plus Jakarta Sans', sans-serif",
-        background: "var(--color-surface)",
-        borderRight: "1px solid var(--color-border)",
+        background: "#0a0b0e",
+        borderRight: "1px solid rgba(255,255,255,0.06)",
       }}>
       {/* ── Brand ── */}
-      <div className="flex items-center gap-3 px-5 py-6">
-        <img src="/favicon.svg" alt="" className="h-8" />
-        <div>
-          <p
-            className="text-base font-bold text-white leading-none tracking-wide"
-            style={{ fontFamily: "'Fraunces', serif" }}>
-            VELORA
-          </p>
-          <p className="text-[10px] text-amber-500/80 font-semibold tracking-widest uppercase mt-0.5">
-            Driven by Possibility
-          </p>
+      <div className="flex items-center gap-3 px-6 pt-7 pb-8">
+        <img src="/favicon.svg" alt="" className="h-7 w-7 object-contain" />
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span
+            className="text-[20px] font-semibold leading-none text-white tracking-wide"
+            style={{ fontFamily: "'Fraunces', serif", fontWeight: 600 }}>
+            Velora
+          </span>
+          <span
+            className="w-px h-4 flex-shrink-0"
+            style={{ background: "rgba(255,255,255,0.18)" }}
+          />
+          <span
+            className="text-[9px] font-semibold uppercase leading-tight whitespace-nowrap"
+            style={{
+              color: "rgba(255,255,255,0.45)",
+              letterSpacing: "0.12em",
+              fontFamily: "'Inter', sans-serif",
+            }}>
+            Fleet<br />Intelligence
+          </span>
         </div>
       </div>
 
-      {/* ── Divider ── */}
-      <div className="mx-4 h-px bg-gradient-to-r from-transparent via-slate-700/60 to-transparent" />
-
-      {/* ── New Test Case button ── */}
-      <div className="px-4 py-4">
+      {/* ── TEST CASES section header ── */}
+      <div
+        className="px-6 pb-3 flex items-center justify-between"
+        style={{
+          color: "rgba(255,255,255,0.42)",
+        }}>
+        <span
+          className="text-[10px] font-semibold uppercase tracking-[0.18em]"
+          style={{ fontFamily: "'Inter', sans-serif" }}>
+          Test Cases
+        </span>
         <button
           type="button"
           onClick={onNewCase}
-          className="
-            w-full flex items-center justify-center gap-2.5
-            px-4 py-2.5 rounded-md
-            font-bold text-sm text-white
-            transition-all duration-200
-            hover:-translate-y-0.5
-            shadow-lg shadow-amber-900/30 hover:shadow-amber-900/50
-            cursor-pointer
-          "
-          style={{ background: "var(--color-accent)" }}>
+          title="New test case"
+          className="w-5 h-5 rounded flex items-center justify-center transition-colors"
+          style={{ color: "rgba(255,255,255,0.45)" }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "#c9a047")}
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.color = "rgba(255,255,255,0.45)")
+          }>
           <IconPlus />
-          New Test Case
         </button>
       </div>
 
-      {/* ── Test Cases list ── */}
-      <div className="px-3 pb-2">
-        <div className="flex items-center gap-2 px-2 mb-2">
-          <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
-            Test Cases
-          </span>
-          <div className="flex-1 h-px bg-slate-700/50" />
-          {results.length > 0 && (
-            <span className="text-[10px] font-bold text-slate-600 bg-slate-800 rounded-full px-1.5 py-0.5">
-              {results.length}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* ── Scrollable case list ── */}
-      <div className="flex-1 overflow-y-auto px-3 pb-4 space-y-1 scrollbar-thin">
+      {/* ── Case list ── */}
+      <div className="flex-1 overflow-y-auto pb-2 scrollbar-thin">
         {results.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-10 px-4 text-center">
-            <div className="w-10 h-10 rounded-md bg-slate-800/80 flex items-center justify-center text-slate-600">
-              <IconRoute />
-            </div>
-            <p className="text-xs text-slate-500 leading-relaxed">
+          <div className="px-6 py-6">
+            <p
+              className="text-[11px] leading-relaxed"
+              style={{ color: "rgba(255,255,255,0.35)" }}>
               No test cases yet.
-              <br />
-              Run your first optimization above.
             </p>
           </div>
         ) : (
@@ -224,11 +175,8 @@ export default function Sidebar({
             />
           ))
         )}
-      </div>
 
-      {/* ── Footer ── */}
-      <div className="mx-4 h-px bg-gradient-to-r from-transparent via-slate-700/40 to-transparent" />
-      <div className="px-5 py-4 space-y-3">
+        {/* Delete All — styled as a row item, matching Image 1 */}
         {results.length > 0 && (
           <button
             type="button"
@@ -241,17 +189,36 @@ export default function Sidebar({
                 onDeleteAllTestCases?.();
               }
             }}
-            className="
-              w-full text-[10px] font-semibold
-              px-3 py-2 rounded-md
-              text-rose-400 hover:bg-rose-500/10
-              transition-colors duration-200
-            "
-            title="Delete all test cases">
+            className="w-full text-left pl-6 pr-3 py-2.5 transition-colors duration-150"
+            style={{
+              color: "rgba(255,255,255,0.45)",
+              borderLeft: "2px solid transparent",
+              fontSize: "13px",
+              fontWeight: 400,
+              letterSpacing: "0.01em",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(255,255,255,0.025)";
+              e.currentTarget.style.color = "rgba(255,255,255,0.7)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.color = "rgba(255,255,255,0.45)";
+            }}>
             Delete All
           </button>
         )}
-        <p className="text-[10px] text-slate-600 font-semibold tracking-wide">
+      </div>
+
+      {/* ── Footer ── */}
+      <div
+        className="px-6 py-4"
+        style={{
+          borderTop: "1px solid rgba(255,255,255,0.04)",
+        }}>
+        <p
+          className="text-[10px] font-medium tracking-wide"
+          style={{ color: "rgba(255,255,255,0.25)" }}>
           © 2025 Velora Fleet Intelligence
         </p>
       </div>

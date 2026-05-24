@@ -119,64 +119,47 @@ const icons = {
   ),
 };
 
-/* ── MetricCard ── */
-function MetricCard({ label, value, variant = "default", icon }) {
-  const v = {
-    default: {
-      wrap: "border-[var(--color-border)] hover:border-[var(--color-border-2)] hover:bg-[var(--color-surface-2)]",
-      label: "text-[var(--color-text-2)]",
-      value: "text-[var(--color-text)]",
-      iconWrap: "bg-[var(--color-surface-2)] text-[var(--color-text-2)]",
-      leftBorder: "bg-[var(--color-border-2)]",
-    },
-    gold: {
-      wrap: "border-amber-900/50 hover:border-amber-700/50 hover:bg-amber-950/20",
-      label: "text-amber-500",
-      value: "text-amber-400",
-      iconWrap: "bg-amber-950/40 text-amber-500",
-      leftBorder: "bg-amber-500",
-    },
-    green: {
-      wrap: "border-emerald-900/50 hover:border-emerald-700/50 hover:bg-emerald-950/20",
-      label: "text-emerald-500",
-      value: "text-emerald-400",
-      iconWrap: "bg-emerald-950/40 text-emerald-500",
-      leftBorder: "bg-emerald-500",
-    },
-  }[variant];
-
+/* ── Horizontal Stat (no card, vertical-divider style from mockup) ── */
+function StatItem({ label, value, accent = false, isFirst = false }) {
   return (
     <div
-      className={`relative rounded-md border p-5 pt-3 flex flex-col gap-3 bg-[var(--color-surface)] ${v.wrap} transition-all duration-200 group overflow-hidden`}>
-      {/* Left accent border */}
-      <div className={`absolute top-0 left-0 bottom-0 w-[3px] ${v.leftBorder} opacity-70 rounded-l-xl`} />
-
-      <div className="flex items-center justify-between pl-2">
-        <p className={`text-[11px] font-bold uppercase tracking-widest ${v.label}`}>
-          {label}
-        </p>
-        {icon && (
-          <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${v.iconWrap}`}>
-            {icon}
-          </div>
-        )}
-      </div>
-      <p className={`text-[1.6rem] font-extrabold leading-none tracking-tight pl-2 ${v.value}`}>
-        {value ?? <span className="text-[var(--color-text-3)] font-normal text-xl">—</span>}
+      className={`flex-1 min-w-0 flex flex-col gap-2 py-1 ${isFirst ? "" : "sm:pl-7"} ${isFirst ? "" : "sm:border-l"} sm:pr-4`}
+      style={{
+        borderColor: "rgba(255,255,255,0.07)",
+      }}>
+      <p
+        className="text-[10px] font-semibold uppercase tracking-[0.16em] whitespace-nowrap overflow-hidden text-ellipsis"
+        style={{
+          color: "rgba(255,255,255,0.42)",
+          fontFamily: "'Inter', sans-serif",
+        }}>
+        {label}:
+      </p>
+      <p
+        className="text-[1.85rem] font-light leading-none tracking-tight whitespace-nowrap overflow-hidden text-ellipsis"
+        style={{
+          color: accent ? "#e8c882" : "#f5f5f5",
+          fontFamily: "'Fraunces', serif",
+          fontWeight: 400,
+        }}>
+        {value ?? <span style={{ color: "rgba(255,255,255,0.25)" }}>—</span>}
       </p>
     </div>
   );
 }
 
-/* ── Section Label ── */
+/* ── Section Label (uppercase, minimal) ── */
 function SectionLabel({ children }) {
   return (
-    <div className="flex items-center gap-3 mb-4">
-      <div className="w-[3px] h-4 rounded-full bg-[var(--color-accent)]" />
-      <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--color-text-2)]">
+    <div className="mb-5 pb-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+      <span
+        className="text-[10px] font-semibold uppercase tracking-[0.18em]"
+        style={{
+          color: "rgba(255,255,255,0.55)",
+          fontFamily: "'Inter', sans-serif",
+        }}>
         {children}
       </span>
-      <div className="flex-1 h-px bg-[var(--color-border-2)]" />
     </div>
   );
 }
@@ -418,54 +401,63 @@ export default function DashboardView({
         background: "var(--color-bg)",
       }}>
 
-      <div className="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-8 space-y-8">
-        {/* ── Header ── */}
-        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
-          <div className="flex items-center gap-4">
-            {/* Logo badge */}
-            <div
-              className="w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0"
+      <div className="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-12 py-10 space-y-10">
+        {/* ── Header (Image 1: large serif title + uppercase sub-label) ── */}
+        <header className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-6">
+          <div className="min-w-0">
+            <h1
+              className="leading-[1.05] tracking-tight text-white"
               style={{
-                background: "var(--color-accent)",
+                fontFamily: "'Fraunces', serif",
+                fontWeight: 400,
+                fontSize: "clamp(2rem, 4vw, 3.1rem)",
               }}>
-              <svg
-                className="w-5 h-5 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}>
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6-3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
-                />
-              </svg>
-            </div>
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-500">
-                Fleet Intelligence
-              </p>
-              <h1
-                className="text-2xl sm:text-3xl font-bold text-white leading-tight"
-                style={{ fontFamily: "'Fraunces', serif" }}>
-                Route Dashboard
-              </h1>
-            </div>
+              Velora Fleet Analytics Dashboard
+            </h1>
+            <p
+              className="mt-4 text-[11px] font-semibold uppercase tracking-[0.18em]"
+              style={{
+                color: "rgba(255,255,255,0.55)",
+                fontFamily: "'Inter', sans-serif",
+              }}>
+              Fleet Overview
+              {selectedResult?.filename && (
+                <span style={{ color: "rgba(255,255,255,0.35)" }}>
+                  {" · "}
+                  <span style={{ color: "rgba(255,255,255,0.7)" }}>
+                    {selectedResult.filename}
+                  </span>
+                </span>
+              )}
+            </p>
           </div>
 
-          <div className="flex items-center gap-3 self-end">
+          <div className="flex items-center gap-2 self-end">
             <div style={{ position: "relative" }} >
               <button
                 onClick={() => setIsDownloadMenuOpen(!isDownloadMenuOpen)}
                 title="Download Export"
-                className="cursor-pointer group flex items-center justify-center w-11 h-11 rounded-md bg-slate-800/80 border border-slate-700/60 transition-all duration-300 hover:bg-slate-700/80 hover:border-slate-500/50 hover:-translate-y-0.5 shadow-lg shadow-black/20"
+                className="cursor-pointer group flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200"
+                style={{
+                  background: "transparent",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(201,160,71,0.5)";
+                  e.currentTarget.style.background = "rgba(201,160,71,0.06)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
+                  e.currentTarget.style.background = "transparent";
+                }}
               >
                 <svg
-                  className="w-5 h-5 text-slate-400 group-hover:text-amber-400 transition-colors duration-300"
+                  className="w-4 h-4 transition-colors duration-200"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
-                  strokeWidth={2}
+                  strokeWidth={1.8}
+                  style={{ color: "rgba(255,255,255,0.6)" }}
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
@@ -477,13 +469,28 @@ export default function DashboardView({
                     style={{ position: "fixed", inset: 0, zIndex: 40 }}
                     onClick={() => setIsDownloadMenuOpen(false)}
                   />
-                  <div className="absolute right-0 top-[calc(100%+8px)] bg-slate-800 border border-slate-700/60 rounded-md shadow-xl p-1.5 min-w-[170px] z-50 flex flex-col gap-1">
+                  <div
+                    className="absolute right-0 top-[calc(100%+8px)] rounded-md p-1.5 min-w-[170px] z-50 flex flex-col gap-1"
+                    style={{
+                      background: "#13151a",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      boxShadow: "0 12px 28px rgba(0,0,0,0.55)",
+                    }}>
                     <button
                       onClick={() => {
                         setIsDownloadMenuOpen(false);
                         handleExportPdf();
                       }}
-                      className="w-full text-left px-3 py-2.5 rounded-lg bg-transparent border-none text-[13px] font-medium text-slate-300 cursor-pointer transition-colors hover:bg-slate-700/80 hover:text-white"
+                      className="w-full text-left px-3 py-2 rounded bg-transparent border-none text-[13px] cursor-pointer transition-colors"
+                      style={{ color: "rgba(255,255,255,0.7)" }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                        e.currentTarget.style.color = "#fff";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "transparent";
+                        e.currentTarget.style.color = "rgba(255,255,255,0.7)";
+                      }}
                     >
                       Export as PDF
                     </button>
@@ -492,7 +499,16 @@ export default function DashboardView({
                         setIsDownloadMenuOpen(false);
                         handleExportJson();
                       }}
-                      className="w-full text-left px-3 py-2.5 rounded-lg bg-transparent border-none text-[13px] font-medium text-slate-300 cursor-pointer transition-colors hover:bg-slate-700/80 hover:text-white"
+                      className="w-full text-left px-3 py-2 rounded bg-transparent border-none text-[13px] cursor-pointer transition-colors"
+                      style={{ color: "rgba(255,255,255,0.7)" }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                        e.currentTarget.style.color = "#fff";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "transparent";
+                        e.currentTarget.style.color = "rgba(255,255,255,0.7)";
+                      }}
                     >
                       Export as JSON
                     </button>
@@ -503,17 +519,28 @@ export default function DashboardView({
 
             <button
               onClick={() => setIsAddEmployeeModalOpen(true)}
-              className="cursor-pointer group relative flex items-center justify-center gap-2 px-6 py-2.5 rounded-md font-bold text-sm tracking-wide text-white overflow-hidden transition-all duration-300 shadow-lg shadow-amber-900/20 hover:shadow-amber-900/40 hover:-translate-y-0.5"
+              className="cursor-pointer flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-[13px] tracking-wide transition-all duration-200"
               style={{
-                background: "var(--color-accent)"
+                background: "transparent",
+                border: "1px solid rgba(201,160,71,0.5)",
+                color: "#e8c882",
+                fontFamily: "'Inter', sans-serif",
+                fontWeight: 500,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(201,160,71,0.1)";
+                e.currentTarget.style.borderColor = "#c9a047";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.borderColor = "rgba(201,160,71,0.5)";
               }}>
-              <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
               <svg
-                className="w-4 h-4 transition-transform duration-300 group-hover:rotate-180"
+                className="w-3.5 h-3.5"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
-                strokeWidth={2.5}>
+                strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
               </svg>
               Add Employee
@@ -521,37 +548,74 @@ export default function DashboardView({
           </div>
         </header>
 
+        {/* ── Fleet Overview Stats Strip (Image 1: horizontal, vertical dividers, no cards) ── */}
+        {showMetrics && (
+          <div>
+            <SectionLabel>
+              Fleet Overview
+              {selectedResult?.filename && (
+                <span style={{ color: "rgba(255,255,255,0.32)" }}>
+                  {"  ·  "}
+                  <span style={{ color: "rgba(255,255,255,0.55)" }}>{selectedResult.filename}</span>
+                </span>
+              )}
+            </SectionLabel>
+            <div className="flex flex-col sm:flex-row items-stretch gap-y-4">
+              <StatItem
+                label="Vehicles Used"
+                value={formatNumber(m.vehicles_used)}
+                isFirst
+              />
+              <StatItem
+                label="Employees Covered"
+                value={formatNumber(m.employees_covered)}
+              />
+              <StatItem
+                label="Total Distance"
+                value={
+                  m.total_distance_km != null
+                    ? `${formatNumber(m.total_distance_km)} km`
+                    : null
+                }
+              />
+              <StatItem
+                label="Total Objective Cost"
+                value={formatCurrency(m.total_cost)}
+                accent
+              />
+            </div>
+          </div>
+        )}
+
         {/* ── Map Card ── */}
-        <div className="rounded-lg border overflow-hidden" style={{ background: "var(--color-surface)", borderColor: "var(--color-border)" }}>
-          {/* Toolbar */}
-          <div className="flex flex-row flex-wrap sm:flex-nowrap items-center justify-between gap-4 px-6 py-4 border-b  no-scrollbar" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}>
-            <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0 w-full sm:w-auto">
-              <span className="hidden lg:inline text-[11px] font-bold text-slate-500 uppercase tracking-widest flex-shrink-0">
-                Map View
+        <div
+          className="rounded-md overflow-hidden"
+          style={{
+            background: "#0c0d11",
+            border: "1px solid rgba(255,255,255,0.06)",
+          }}>
+          {/* Toolbar — Image 1 "VIEWS:" style, right-aligned, minimal pills */}
+          <div
+            className="flex flex-row flex-wrap items-center justify-between gap-3 px-5 py-3 no-scrollbar"
+            style={{
+              borderBottom: "1px solid rgba(255,255,255,0.05)",
+              background: "transparent",
+            }}>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <span
+                className="text-[10px] font-semibold uppercase tracking-[0.18em]"
+                style={{
+                  color: "rgba(255,255,255,0.42)",
+                  fontFamily: "'Inter', sans-serif",
+                }}>
+                Views:
               </span>
-              {/* Toggle group */}
-              <div className="flex items-center rounded-md p-1 gap-0.5 border w-full sm:w-auto overflow-x-auto" style={{ background: "var(--color-bg)", borderColor: "var(--color-border)" }}>
+              <div className="flex items-center gap-1 overflow-x-auto">
                 {[
-                  {
-                    key: "initial",
-                    label: "Initial Points",
-                    shortLabel: "Initial",
-                  },
-                  {
-                    key: "optimized",
-                    label: "All Constraints",
-                    shortLabel: "All Const.",
-                  },
-                  {
-                    key: "noconstraints",
-                    label: "No Constraints",
-                    shortLabel: "No Const.",
-                  },
-                  {
-                    key: "infeasible",
-                    label: "Hybrid",
-                    shortLabel: "Hybrid",
-                  },
+                  { key: "initial", label: "Initial", shortLabel: "Initial" },
+                  { key: "optimized", label: "Efficiency", shortLabel: "Eff." },
+                  { key: "noconstraints", label: "Cost", shortLabel: "Cost" },
+                  { key: "infeasible", label: "Hybrid", shortLabel: "Hybrid" },
                 ].map(({ key, label, shortLabel }) => {
                   const active = mapMode === key;
                   const disabled = key !== "initial" && !selectedResult;
@@ -561,18 +625,32 @@ export default function DashboardView({
                       type="button"
                       onClick={() => !disabled && setMapMode(key)}
                       disabled={disabled}
-                      className={`
-                        px-2.5 sm:px-3 xl:px-4 py-1.5 rounded-md text-[10px] sm:text-xs font-semibold tracking-tight transition-all duration-200 whitespace-nowrap flex-1 sm:flex-none flex-shrink-0
-                        ${active
-                          ? "text-white"
-                          : disabled
-                            ? "cursor-not-allowed"
-                            : "hover:text-white"
-                        }
-                      `}
+                      className="px-3 py-1 rounded-full text-[12px] tracking-tight transition-all duration-200 whitespace-nowrap flex-shrink-0 cursor-pointer disabled:cursor-not-allowed"
                       style={{
-                        color: active ? "#fff" : disabled ? "var(--color-text-3)" : "var(--color-text-2)",
-                        background: active ? "var(--color-accent)" : "transparent",
+                        fontFamily: "'Inter', sans-serif",
+                        fontWeight: active ? 600 : 500,
+                        color: active
+                          ? "#1a1408"
+                          : disabled
+                            ? "rgba(255,255,255,0.25)"
+                            : "rgba(255,255,255,0.7)",
+                        background: active ? "#c9a047" : "transparent",
+                        border: active
+                          ? "1px solid #c9a047"
+                          : "1px solid transparent",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!active && !disabled) {
+                          e.currentTarget.style.color = "#fff";
+                          e.currentTarget.style.background =
+                            "rgba(255,255,255,0.04)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!active && !disabled) {
+                          e.currentTarget.style.color = "rgba(255,255,255,0.7)";
+                          e.currentTarget.style.background = "transparent";
+                        }
                       }}>
                       <span className="hidden lg:inline">{label}</span>
                       <span className="lg:hidden">{shortLabel}</span>
@@ -587,8 +665,14 @@ export default function DashboardView({
                 value={vehicleFilter}
                 onChange={(e) => setVehicleFilter(e.target.value)}
                 disabled={!selectedResult}
-                className="appearance-none pl-4 pr-9 py-2 rounded-xl border text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/50 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all"
-                style={{ background: "var(--color-bg)", borderColor: "var(--color-border)", color: "var(--color-text-2)" }}>
+                className="appearance-none pl-4 pr-9 py-1.5 rounded-full text-[12px] focus:outline-none disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all"
+                style={{
+                  background: "transparent",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  color: "rgba(255,255,255,0.7)",
+                  fontFamily: "'Inter', sans-serif",
+                  fontWeight: 500,
+                }}>
                 <option value="ALL">Combined View</option>
                 {(mapData?.vehicles ?? []).map((v) => (
                   <option key={v} value={v}>
@@ -596,7 +680,9 @@ export default function DashboardView({
                   </option>
                 ))}
               </select>
-              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "var(--color-text-3)" }}>
+              <span
+                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2"
+                style={{ color: "rgba(255,255,255,0.4)" }}>
                 {icons.chevron}
               </span>
             </div>
@@ -641,53 +727,47 @@ export default function DashboardView({
         </div>
 
         {/* ── Metrics ── */}
-        <div className="space-y-8">
+        <div className="space-y-10">
+          {/* ── Savings Analysis (horizontal strip, matching Fleet Overview) ── */}
           {showMetrics && (
             <div>
               <SectionLabel>
-                Fleet Overview{" "}
-                <span className="text-amber-500">· {currentModeLabel}</span>
+                Savings Analysis
+                <span style={{ color: "rgba(255,255,255,0.32)" }}>
+                  {"  ·  "}
+                  <span style={{ color: "rgba(255,255,255,0.55)" }}>
+                    {currentModeLabel}
+                  </span>
+                </span>
               </SectionLabel>
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <MetricCard
-                  label="Vehicles Used"
-                  value={formatNumber(m.vehicles_used)}
-                  icon={icons.vehicle}
+              <div className="flex flex-col sm:flex-row items-stretch gap-y-4 flex-wrap">
+                <StatItem
+                  label="Baseline Cost"
+                  value={formatCurrency(m.baseline_cost)}
+                  isFirst
                 />
-                <MetricCard
-                  label="Employees Covered"
-                  value={formatNumber(m.employees_covered)}
-                  icon={icons.people}
+                <StatItem
+                  label="Net Savings"
+                  value={formatCurrency(m.net_savings)}
+                  accent
                 />
-                <MetricCard
-                  label="Total Distance"
+                <StatItem
+                  label="Savings %"
                   value={
-                    m.total_distance_km != null
-                      ? `${formatNumber(m.total_distance_km)} km`
+                    m.savings_percentage != null
+                      ? `${formatNumber(m.savings_percentage)}%`
                       : null
                   }
-                  icon={icons.route}
+                  accent
                 />
-                <MetricCard
-                  label="Total Objective Cost"
-                  value={formatCurrency(m.total_cost)}
-                  icon={icons.cost}
-                  variant="gold"
+                <StatItem
+                  label="Optimized Time"
+                  value={formatMinutes(m.optimized_travel_time_min)}
                 />
-              </div>
-            </div>
-          )}
-
-          {/* ── Savings Analysis ── */}
-          {showMetrics && (
-            <div>
-              <SectionLabel>Savings Analysis — {currentModeLabel}</SectionLabel>
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <MetricCard label="Baseline Cost" value={formatCurrency(m.baseline_cost)} icon={icons.cost} />
-                <MetricCard label="Net Savings" value={formatCurrency(m.net_savings)} icon={icons.savings} variant="green" />
-                <MetricCard label="Savings %" value={m.savings_percentage != null ? `${formatNumber(m.savings_percentage)}%` : null} icon={icons.savings} variant="green" />
-                <MetricCard label="Optimized Time" value={formatMinutes(m.optimized_travel_time_min)} icon={icons.clock} variant="gold" />
-                <MetricCard label="Baseline Time" value={formatMinutes(m.baseline_travel_time_min)} icon={icons.clock} />
+                <StatItem
+                  label="Baseline Time"
+                  value={formatMinutes(m.baseline_travel_time_min)}
+                />
               </div>
             </div>
           )}
@@ -720,12 +800,17 @@ export default function DashboardView({
           )}
 
           {/* ── Footer ── */}
-          <footer className="flex items-center justify-center gap-3 pt-2 pb-8">
-            <div className="h-px w-12 bg-slate-700/60" />
-            <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-600">
-              Route Optimizer · Fleet Intelligence
+          <footer className="flex items-center justify-center gap-3 pt-4 pb-10">
+            <div className="h-px w-12" style={{ background: "rgba(255,255,255,0.08)" }} />
+            <span
+              className="text-[10px] font-medium uppercase tracking-[0.22em]"
+              style={{
+                color: "rgba(255,255,255,0.3)",
+                fontFamily: "'Inter', sans-serif",
+              }}>
+              Velora · Fleet Intelligence
             </span>
-            <div className="h-px w-12 bg-slate-700/60" />
+            <div className="h-px w-12" style={{ background: "rgba(255,255,255,0.08)" }} />
           </footer>
         </div>
       </div>
