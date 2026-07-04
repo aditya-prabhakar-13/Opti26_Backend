@@ -35,4 +35,4 @@ Thumbs.db
 # Build artifacts and generated outputs
 output.json
 .claude
-
+.understand-anything

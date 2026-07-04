@@ -1,87 +1,56 @@
-# Opti26 (Backend + Web + Mobile)
+# Opti26 / Velora — Documentation Index
 
-Corporate mobility optimization platform with:
-- Django backend (`optimizer/`) for Excel parsing, executable orchestration, route geometry and results APIs
-- React + Vite web app (`frontend/`)
-- Capacitor Android app wrapper (`Opti26_mobile/`) synced from current web UI
+Welcome to the documentation for **Opti26 (Velora)**, a corporate mobility (employee cab pooling) optimization platform. This `docs/` folder explains **everything** about the project: what it does, how it is built, how the pieces talk to each other, how to install and run it, and how to deploy it.
 
-## Repository Layout
-- `manage.py`, `Opti26_Backend/` Django project entry/config
-- `optimizer/` backend app (Excel parser, optimization orchestration, evaluator, executables)
-- `frontend/` current web frontend
-- `Opti26_mobile/` mobile frontend + Android project (Capacitor)
+> **TL;DR** — A Django backend accepts an Excel workbook describing employees, vehicles, baseline costs and metadata, feeds it to native C++ optimization executables (`velora_*`), evaluates the returned routes against hard/soft constraints, and serves the results as JSON to a React (Vite) web app and a Capacitor-wrapped Android app.
 
-## Backend API Endpoints
-- `POST /api/optimize` upload Excel (`excel_file`) and run optimization
-- `POST /api/optimize/dynamic` dynamic insertion flow for new employees
-- `GET /api/progress` optimization progress polling
-- `GET /api/results` list results
-- `GET /api/results/<id>` get one result
-- `DELETE /api/results/<id>` delete one result
-- `GET /api/results/latest` latest result
-- `GET /api/route-geometry?coordinates=lng,lat;...` OSRM geometry lookup
+---
 
-## Executables
-Executable binaries are resolved by OS from:
-- `optimizer/executables/win/`
-- `optimizer/executables/linux/`
-- `optimizer/executables/macos/`
+## Read in this order
 
-Standard optimization uses:
-- `velora_final`
-- `velora_noconstraints`
-- `velora_infeasiblehandling`
+| # | Document | What it covers |
+|---|----------|----------------|
+| 1 | [PROJECT_OVERVIEW.md](./PROJECT_OVERVIEW.md) | The problem, the product, the high-level solution, and the three sub-apps. |
+| 2 | [ARCHITECTURE.md](./ARCHITECTURE.md) | System design, request/response data flow, component diagram. |
+| 3 | [APP_STRUCTURE.md](./APP_STRUCTURE.md) | Complete repository/directory tree with a description of every folder and file. |
+| 4 | [QUICK_START.md](./QUICK_START.md) | Get everything running locally in the fewest possible steps. |
+| 5 | [INSTALLATION.md](./INSTALLATION.md) | Detailed, platform-by-platform install instructions. |
+| 6 | [ENVIRONMENT_SETUP.md](./ENVIRONMENT_SETUP.md) | Environment variables, config, CORS, executables, tooling versions. |
+| 7 | [API_REFERENCE.md](./API_REFERENCE.md) | Every HTTP endpoint: method, params, request/response bodies, errors. |
+| 8 | [MODELS_DOCUMENTATION.md](./MODELS_DOCUMENTATION.md) | Django data model, database schema, migrations. |
+| 9 | [DATA_FORMATS.md](./DATA_FORMATS.md) | The Excel input format and the optimization JSON output schema. |
+| 10 | [OPTIMIZATION_ENGINE.md](./OPTIMIZATION_ENGINE.md) | The `velora_*` executables, constraint evaluator, dynamic insertion. |
+| 11 | [FRONTEND_DOCUMENTATION.md](./FRONTEND_DOCUMENTATION.md) | The React web app: components, state, map, PDF, route geometry. |
+| 12 | [MOBILE_DOCUMENTATION.md](./MOBILE_DOCUMENTATION.md) | The Capacitor Android wrapper and how it is built. |
+| 13 | [DEPLOYMENT.md](./DEPLOYMENT.md) | Docker, Railway (backend), Vercel (frontend), APK release. |
+| 14 | [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md) | Consolidated summary of design decisions and how it all fits together. |
 
-Dynamic optimization uses:
-- `velora_final_dynamic`
-- `velora_noconstraints_dynamic`
-- `velora_infeasiblehandling_dynamic`
+---
 
-## Local Run
-From repo root:
+## The 30-second mental model
 
-1. Backend
-```powershell
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py runserver
+```
+ Excel (.xlsx)                     Native C++ optimizers                JSON result
+┌────────────┐   parse   ┌──────────────────────────────────┐   read   ┌──────────┐
+│ employees  │──────────▶│ velora_final            (default) │─────────▶│ vehicles │
+│ vehicles   │  to JSON  │ velora_noconstraints    (upper)   │          │ trips    │
+│ baseline   │           │ velora_infeasiblehandling (relaxed)│          │ summary  │
+│ metadata   │           └──────────────────────────────────┘          └────┬─────┘
+└────────────┘                                                                │
+      ▲                                                                       ▼
+      │                             evaluator.py  (H1–H6 hard, S1–S4 soft)
+   React web / Android  ◀───────────  Django REST-ish JSON API  ◀───── SQLite DB
 ```
 
-2. Web frontend
-```powershell
-cd frontend
-npm install
-npm run dev
-```
+## Component summary
 
-3. Open:
-- Web: `http://localhost:5173`
-- Backend: `http://127.0.0.1:8000`
+| Layer | Technology | Location |
+|-------|-----------|----------|
+| Backend | Django 6.0.2 (Python) | `Opti26_Backend/`, `optimizer/` |
+| Optimizer | Native C++ binaries + Python evaluator | `optimizer/executables/` |
+| Database | SQLite | `db.sqlite3` |
+| Web frontend | React 18 + Vite 5 + Tailwind 4 + Leaflet | `frontend/` |
+| Mobile | Capacitor 8 (Android) wrapping the web UI | `Opti26_mobile/` |
+| Deployment | Docker + Gunicorn (Railway), Vercel, Gradle APK | `Dockerfile`, `frontend/`, `Opti26_mobile/android/` |
 
-## Current Frontend API Base
-API base is hardcoded in client:
-- `frontend/src/api.js` -> `https://api.velora-opti26.xyz`
-- `Opti26_mobile/src/api.js` -> `https://api.velora-opti26.xyz`
-
-## Mobile Build (Android)
-From `Opti26_mobile/`:
-
-```powershell
-npm install
-npm run mobile:build
-```
-
-Then build release APK:
-```powershell
-cd android
-.\gradlew.bat assembleRelease --no-daemon
-```
-
-Release APK output:
-- `Opti26_mobile/android/app/build/outputs/apk/release/app-release.apk`
-
-Project-level copied APKs:
-- `Opti26_mobile/app-release.apk`
-- `Opti26_mobile/velora.apk`
+For anything not covered here, the source itself is small and readable — start at `optimizer/views.py` (backend orchestration) and `frontend/src/App.jsx` (UI orchestration).
