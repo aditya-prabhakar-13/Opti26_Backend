@@ -7,54 +7,55 @@ import { useRef, useState, useEffect, useCallback } from "react";
 /* ─────────────────────────────────────────────
    Colour palette — matches map vehicle colours
 ───────────────────────────────────────────── */
+// Light-mode: bg = vivid fill/dot, dim = pale tint, text = darker saturated (AA on white).
 const VEHICLE_PALETTE = [
   {
     bg: "#f59e0b",
-    dim: "rgba(245,158,11,0.18)",
-    border: "rgba(245,158,11,0.6)",
-    text: "#fbbf24",
+    dim: "rgba(245,158,11,0.16)",
+    border: "rgba(245,158,11,0.55)",
+    text: "#b45309",
   }, // amber
   {
     bg: "#3b82f6",
-    dim: "rgba(59,130,246,0.18)",
-    border: "rgba(59,130,246,0.6)",
-    text: "#60a5fa",
+    dim: "rgba(59,130,246,0.16)",
+    border: "rgba(59,130,246,0.55)",
+    text: "#1d4ed8",
   }, // blue
   {
     bg: "#10b981",
-    dim: "rgba(16,185,129,0.18)",
-    border: "rgba(16,185,129,0.6)",
-    text: "#34d399",
+    dim: "rgba(16,185,129,0.16)",
+    border: "rgba(16,185,129,0.55)",
+    text: "#047857",
   }, // emerald
   {
     bg: "#8b5cf6",
-    dim: "rgba(139,92,246,0.18)",
-    border: "rgba(139,92,246,0.6)",
-    text: "#a78bfa",
+    dim: "rgba(139,92,246,0.16)",
+    border: "rgba(139,92,246,0.55)",
+    text: "#6d28d9",
   }, // violet
   {
     bg: "#ef4444",
-    dim: "rgba(239,68,68,0.18)",
-    border: "rgba(239,68,68,0.6)",
-    text: "#f87171",
+    dim: "rgba(239,68,68,0.16)",
+    border: "rgba(239,68,68,0.55)",
+    text: "#b91c1c",
   }, // red
   {
     bg: "#06b6d4",
-    dim: "rgba(6,182,212,0.18)",
-    border: "rgba(6,182,212,0.6)",
-    text: "#22d3ee",
+    dim: "rgba(6,182,212,0.16)",
+    border: "rgba(6,182,212,0.55)",
+    text: "#0e7490",
   }, // cyan
   {
     bg: "#f97316",
-    dim: "rgba(249,115,22,0.18)",
-    border: "rgba(249,115,22,0.6)",
-    text: "#fb923c",
+    dim: "rgba(249,115,22,0.16)",
+    border: "rgba(249,115,22,0.55)",
+    text: "#c2410c",
   }, // orange
   {
     bg: "#ec4899",
-    dim: "rgba(236,72,153,0.18)",
-    border: "rgba(236,72,153,0.6)",
-    text: "#f472b6",
+    dim: "rgba(236,72,153,0.16)",
+    border: "rgba(236,72,153,0.55)",
+    text: "#be185d",
   }, // pink
 ];
 
@@ -208,7 +209,7 @@ function Tooltip({ trip, color, anchorRect, containerRect }) {
       <div
         className="rounded-md border text-xs shadow-2xl overflow-hidden"
         style={{
-          background: "rgba(15,22,35,0.97)",
+          background: "var(--color-paper-2)",
           borderColor: color.border,
           boxShadow: `0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px ${color.border}`,
           backdropFilter: "blur(12px)",
@@ -224,7 +225,7 @@ function Tooltip({ trip, color, anchorRect, containerRect }) {
             className="w-2 h-2 rounded-full flex-shrink-0"
             style={{ background: color.bg }}
           />
-          <span className="font-bold text-white truncate">
+          <span className="font-bold [color:var(--color-ink)] truncate">
             Trip {trip.id ?? trip.tripId ?? "—"}
           </span>
           <span className="ml-auto font-semibold" style={{ color: color.text }}>
@@ -272,8 +273,8 @@ function Tooltip({ trip, color, anchorRect, containerRect }) {
 function Row({ label, value, color }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-slate-500 font-medium">{label}</span>
-      <span className="font-semibold text-white">{value}</span>
+      <span className="text-[var(--color-muted)] font-medium">{label}</span>
+      <span className="font-semibold [color:var(--color-ink)]">{value}</span>
     </div>
   );
 }
@@ -288,11 +289,11 @@ function Playhead({ pct }) {
       style={{ left: `${pct * 100}%` }}>
       <div
         className="absolute top-0 w-[2px] h-full -translate-x-1/2"
-        style={{ background: "rgba(245,158,11,0.7)" }}
+        style={{ background: "var(--color-accent)" }}
       />
       <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-amber-500"
-        style={{ background: "#06080a" }}
+        className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-[var(--color-accent)]"
+        style={{ background: "var(--color-paper-2)" }}
       />
     </div>
   );
@@ -323,8 +324,8 @@ function TimeRuler({ minTime, maxTime, width }) {
             key={t}
             className="absolute top-0 flex flex-col items-center"
             style={{ left: `${pct}%`, transform: "translateX(-50%)" }}>
-            <div className="w-px h-2 bg-slate-600" />
-            <span className="text-[10px] font-semibold text-slate-500 mt-0.5 whitespace-nowrap">
+            <div className="w-px h-2 bg-[var(--color-rule-2)]" />
+            <span className="text-[10px] font-semibold text-[var(--color-muted)] mt-0.5 whitespace-nowrap">
               {fmtTime(t)}
             </span>
           </div>
@@ -384,9 +385,9 @@ export default function TripTimeline({ trips = [], title = "Trip Timeline" }) {
   if (!vehicles.length) {
     return (
       <div
-        className="rounded-md border border-slate-700/60 bg-[#0a0c10] p-10 flex flex-col items-center gap-3"
-        style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-        <div className="w-12 h-12 rounded-md bg-slate-800 flex items-center justify-center text-slate-600">
+        className="rounded-md border border-[var(--color-rule)] bg-[var(--color-paper-2)] p-10 flex flex-col items-center gap-3"
+        style={{ fontFamily: "var(--font-body)" }}>
+        <div className="w-12 h-12 rounded-md bg-[var(--color-paper-3)] flex items-center justify-center text-[var(--color-faint)]">
           <svg
             className="w-6 h-6"
             fill="none"
@@ -400,10 +401,10 @@ export default function TripTimeline({ trips = [], title = "Trip Timeline" }) {
             />
           </svg>
         </div>
-        <p className="text-slate-500 text-sm font-semibold">
+        <p className="text-[var(--color-muted)] text-sm font-semibold">
           No trips to display
         </p>
-        <p className="text-slate-600 text-xs">
+        <p className="text-[var(--color-faint)] text-xs">
           Run an optimization to see the timeline.
         </p>
       </div>
@@ -413,16 +414,16 @@ export default function TripTimeline({ trips = [], title = "Trip Timeline" }) {
   return (
     <div
       ref={containerRef}
-      className="relative rounded-md border border-slate-700/60 bg-[#0a0c10] backdrop-blur-sm shadow-2xl"
-      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      className="relative rounded-md border border-[var(--color-rule)] bg-[var(--color-paper-2)] backdrop-blur-sm shadow-2xl"
+      style={{ fontFamily: "var(--font-body)" }}>
       {/* ── Header ── */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700/50 bg-[#0c0e12]">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-rule)] bg-[var(--color-paper)]">
         <div className="flex items-center gap-3">
           <div
             className="w-8 h-8 rounded-md flex items-center justify-center"
             style={{ background: "var(--color-accent)" }}>
             <svg
-              className="w-4 h-4 text-white"
+              className="w-4 h-4 [color:var(--color-ink)]"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -435,12 +436,12 @@ export default function TripTimeline({ trips = [], title = "Trip Timeline" }) {
             </svg>
           </div>
           <div>
-            <h2 className="text-sm font-bold text-white">{title}</h2>
-            <p className="text-[11px] text-slate-500">
+            <h2 className="text-sm font-bold [color:var(--color-ink)]">{title}</h2>
+            <p className="text-[11px] text-[var(--color-muted)]">
               {vehicles.length} vehicle{vehicles.length !== 1 ? "s" : ""} ·{" "}
               {trips.length} trip{trips.length !== 1 ? "s" : ""}
               {scrubTime != null && (
-                <span className="ml-2 text-amber-400 font-semibold">
+                <span className="ml-2 text-[var(--color-accent-text)] font-semibold">
                   · {fmtTime(scrubTime)}
                 </span>
               )}
@@ -458,14 +459,14 @@ export default function TripTimeline({ trips = [], title = "Trip Timeline" }) {
                   className="w-2.5 h-2.5 rounded-sm"
                   style={{ background: c.bg }}
                 />
-                <span className="text-[11px] font-semibold text-slate-400 max-w-[80px] truncate">
+                <span className="text-[11px] font-semibold text-[var(--color-muted)] max-w-[80px] truncate">
                   {v.id}
                 </span>
               </div>
             );
           })}
           {vehicles.length > 5 && (
-            <span className="text-[11px] text-slate-600">
+            <span className="text-[11px] text-[var(--color-faint)]">
               +{vehicles.length - 5} more
             </span>
           )}
@@ -480,10 +481,10 @@ export default function TripTimeline({ trips = [], title = "Trip Timeline" }) {
         <div className="flex min-w-[520px]">
           {/* Vehicle labels */}
           <div
-            className="flex-shrink-0 border-r border-slate-700/50 bg-slate-900/40"
+            className="flex-shrink-0 border-r border-[var(--color-rule)] bg-[var(--color-paper-3)]"
             style={{ width: LABEL_W }}>
             {/* Ruler spacer */}
-            <div className="h-8 border-b border-slate-700/30" />
+            <div className="h-8 border-b border-[var(--color-rule)]" />
             {vehicles.map((v) => {
               const c = vehicleColor(v.colorIndex);
               return (
@@ -492,7 +493,7 @@ export default function TripTimeline({ trips = [], title = "Trip Timeline" }) {
                   className="flex items-center gap-2 px-3"
                   style={{
                     height: ROW_H,
-                    borderBottom: "1px solid rgba(148,163,184,0.06)",
+                    borderBottom: "1px solid var(--color-rule)",
                   }}>
                   <div
                     className="w-2 h-2 rounded-full flex-shrink-0"
@@ -517,7 +518,7 @@ export default function TripTimeline({ trips = [], title = "Trip Timeline" }) {
             onMouseLeave={handleTrackMouseLeave}>
             {/* Time ruler */}
             <div
-              className="border-b border-slate-700/30 relative"
+              className="border-b border-[var(--color-rule)] relative"
               style={{ height: 32 }}>
               <TimeRuler
                 minTime={minTime}
@@ -538,7 +539,7 @@ export default function TripTimeline({ trips = [], title = "Trip Timeline" }) {
                     className="absolute top-0 bottom-0 w-px"
                     style={{
                       left: `${pct}%`,
-                      background: "rgba(148,163,184,0.06)",
+                      background: "var(--color-rule)",
                     }}
                   />,
                 );
@@ -558,7 +559,7 @@ export default function TripTimeline({ trips = [], title = "Trip Timeline" }) {
                   className="relative"
                   style={{
                     height: ROW_H,
-                    borderBottom: "1px solid rgba(148,163,184,0.06)",
+                    borderBottom: "1px solid var(--color-rule)",
                   }}>
                   {/* Row hover band */}
                   <div
@@ -612,7 +613,7 @@ export default function TripTimeline({ trips = [], title = "Trip Timeline" }) {
                         {width > 4 && (
                           <div className="absolute inset-0 flex items-center px-2 overflow-hidden pointer-events-none">
                             <span
-                              className="text-[10px] font-bold truncate text-white">
+                              className="text-[10px] font-bold truncate [color:var(--color-ink)]">
                               {fmtDur(trip._end - trip._start)}
                             </span>
                           </div>
@@ -644,17 +645,17 @@ export default function TripTimeline({ trips = [], title = "Trip Timeline" }) {
       )}
 
       {/* ── Footer summary bar ── */}
-      <div className="px-6 py-3 border-t border-slate-700/50 bg-slate-900/30 flex items-center gap-6 flex-wrap">
-        <span className="text-[11px] text-slate-600">
+      <div className="px-6 py-3 border-t border-[var(--color-rule)] bg-[var(--color-paper-3)] flex items-center gap-6 flex-wrap">
+        <span className="text-[11px] text-[var(--color-faint)]">
           {fmtTime(minTime)} — {fmtTime(maxTime)}
         </span>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-[2px] rounded-full bg-amber-400/70" />
-          <span className="text-[11px] text-slate-600">
+          <div className="w-3 h-[2px] rounded-full bg-[var(--color-accent)]" />
+          <span className="text-[11px] text-[var(--color-faint)]">
             Scrub to inspect time
           </span>
         </div>
-        <span className="text-[11px] text-slate-600 ml-auto">
+        <span className="text-[11px] text-[var(--color-faint)] ml-auto">
           Hover a clip for details
         </span>
       </div>

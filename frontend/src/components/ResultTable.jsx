@@ -4,41 +4,43 @@ import { useState, useMemo, useEffect } from "react";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
+// Light-mode categorical palette: saturated accent/dot for fills, pale tint bg,
+// darker saturated text for AA legibility on white.
 const VEHICLE_PALETTE = [
   {
     accent: "#f59e0b",
     bg: "rgba(245,158,11,0.12)",
-    border: "rgba(245,158,11,0.3)",
-    text: "#fbbf24",
-    soft: "rgba(245,158,11,0.08)",
+    border: "rgba(245,158,11,0.4)",
+    text: "#b45309",
+    soft: "rgba(245,158,11,0.09)",
   },
   {
-    accent: "#38bdf8",
-    bg: "rgba(56,189,248,0.12)",
-    border: "rgba(56,189,248,0.3)",
-    text: "#7dd3fc",
-    soft: "rgba(56,189,248,0.08)",
+    accent: "#0ea5e9",
+    bg: "rgba(14,165,233,0.12)",
+    border: "rgba(14,165,233,0.4)",
+    text: "#0369a1",
+    soft: "rgba(14,165,233,0.09)",
   },
   {
-    accent: "#a78bfa",
-    bg: "rgba(167,139,250,0.12)",
-    border: "rgba(167,139,250,0.3)",
-    text: "#c4b5fd",
-    soft: "rgba(167,139,250,0.08)",
+    accent: "#8b5cf6",
+    bg: "rgba(139,92,246,0.12)",
+    border: "rgba(139,92,246,0.4)",
+    text: "#6d28d9",
+    soft: "rgba(139,92,246,0.09)",
   },
   {
-    accent: "#34d399",
-    bg: "rgba(52,211,153,0.12)",
-    border: "rgba(52,211,153,0.3)",
-    text: "#6ee7b7",
-    soft: "rgba(52,211,153,0.08)",
+    accent: "#10b981",
+    bg: "rgba(16,185,129,0.12)",
+    border: "rgba(16,185,129,0.4)",
+    text: "#047857",
+    soft: "rgba(16,185,129,0.09)",
   },
   {
-    accent: "#fb7185",
-    bg: "rgba(251,113,133,0.12)",
-    border: "rgba(251,113,133,0.3)",
-    text: "#fda4af",
-    soft: "rgba(251,113,133,0.08)",
+    accent: "#f43f5e",
+    bg: "rgba(244,63,94,0.12)",
+    border: "rgba(244,63,94,0.4)",
+    text: "#be123c",
+    soft: "rgba(244,63,94,0.09)",
   },
 ];
 
@@ -50,11 +52,11 @@ const PRIORITY_LABEL = {
   5: "Minimal",
 };
 const PRIORITY_COLOR = {
-  1: { bg: "rgba(251,113,133,0.15)", text: "#fda4af", dot: "#fb7185" },
-  2: { bg: "rgba(251,191,36,0.15)", text: "#fde68a", dot: "#fbbf24" },
-  3: { bg: "rgba(56,189,248,0.15)", text: "#7dd3fc", dot: "#38bdf8" },
-  4: { bg: "rgba(52,211,153,0.15)", text: "#6ee7b7", dot: "#34d399" },
-  5: { bg: "rgba(148,163,184,0.15)", text: "#94a3b8", dot: "#64748b" },
+  1: { bg: "rgba(244,63,94,0.14)", text: "#be123c", dot: "#f43f5e" },
+  2: { bg: "rgba(245,158,11,0.16)", text: "#b45309", dot: "#f59e0b" },
+  3: { bg: "rgba(14,165,233,0.14)", text: "#0369a1", dot: "#0ea5e9" },
+  4: { bg: "rgba(16,185,129,0.14)", text: "#047857", dot: "#10b981" },
+  5: { bg: "rgba(100,116,139,0.14)", text: "#475569", dot: "#64748b" },
 };
 
 // Switch to dropdown above this many items
@@ -96,9 +98,9 @@ function Chip({ children, style, onClick, active }) {
       onClick={onClick}
       className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all duration-150 whitespace-nowrap"
       style={{
-        border: `1px solid ${active ? style.border : "rgba(148,163,184,0.15)"}`,
-        background: active ? style.bg : "rgba(15,23,42,0.4)",
-        color: active ? style.text : "rgba(148,163,184,0.6)",
+        border: `1px solid ${active ? style.border : "var(--color-rule-2)"}`,
+        background: active ? style.bg : "var(--color-paper-2)",
+        color: active ? style.text : "var(--color-muted)",
         boxShadow: active ? `0 0 12px 0 ${style.accent}22` : "none",
       }}>
       {active && (
@@ -130,14 +132,14 @@ function RouteStops({ route, palette }) {
   const stops = route.filter((s) => s !== "START" && s !== "END");
   return (
     <div className="flex items-center gap-1 flex-wrap">
-      <span className="text-[10px]" style={{ color: "rgba(148,163,184,0.35)" }}>
+      <span className="text-[10px]" style={{ color: "var(--color-faint)" }}>
         START
       </span>
       {stops.map((stop, i) => (
         <span key={i} className="flex items-center gap-1">
           <span
             className="text-[10px]"
-            style={{ color: "rgba(148,163,184,0.25)" }}>
+            style={{ color: "var(--color-faint)" }}>
             →
           </span>
           <span
@@ -151,10 +153,10 @@ function RouteStops({ route, palette }) {
           </span>
         </span>
       ))}
-      <span className="text-[10px]" style={{ color: "rgba(148,163,184,0.25)" }}>
+      <span className="text-[10px]" style={{ color: "var(--color-faint)" }}>
         →
       </span>
-      <span className="text-[10px]" style={{ color: "rgba(148,163,184,0.35)" }}>
+      <span className="text-[10px]" style={{ color: "var(--color-faint)" }}>
         END
       </span>
     </div>
@@ -183,8 +185,8 @@ function FilterControl({
   paletteMap = {},
 }) {
   const neutral = {
-    bg: "rgba(148,163,184,0.1)",
-    border: "rgba(148,163,184,0.25)",
+    bg: "var(--color-rule)",
+    border: "var(--color-faint)",
     text: "#94a3b8",
     accent: "#94a3b8",
   };
@@ -202,18 +204,18 @@ function FilterControl({
             onChange={(e) => onChange(e.target.value)}
             className="appearance-none pl-4 pr-9 py-2 rounded-md text-xs font-bold cursor-pointer transition-all duration-150 focus:outline-none focus:ring-2"
             style={{
-              background: "rgba(15,23,42,0.7)",
-              border: `1px solid ${activePalette ? activePalette.border : "rgba(148,163,184,0.2)"}`,
+              background: "var(--color-paper-3)",
+              border: `1px solid ${activePalette ? activePalette.border : "var(--color-rule-2)"}`,
               color: activePalette
                 ? activePalette.text
-                : "rgba(148,163,184,0.7)",
+                : "var(--color-ink-2)",
               boxShadow: activePalette
                 ? `0 0 12px 0 ${activePalette.accent}22`
                 : "none",
               // focus ring colour
               "--tw-ring-color": activePalette
                 ? activePalette.border
-                : "rgba(148,163,184,0.3)",
+                : "var(--color-faint)",
             }}>
             <option value={allValue}>{allLabel}</option>
             {items.map(({ value, label }) => (
@@ -228,7 +230,7 @@ function FilterControl({
             style={{
               color: activePalette
                 ? activePalette.text
-                : "rgba(148,163,184,0.4)",
+                : "var(--color-muted)",
             }}
             fill="none"
             viewBox="0 0 24 24"
@@ -268,7 +270,7 @@ function FilterControl({
 
         <span
           className="text-[10px] font-semibold"
-          style={{ color: "rgba(148,163,184,0.3)" }}>
+          style={{ color: "var(--color-faint)" }}>
           {items.length} total
         </span>
       </div>
@@ -318,12 +320,12 @@ function VehicleView({ vehicles, inputVehicles, selectedVehicleId }) {
       <div
         className="flex items-center justify-center py-16 rounded-md"
         style={{
-          border: "1px solid rgba(148,163,184,0.1)",
-          background: "rgba(15,23,42,0.4)",
+          border: "1px solid var(--color-rule)",
+          background: "var(--color-paper-2)",
         }}>
         <p
           className="text-sm font-semibold"
-          style={{ color: "rgba(148,163,184,0.35)" }}>
+          style={{ color: "var(--color-faint)" }}>
           No vehicles found for current selection.
         </p>
       </div>
@@ -348,7 +350,7 @@ function VehicleView({ vehicles, inputVehicles, selectedVehicleId }) {
             className="rounded-md overflow-hidden"
             style={{
               border: `1px solid ${palette.border}`,
-              background: "rgba(15,23,42,0.5)",
+              background: "var(--color-paper-2)",
             }}>
             {/* Header */}
             <div
@@ -365,23 +367,23 @@ function VehicleView({ vehicles, inputVehicles, selectedVehicleId }) {
                 </div>
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-bold text-white text-base">
+                    <span className="font-bold [color:var(--color-ink)] text-base">
                       {vehicle.vehicle_id}
                     </span>
                     <Badge
                       color={
-                        vehicle.category === "premium" ? "#f59e0b" : "#94a3b8"
+                        vehicle.category === "premium" ? "#b45309" : "#475569"
                       }>
                       {vehicle.category}
                     </Badge>
                     {inputV && (
-                      <Badge color="#38bdf8">{inputV.vehicle_type}</Badge>
+                      <Badge color="#0369a1">{inputV.vehicle_type}</Badge>
                     )}
                     {inputV && (
                       <Badge
                         color={
                           inputV.fuel_type === "electric"
-                            ? "#34d399"
+                            ? "#047857"
                             : "#94a3b8"
                         }>
                         {inputV.fuel_type}
@@ -393,33 +395,33 @@ function VehicleView({ vehicles, inputVehicles, selectedVehicleId }) {
                       <>
                         <span
                           className="text-xs"
-                          style={{ color: "rgba(148,163,184,0.6)" }}>
+                          style={{ color: "var(--color-muted)" }}>
                           Cap:{" "}
-                          <span className="text-white font-semibold">
+                          <span className="font-semibold [color:var(--color-ink)]">
                             {inputV.capacity}
                           </span>
                         </span>
                         <span
                           className="text-xs"
-                          style={{ color: "rgba(148,163,184,0.6)" }}>
+                          style={{ color: "var(--color-muted)" }}>
                           Speed:{" "}
-                          <span className="text-white font-semibold">
+                          <span className="font-semibold [color:var(--color-ink)]">
                             {inputV.avg_speed_kmph} km/h
                           </span>
                         </span>
                         <span
                           className="text-xs"
-                          style={{ color: "rgba(148,163,184,0.6)" }}>
+                          style={{ color: "var(--color-muted)" }}>
                           Rate:{" "}
-                          <span className="text-white font-semibold">
+                          <span className="font-semibold [color:var(--color-ink)]">
                             ₹{inputV.cost_per_km}/km
                           </span>
                         </span>
                         <span
                           className="text-xs"
-                          style={{ color: "rgba(148,163,184,0.6)" }}>
+                          style={{ color: "var(--color-muted)" }}>
                           Available:{" "}
-                          <span className="text-white font-semibold">
+                          <span className="font-semibold [color:var(--color-ink)]">
                             {inputV.available_from}
                           </span>
                         </span>
@@ -435,17 +437,17 @@ function VehicleView({ vehicles, inputVehicles, selectedVehicleId }) {
                     style={{ color: palette.text }}>
                     Total Objective Cost
                   </p>
-                  <p className="text-xl font-bold text-white">
+                  <p className="text-xl font-bold [color:var(--color-ink)]">
                     {fmtCost(vehicle.total_cost)}
                   </p>
                 </div>
                 <div>
                   <p
                     className="text-[10px] font-bold uppercase tracking-widest"
-                    style={{ color: "rgba(148,163,184,0.5)" }}>
+                    style={{ color: "var(--color-muted)" }}>
                     Trips
                   </p>
-                  <p className="text-xl font-bold text-white">
+                  <p className="text-xl font-bold [color:var(--color-ink)]">
                     {vehicle.trips?.length ?? 0}
                   </p>
                 </div>
@@ -455,7 +457,7 @@ function VehicleView({ vehicles, inputVehicles, selectedVehicleId }) {
             {/* Trips */}
             <div
               className="divide-y"
-              style={{ borderColor: "rgba(148,163,184,0.07)" }}>
+              style={{ borderColor: "var(--color-rule)" }}>
               {vehicle.trips?.map((trip) => {
                 const duration = timeDiffMin(trip.start_time, trip.end_time);
                 return (
@@ -471,15 +473,15 @@ function VehicleView({ vehicles, inputVehicles, selectedVehicleId }) {
                           }}>
                           {trip.trip_number}
                         </div>
-                        <span className="text-sm font-bold text-white">
+                        <span className="text-sm font-bold [color:var(--color-ink)]">
                           Trip {trip.trip_number}
                         </span>
                         <div className="flex items-center gap-2 flex-wrap">
                           <span
                             className="text-xs font-semibold px-2 py-0.5 rounded-lg"
                             style={{
-                              background: "rgba(148,163,184,0.08)",
-                              color: "rgba(148,163,184,0.7)",
+                              background: "var(--color-paper-3)",
+                              color: "var(--color-ink-2)",
                             }}>
                             {fmtTime(trip.start_time)} →{" "}
                             {fmtTime(trip.end_time)}
@@ -487,20 +489,20 @@ function VehicleView({ vehicles, inputVehicles, selectedVehicleId }) {
                           {duration != null && (
                             <span
                               className="text-xs"
-                              style={{ color: "rgba(148,163,184,0.45)" }}>
+                              style={{ color: "var(--color-muted)" }}>
                               {durationLabel(duration)}
                             </span>
                           )}
                         </div>
                       </div>
                       <div className="flex items-center gap-4 text-xs flex-wrap">
-                        <span style={{ color: "rgba(148,163,184,0.55)" }}>
+                        <span style={{ color: "var(--color-muted)" }}>
                           Distance:{" "}
-                          <span className="text-white font-semibold">
+                          <span className="font-semibold [color:var(--color-ink)]">
                             {fmtDist(trip.trip_distance_km)}
                           </span>
                         </span>
-                        <span style={{ color: "rgba(148,163,184,0.55)" }}>
+                        <span style={{ color: "var(--color-muted)" }}>
                           Cost:{" "}
                           <span
                             className="font-bold"
@@ -508,9 +510,9 @@ function VehicleView({ vehicles, inputVehicles, selectedVehicleId }) {
                             {fmtCost(trip.trip_cost)}
                           </span>
                         </span>
-                        <span style={{ color: "rgba(148,163,184,0.55)" }}>
+                        <span style={{ color: "var(--color-muted)" }}>
                           Load:{" "}
-                          <span className="text-white font-semibold">
+                          <span className="font-semibold [color:var(--color-ink)]">
                             {trip.load}/{trip.capacity_limit}
                           </span>
                         </span>
@@ -527,7 +529,7 @@ function VehicleView({ vehicles, inputVehicles, selectedVehicleId }) {
                           <thead>
                             <tr
                               style={{
-                                borderBottom: "1px solid rgba(148,163,184,0.1)",
+                                borderBottom: "1px solid var(--color-rule)",
                               }}>
                               {[
                                 "Employee",
@@ -538,7 +540,7 @@ function VehicleView({ vehicles, inputVehicles, selectedVehicleId }) {
                                 <th
                                   key={h}
                                   className="text-left pb-2 pr-4 font-bold uppercase tracking-wider text-[10px]"
-                                  style={{ color: "rgba(148,163,184,0.4)" }}>
+                                  style={{ color: "var(--color-muted)" }}>
                                   {h}
                                 </th>
                               ))}
@@ -556,7 +558,7 @@ function VehicleView({ vehicles, inputVehicles, selectedVehicleId }) {
                                   style={{
                                     borderBottom:
                                       pi < trip.passengers.length - 1
-                                        ? "1px solid rgba(148,163,184,0.06)"
+                                        ? "1px solid var(--color-rule)"
                                         : "none",
                                   }}>
                                   <td className="py-2.5 pr-4">
@@ -570,17 +572,17 @@ function VehicleView({ vehicles, inputVehicles, selectedVehicleId }) {
                                       {p.employee_id}
                                     </span>
                                   </td>
-                                  <td className="py-2.5 pr-4 font-semibold text-white">
+                                  <td className="py-2.5 pr-4 font-semibold [color:var(--color-ink)]">
                                     {fmtTime(p.pickup_time)}
                                   </td>
-                                  <td className="py-2.5 pr-4 font-semibold text-white">
+                                  <td className="py-2.5 pr-4 font-semibold [color:var(--color-ink)]">
                                     {fmtTime(p.drop_time)}
                                   </td>
                                   <td className="py-2.5">
                                     <span
                                       className="text-xs"
                                       style={{
-                                        color: "rgba(148,163,184,0.55)",
+                                        color: "var(--color-muted)",
                                       }}>
                                       {durationLabel(rideDuration)}
                                     </span>
@@ -634,12 +636,12 @@ function EmployeeView({
       <div
         className="flex items-center justify-center py-16 rounded-md"
         style={{
-          border: "1px solid rgba(148,163,184,0.1)",
-          background: "rgba(15,23,42,0.4)",
+          border: "1px solid var(--color-rule)",
+          background: "var(--color-paper-2)",
         }}>
         <p
           className="text-sm font-semibold"
-          style={{ color: "rgba(148,163,184,0.35)" }}>
+          style={{ color: "var(--color-faint)" }}>
           No employees found for current selection.
         </p>
       </div>
@@ -649,13 +651,13 @@ function EmployeeView({
   return (
     <div
       className="overflow-x-auto rounded-md"
-      style={{ border: "1px solid rgba(148,163,184,0.1)" }}>
+      style={{ border: "1px solid var(--color-rule)" }}>
       <table className="w-full min-w-[860px] text-sm">
         <thead>
           <tr
             style={{
-              background: "rgba(15,23,42,0.8)",
-              borderBottom: "1px solid rgba(148,163,184,0.1)",
+              background: "var(--color-paper-3)",
+              borderBottom: "1px solid var(--color-rule)",
             }}>
             {[
               "Employee",
@@ -672,7 +674,7 @@ function EmployeeView({
               <th
                 key={h}
                 className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
-                style={{ color: "rgba(148,163,184,0.4)" }}>
+                style={{ color: "var(--color-muted)" }}>
                 {h}
               </th>
             ))}
@@ -701,9 +703,9 @@ function EmployeeView({
                 style={{
                   background:
                     rowIdx % 2 === 0
-                      ? "rgba(15,23,42,0.4)"
-                      : "rgba(15,23,42,0.2)",
-                  borderBottom: "1px solid rgba(148,163,184,0.06)",
+                      ? "var(--color-paper-2)"
+                      : "var(--color-paper)",
+                  borderBottom: "1px solid var(--color-rule)",
                 }}>
                 <td className="px-4 py-3">
                   <span
@@ -716,7 +718,7 @@ function EmployeeView({
                           border: `1px solid ${palette.border}`,
                         }
                         : {
-                          background: "rgba(148,163,184,0.1)",
+                          background: "var(--color-rule)",
                           color: "#94a3b8",
                         }
                     }>
@@ -750,53 +752,53 @@ function EmployeeView({
                       </span>
                       <span
                         className="text-xs"
-                        style={{ color: "rgba(148,163,184,0.45)" }}>
+                        style={{ color: "var(--color-muted)" }}>
                         Trip {assignment.trip.trip_number}
                       </span>
                     </div>
                   ) : (
                     <span
                       className="text-xs"
-                      style={{ color: "rgba(148,163,184,0.3)" }}>
+                      style={{ color: "var(--color-faint)" }}>
                       Unrouted
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-3 font-semibold text-white text-xs">
+                <td className="px-4 py-3 font-semibold [color:var(--color-ink)] text-xs">
                   {assignment ? fmtTime(assignment.passenger.pickup_time) : "—"}
                 </td>
-                <td className="px-4 py-3 font-semibold text-white text-xs">
+                <td className="px-4 py-3 font-semibold [color:var(--color-ink)] text-xs">
                   {assignment ? fmtTime(assignment.passenger.drop_time) : "—"}
                 </td>
                 <td
                   className="px-4 py-3 text-xs"
-                  style={{ color: "rgba(148,163,184,0.6)" }}>
+                  style={{ color: "var(--color-muted)" }}>
                   {durationLabel(rideDuration)}
                 </td>
                 <td
                   className="px-4 py-3 text-xs"
-                  style={{ color: "rgba(148,163,184,0.55)" }}>
+                  style={{ color: "var(--color-muted)" }}>
                   {empInput?.earliest_pickup ?? "—"}
                 </td>
                 <td
                   className="px-4 py-3 text-xs"
-                  style={{ color: "rgba(148,163,184,0.55)" }}>
+                  style={{ color: "var(--color-muted)" }}>
                   {empInput?.latest_drop ?? "—"}
                 </td>
                 <td
                   className="px-4 py-3 text-xs"
-                  style={{ color: "rgba(148,163,184,0.55)" }}>
+                  style={{ color: "var(--color-muted)" }}>
                   {baseline ? fmtCost(baseline.baseline_cost) : "—"}
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex gap-1.5 flex-wrap">
                     {empInput?.vehicle_preference && (
-                      <Badge color="#a78bfa">
+                      <Badge color="#6d28d9">
                         {empInput.vehicle_preference}
                       </Badge>
                     )}
                     {empInput?.sharing_preference && (
-                      <Badge color="#38bdf8">
+                      <Badge color="#0369a1">
                         {empInput.sharing_preference}
                       </Badge>
                     )}
@@ -818,7 +820,7 @@ function SummaryBar({ summary }) {
     {
       label: "Employees Routed",
       value: `${summary.employees_routed} / ${summary.total_employees}`,
-      color: "#34d399",
+      color: "#047857",
     },
     {
       label: "Optimized Cost",
@@ -828,17 +830,17 @@ function SummaryBar({ summary }) {
     {
       label: "Baseline Cost",
       value: fmtCost(summary.total_baseline_cost),
-      color: "rgba(148,163,184,0.6)",
+      color: "var(--color-muted)",
     },
     {
       label: "Net Savings",
       value: fmtCost(summary.net_savings),
-      color: "#34d399",
+      color: "#047857",
     },
     {
       label: "Savings %",
       value: `${Number(summary.savings_percentage).toFixed(1)}%`,
-      color: "#34d399",
+      color: "#047857",
     },
   ];
   return (
@@ -848,12 +850,12 @@ function SummaryBar({ summary }) {
           key={label}
           className="rounded-md px-4 py-3"
           style={{
-            background: "rgba(15,23,42,0.6)",
-            border: "1px solid rgba(148,163,184,0.1)",
+            background: "var(--color-paper-2)",
+            border: "1px solid var(--color-rule)",
           }}>
           <p
             className="text-[10px] font-bold uppercase tracking-widest mb-1"
-            style={{ color: "rgba(148,163,184,0.4)" }}>
+            style={{ color: "var(--color-muted)" }}>
             {label}
           </p>
           <p className="text-base font-bold" style={{ color }}>
@@ -892,10 +894,10 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
     return (
       <div
         className="flex items-center justify-center py-24"
-        style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+        style={{ fontFamily: "var(--font-body)" }}>
         <p
           className="text-sm font-semibold"
-          style={{ color: "rgba(148,163,184,0.4)" }}>
+          style={{ color: "var(--color-muted)" }}>
           No result data available.
         </p>
       </div>
@@ -940,18 +942,18 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
   return (
     <div
       className="space-y-6"
-      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      style={{ fontFamily: "var(--font-body)" }}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <p
             className="text-[11px] font-bold uppercase tracking-[0.2em]"
-            style={{ color: "#f59e0b" }}>
+            style={{ color: "var(--color-accent-text)" }}>
             Optimization Results
           </p>
           <h2
-            className="text-2xl font-bold text-white mt-0.5"
-            style={{ fontFamily: "'Fraunces', serif" }}>
+            className="text-2xl font-bold [color:var(--color-ink)] mt-0.5"
+            style={{ fontFamily: "var(--font-display)" }}>
             Route Breakdown
           </h2>
         </div>
@@ -974,15 +976,15 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
       <div
         className="rounded-md px-5 py-4 space-y-4"
         style={{
-          background: "rgba(15,23,42,0.6)",
-          border: "1px solid rgba(148,163,184,0.1)",
+          background: "var(--color-paper-2)",
+          border: "1px solid var(--color-rule)",
         }}>
         {/* Mode toggle */}
         <div
           className="flex items-center p-1 rounded-md gap-1 w-fit"
           style={{
-            background: "rgba(15,23,42,0.7)",
-            border: "1px solid rgba(148,163,184,0.1)",
+            background: "var(--color-paper-3)",
+            border: "1px solid var(--color-rule)",
           }}>
           {[
             { key: "vehicle", label: "By Vehicle" },
@@ -997,10 +999,10 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
                 filterMode === key
                   ? {
                     background: "var(--color-accent)",
-                    color: "#0f172a",
-                    boxShadow: "0 0 16px rgba(245,158,11,0.1)",
+                    color: "var(--color-accent-ink)",
+                    boxShadow: "var(--shadow-sm)",
                   }
-                  : { color: "rgba(148,163,184,0.5)" }
+                  : { color: "var(--color-muted)" }
               }>
               {label}
             </button>
@@ -1011,7 +1013,7 @@ export default function ResultsTableView({ selectedResult, mapMode }) {
         <div>
           <span
             className="text-[10px] font-bold uppercase tracking-widest mb-2.5 block"
-            style={{ color: "rgba(148,163,184,0.35)" }}>
+            style={{ color: "var(--color-faint)" }}>
             Filter:
           </span>
 

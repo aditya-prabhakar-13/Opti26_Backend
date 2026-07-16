@@ -11,20 +11,28 @@ export default function ViolationsReport({ evaluations, mapMode }) {
     const { stats, violations } = evaluationData;
 
     return (
-        <div className="mt-4 bg-[#0a0c10] border border-slate-700/60 rounded-md overflow-hidden shadow-lg">
+        <div
+            className="mt-4 rounded-md overflow-hidden"
+            style={{
+                background: "var(--color-paper-2)",
+                border: "1px solid var(--color-rule)",
+                boxShadow: "var(--shadow-sm)",
+            }}>
             {/* Header */}
-            <div className="px-5 py-3 border-b border-slate-700/60 flex items-center justify-between bg-[#0c0e12]">
-                <h3 className="text-sm font-semibold text-white tracking-wide">
+            <div
+                className="px-5 py-3 flex items-center justify-between"
+                style={{ borderBottom: "1px solid var(--color-rule)", background: "var(--color-paper)" }}>
+                <h3 className="text-sm font-semibold tracking-wide" style={{ color: "var(--color-ink)", fontFamily: "var(--font-display)" }}>
                     Constraint Violations ({mapMode})
                 </h3>
                 <div className="flex gap-4 text-xs font-medium">
                     <div className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-rose-500"></span>
-                        <span className="text-slate-300">Hard: {stats?.hard_violations || 0}</span>
+                        <span className="w-2 h-2 rounded-full" style={{ background: "var(--color-red)" }}></span>
+                        <span style={{ color: "var(--color-ink-2)" }}>Hard: {stats?.hard_violations || 0}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                        <span className="text-slate-300">Soft: {stats?.soft_violations || 0}</span>
+                        <span className="w-2 h-2 rounded-full" style={{ background: "var(--color-amber)" }}></span>
+                        <span style={{ color: "var(--color-ink-2)" }}>Soft: {stats?.soft_violations || 0}</span>
                     </div>
                 </div>
             </div>
@@ -43,49 +51,51 @@ export default function ViolationsReport({ evaluations, mapMode }) {
                             <col key={idx} style={width ? { width } : undefined} />
                         ))}
                     </colgroup>
-                    <thead className="bg-[#131620] sticky top-0 z-10 backdrop-blur-sm">
+                    <thead className="sticky top-0 z-10 backdrop-blur-sm" style={{ background: "var(--color-paper-3)" }}>
                         <tr>
                             {['Severity', 'Constraint', 'Employee', 'Vehicle', 'Detail'].map(col => (
-                                <th key={col} className="px-4 py-2.5 text-xs font-semibold text-slate-400 border-b border-slate-700/50 whitespace-nowrap">
+                                <th key={col} className="px-4 py-2.5 text-xs font-semibold whitespace-nowrap" style={{ color: "var(--color-muted)", borderBottom: "1px solid var(--color-rule)" }}>
                                     {col}
                                 </th>
                             ))}
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-700/50">
+                    <tbody style={{ borderColor: "var(--color-rule)" }} className="[&>tr]:border-t [&>tr]:border-[var(--color-rule)]">
                         {violations && violations.length > 0 ? (
                             violations.map((v, i) => {
                                 const isExpanded = expandedRow === i;
                                 const isLong = v.detail && v.detail.length > 100;
                                 return (
-                                    <tr key={i} className="hover:bg-slate-800/30 transition-colors align-top">
+                                    <tr key={i} className="transition-colors align-top hover:[background:var(--color-paper-3)]">
                                         {/* Severity */}
                                         <td className="px-4 py-2.5 text-xs">
-                                            <span className={`px-2 py-0.5 rounded-md font-medium ${v.severity === 'HARD'
-                                                ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                                                : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                                                }`}>
+                                            <span
+                                                className="px-2 py-0.5 rounded-md font-medium"
+                                                style={v.severity === 'HARD'
+                                                    ? { background: "var(--color-red-soft)", color: "var(--color-red)", border: "1px solid var(--color-red)" }
+                                                    : { background: "var(--color-amber-soft)", color: "var(--color-accent-text)", border: "1px solid var(--color-amber)" }
+                                                }>
                                                 {v.severity}
                                             </span>
                                         </td>
 
                                         {/* Constraint */}
-                                        <td className="px-4 py-2.5 text-xs text-slate-300 break-words">
+                                        <td className="px-4 py-2.5 text-xs break-words" style={{ color: "var(--color-ink-2)" }}>
                                             {v.constraint_name}
                                         </td>
 
                                         {/* Employee */}
-                                        <td className="px-4 py-2.5 text-xs text-slate-300 font-medium">
-                                            {v.employee_id || <span className="text-slate-600">—</span>}
+                                        <td className="px-4 py-2.5 text-xs font-medium" style={{ color: "var(--color-ink-2)", fontFamily: "var(--font-mono)" }}>
+                                            {v.employee_id || <span style={{ color: "var(--color-faint)" }}>—</span>}
                                         </td>
 
                                         {/* Vehicle */}
-                                        <td className="px-4 py-2.5 text-xs text-slate-300 font-medium">
-                                            {v.vehicle_id || <span className="text-slate-600">—</span>}
+                                        <td className="px-4 py-2.5 text-xs font-medium" style={{ color: "var(--color-ink-2)", fontFamily: "var(--font-mono)" }}>
+                                            {v.vehicle_id || <span style={{ color: "var(--color-faint)" }}>—</span>}
                                         </td>
 
                                         {/* Detail — wraps fully, clamp + expand for very long entries */}
-                                        <td className="px-4 py-2.5 text-xs text-slate-400">
+                                        <td className="px-4 py-2.5 text-xs" style={{ color: "var(--color-muted)" }}>
                                             <div style={
                                                 isLong && !isExpanded
                                                     ? { display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', wordBreak: 'break-word' }
@@ -96,7 +106,8 @@ export default function ViolationsReport({ evaluations, mapMode }) {
                                             {isLong && (
                                                 <button
                                                     onClick={() => setExpandedRow(isExpanded ? null : i)}
-                                                    className="mt-1 text-slate-500 hover:text-slate-300 text-xs transition-colors"
+                                                    className="mt-1 text-xs transition-colors hover:[color:var(--color-ink)]"
+                                                    style={{ color: "var(--color-accent-text)" }}
                                                 >
                                                     {isExpanded ? '▲ less' : '▼ more'}
                                                 </button>
@@ -107,7 +118,7 @@ export default function ViolationsReport({ evaluations, mapMode }) {
                             })
                         ) : (
                             <tr>
-                                <td colSpan="5" className="px-4 py-8 text-center text-sm text-slate-500">
+                                <td colSpan="5" className="px-4 py-8 text-center text-sm" style={{ color: "var(--color-muted)" }}>
                                     No violations recorded for this mode.
                                 </td>
                             </tr>

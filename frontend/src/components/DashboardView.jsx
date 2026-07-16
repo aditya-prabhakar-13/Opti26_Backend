@@ -125,24 +125,24 @@ function StatItem({ label, value, accent = false, isFirst = false }) {
     <div
       className={`flex-1 min-w-0 flex flex-col gap-2 py-1 ${isFirst ? "" : "sm:pl-7"} ${isFirst ? "" : "sm:border-l"} sm:pr-4`}
       style={{
-        borderColor: "rgba(255,255,255,0.07)",
+        borderColor: "var(--color-rule)",
       }}>
       <p
         className="text-[10px] font-semibold uppercase tracking-[0.16em] whitespace-nowrap overflow-hidden text-ellipsis"
         style={{
-          color: "rgba(255,255,255,0.42)",
-          fontFamily: "'Inter', sans-serif",
+          color: "var(--color-muted)",
+          fontFamily: "var(--font-body)",
         }}>
         {label}:
       </p>
       <p
         className="text-[1.85rem] font-light leading-none tracking-tight whitespace-nowrap overflow-hidden text-ellipsis"
         style={{
-          color: accent ? "#e8c882" : "#f5f5f5",
-          fontFamily: "'Fraunces', serif",
-          fontWeight: 400,
+          color: accent ? "var(--color-accent-text)" : "var(--color-ink)",
+          fontFamily: "var(--font-display)",
+          fontWeight: 500,
         }}>
-        {value ?? <span style={{ color: "rgba(255,255,255,0.25)" }}>—</span>}
+        {value ?? <span style={{ color: "var(--color-faint)" }}>—</span>}
       </p>
     </div>
   );
@@ -151,12 +151,12 @@ function StatItem({ label, value, accent = false, isFirst = false }) {
 /* ── Section Label (uppercase, minimal) ── */
 function SectionLabel({ children }) {
   return (
-    <div className="mb-5 pb-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+    <div className="mb-5 pb-3" style={{ borderBottom: "1px solid var(--color-rule)" }}>
       <span
         className="text-[10px] font-semibold uppercase tracking-[0.18em]"
         style={{
-          color: "rgba(255,255,255,0.55)",
-          fontFamily: "'Inter', sans-serif",
+          color: "var(--color-muted)",
+          fontFamily: "var(--font-body)",
         }}>
         {children}
       </span>
@@ -175,8 +175,8 @@ function StatusBadge({ children }) {
       borderRadius: "999px",
       fontSize: "0.6875rem",
       fontWeight: 600,
-      background: "rgba(34,197,94,0.1)",
-      border: "1px solid rgba(34,197,94,0.2)",
+      background: "var(--color-green-soft)",
+      border: "1px solid var(--color-green)",
       color: "var(--color-green)",
     }}>
       <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "var(--color-green)" }} />
@@ -397,7 +397,7 @@ export default function DashboardView({
     <section
       className="min-h-screen"
       style={{
-        fontFamily: "'Plus Jakarta Sans', sans-serif",
+        fontFamily: "var(--font-body)",
         background: "var(--color-bg)",
       }}>
 
@@ -406,10 +406,11 @@ export default function DashboardView({
         <header className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-6">
           <div className="min-w-0">
             <h1
-              className="leading-[1.05] tracking-tight text-white"
+              className="leading-[1.05] tracking-tight"
               style={{
-                fontFamily: "'Fraunces', serif",
-                fontWeight: 400,
+                fontFamily: "var(--font-display)",
+                fontWeight: 600,
+                letterSpacing: "-0.02em",
                 fontSize: "clamp(2rem, 4vw, 3.1rem)",
               }}>
               Velora Fleet Analytics Dashboard
@@ -417,14 +418,14 @@ export default function DashboardView({
             <p
               className="mt-4 text-[11px] font-semibold uppercase tracking-[0.18em]"
               style={{
-                color: "rgba(255,255,255,0.55)",
-                fontFamily: "'Inter', sans-serif",
+                color: "var(--color-muted)",
+                fontFamily: "var(--font-body)",
               }}>
               Fleet Overview
               {selectedResult?.filename && (
-                <span style={{ color: "rgba(255,255,255,0.35)" }}>
+                <span style={{ color: "var(--color-faint)" }}>
                   {" · "}
-                  <span style={{ color: "rgba(255,255,255,0.7)" }}>
+                  <span style={{ color: "var(--color-ink-2)" }}>
                     {selectedResult.filename}
                   </span>
                 </span>
@@ -440,14 +441,14 @@ export default function DashboardView({
                 className="cursor-pointer group flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200"
                 style={{
                   background: "transparent",
-                  border: "1px solid rgba(255,255,255,0.12)",
+                  border: "1px solid var(--color-rule-2)",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(201,160,71,0.5)";
-                  e.currentTarget.style.background = "rgba(201,160,71,0.06)";
+                  e.currentTarget.style.borderColor = "var(--color-accent)";
+                  e.currentTarget.style.background = "var(--color-accent-soft)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
+                  e.currentTarget.style.borderColor = "var(--color-rule-2)";
                   e.currentTarget.style.background = "transparent";
                 }}
               >
@@ -457,7 +458,7 @@ export default function DashboardView({
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                   strokeWidth={1.8}
-                  style={{ color: "rgba(255,255,255,0.6)" }}
+                  style={{ color: "var(--color-ink-2)" }}
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
@@ -472,9 +473,9 @@ export default function DashboardView({
                   <div
                     className="absolute right-0 top-[calc(100%+8px)] rounded-md p-1.5 min-w-[170px] z-50 flex flex-col gap-1"
                     style={{
-                      background: "#13151a",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      boxShadow: "0 12px 28px rgba(0,0,0,0.55)",
+                      background: "var(--color-paper-2)",
+                      border: "1px solid var(--color-rule)",
+                      boxShadow: "var(--shadow-lg)",
                     }}>
                     <button
                       onClick={() => {
@@ -482,14 +483,14 @@ export default function DashboardView({
                         handleExportPdf();
                       }}
                       className="w-full text-left px-3 py-2 rounded bg-transparent border-none text-[13px] cursor-pointer transition-colors"
-                      style={{ color: "rgba(255,255,255,0.7)" }}
+                      style={{ color: "var(--color-ink-2)" }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-                        e.currentTarget.style.color = "#fff";
+                        e.currentTarget.style.background = "var(--color-paper-3)";
+                        e.currentTarget.style.color = "var(--color-ink)";
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.background = "transparent";
-                        e.currentTarget.style.color = "rgba(255,255,255,0.7)";
+                        e.currentTarget.style.color = "var(--color-ink-2)";
                       }}
                     >
                       Export as PDF
@@ -500,14 +501,14 @@ export default function DashboardView({
                         handleExportJson();
                       }}
                       className="w-full text-left px-3 py-2 rounded bg-transparent border-none text-[13px] cursor-pointer transition-colors"
-                      style={{ color: "rgba(255,255,255,0.7)" }}
+                      style={{ color: "var(--color-ink-2)" }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-                        e.currentTarget.style.color = "#fff";
+                        e.currentTarget.style.background = "var(--color-paper-3)";
+                        e.currentTarget.style.color = "var(--color-ink)";
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.background = "transparent";
-                        e.currentTarget.style.color = "rgba(255,255,255,0.7)";
+                        e.currentTarget.style.color = "var(--color-ink-2)";
                       }}
                     >
                       Export as JSON
@@ -522,18 +523,18 @@ export default function DashboardView({
               className="cursor-pointer flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-[13px] tracking-wide transition-all duration-200"
               style={{
                 background: "transparent",
-                border: "1px solid rgba(201,160,71,0.5)",
-                color: "#e8c882",
-                fontFamily: "'Inter', sans-serif",
+                border: "1px solid var(--color-accent)",
+                color: "var(--color-accent-text)",
+                fontFamily: "var(--font-body)",
                 fontWeight: 500,
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(201,160,71,0.1)";
-                e.currentTarget.style.borderColor = "#c9a047";
+                e.currentTarget.style.background = "var(--color-accent-soft)";
+                e.currentTarget.style.borderColor = "var(--color-accent-strong)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.borderColor = "rgba(201,160,71,0.5)";
+                e.currentTarget.style.borderColor = "var(--color-accent)";
               }}>
               <svg
                 className="w-3.5 h-3.5"
@@ -554,9 +555,9 @@ export default function DashboardView({
             <SectionLabel>
               Fleet Overview
               {selectedResult?.filename && (
-                <span style={{ color: "rgba(255,255,255,0.32)" }}>
+                <span style={{ color: "var(--color-faint)" }}>
                   {"  ·  "}
-                  <span style={{ color: "rgba(255,255,255,0.55)" }}>{selectedResult.filename}</span>
+                  <span style={{ color: "var(--color-muted)" }}>{selectedResult.filename}</span>
                 </span>
               )}
             </SectionLabel>
@@ -591,22 +592,22 @@ export default function DashboardView({
         <div
           className="rounded-md overflow-hidden"
           style={{
-            background: "#0c0d11",
-            border: "1px solid rgba(255,255,255,0.06)",
+            background: "var(--color-paper-2)",
+            border: "1px solid var(--color-rule)",
           }}>
           {/* Toolbar — Image 1 "VIEWS:" style, right-aligned, minimal pills */}
           <div
             className="flex flex-row flex-wrap items-center justify-between gap-3 px-5 py-3 no-scrollbar"
             style={{
-              borderBottom: "1px solid rgba(255,255,255,0.05)",
+              borderBottom: "1px solid var(--color-rule)",
               background: "transparent",
             }}>
             <div className="flex items-center gap-3 flex-shrink-0">
               <span
                 className="text-[10px] font-semibold uppercase tracking-[0.18em]"
                 style={{
-                  color: "rgba(255,255,255,0.42)",
-                  fontFamily: "'Inter', sans-serif",
+                  color: "var(--color-muted)",
+                  fontFamily: "var(--font-body)",
                 }}>
                 Views:
               </span>
@@ -627,28 +628,28 @@ export default function DashboardView({
                       disabled={disabled}
                       className="px-3 py-1 rounded-full text-[12px] tracking-tight transition-all duration-200 whitespace-nowrap flex-shrink-0 cursor-pointer disabled:cursor-not-allowed"
                       style={{
-                        fontFamily: "'Inter', sans-serif",
+                        fontFamily: "var(--font-body)",
                         fontWeight: active ? 600 : 500,
                         color: active
-                          ? "#1a1408"
+                          ? "var(--color-accent-ink)"
                           : disabled
-                            ? "rgba(255,255,255,0.25)"
-                            : "rgba(255,255,255,0.7)",
-                        background: active ? "#c9a047" : "transparent",
+                            ? "var(--color-faint)"
+                            : "var(--color-ink-2)",
+                        background: active ? "var(--color-accent)" : "transparent",
                         border: active
-                          ? "1px solid #c9a047"
+                          ? "1px solid var(--color-accent)"
                           : "1px solid transparent",
                       }}
                       onMouseEnter={(e) => {
                         if (!active && !disabled) {
-                          e.currentTarget.style.color = "#fff";
+                          e.currentTarget.style.color = "var(--color-ink)";
                           e.currentTarget.style.background =
-                            "rgba(255,255,255,0.04)";
+                            "var(--color-paper-3)";
                         }
                       }}
                       onMouseLeave={(e) => {
                         if (!active && !disabled) {
-                          e.currentTarget.style.color = "rgba(255,255,255,0.7)";
+                          e.currentTarget.style.color = "var(--color-ink-2)";
                           e.currentTarget.style.background = "transparent";
                         }
                       }}>
@@ -668,9 +669,9 @@ export default function DashboardView({
                 className="appearance-none pl-4 pr-9 py-1.5 rounded-full text-[12px] focus:outline-none disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all"
                 style={{
                   background: "transparent",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  color: "rgba(255,255,255,0.7)",
-                  fontFamily: "'Inter', sans-serif",
+                  border: "1px solid var(--color-rule-2)",
+                  color: "var(--color-ink-2)",
+                  fontFamily: "var(--font-body)",
                   fontWeight: 500,
                 }}>
                 <option value="ALL">Combined View</option>
@@ -682,7 +683,7 @@ export default function DashboardView({
               </select>
               <span
                 className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2"
-                style={{ color: "rgba(255,255,255,0.4)" }}>
+                style={{ color: "var(--color-muted)" }}>
                 {icons.chevron}
               </span>
             </div>
@@ -733,9 +734,9 @@ export default function DashboardView({
             <div>
               <SectionLabel>
                 Savings Analysis
-                <span style={{ color: "rgba(255,255,255,0.32)" }}>
+                <span style={{ color: "var(--color-faint)" }}>
                   {"  ·  "}
-                  <span style={{ color: "rgba(255,255,255,0.55)" }}>
+                  <span style={{ color: "var(--color-muted)" }}>
                     {currentModeLabel}
                   </span>
                 </span>
@@ -801,16 +802,16 @@ export default function DashboardView({
 
           {/* ── Footer ── */}
           <footer className="flex items-center justify-center gap-3 pt-4 pb-10">
-            <div className="h-px w-12" style={{ background: "rgba(255,255,255,0.08)" }} />
+            <div className="h-px w-12" style={{ background: "var(--color-rule-2)" }} />
             <span
               className="text-[10px] font-medium uppercase tracking-[0.22em]"
               style={{
-                color: "rgba(255,255,255,0.3)",
-                fontFamily: "'Inter', sans-serif",
+                color: "var(--color-faint)",
+                fontFamily: "var(--font-body)",
               }}>
               Velora · Fleet Intelligence
             </span>
-            <div className="h-px w-12" style={{ background: "rgba(255,255,255,0.08)" }} />
+            <div className="h-px w-12" style={{ background: "var(--color-rule-2)" }} />
           </footer>
         </div>
       </div>

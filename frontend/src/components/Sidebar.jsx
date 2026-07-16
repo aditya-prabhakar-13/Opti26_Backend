@@ -35,12 +35,15 @@ function TestCaseRow({ result, isActive, isDeleting, onOpen, onDelete }) {
     <div
       className="group relative flex items-center gap-2 pl-6 pr-3 py-2.5 cursor-pointer transition-colors duration-150"
       style={{
-        borderLeft: isActive ? "2px solid #c9a047" : "2px solid transparent",
-        background: isActive ? "rgba(201,160,71,0.04)" : "transparent",
+        borderLeft: isActive
+          ? "2px solid var(--color-accent)"
+          : "2px solid transparent",
+        background: isActive ? "var(--color-accent-soft)" : "transparent",
       }}
       onClick={() => onOpen(result.id)}
       onMouseEnter={(e) => {
-        if (!isActive) e.currentTarget.style.background = "rgba(255,255,255,0.025)";
+        if (!isActive)
+          e.currentTarget.style.background = "var(--color-paper-3)";
       }}
       onMouseLeave={(e) => {
         if (!isActive) e.currentTarget.style.background = "transparent";
@@ -48,8 +51,8 @@ function TestCaseRow({ result, isActive, isDeleting, onOpen, onDelete }) {
       <p
         className="flex-1 min-w-0 truncate text-[13px] tracking-wide"
         style={{
-          color: isActive ? "#f5f5f5" : "rgba(255,255,255,0.55)",
-          fontWeight: isActive ? 500 : 400,
+          color: isActive ? "var(--color-accent-text)" : "var(--color-ink-2)",
+          fontWeight: isActive ? 600 : 400,
         }}
         title={result.filename ?? `Case #${result.id}`}>
         {result.filename ?? `Case #${result.id}`}
@@ -63,13 +66,13 @@ function TestCaseRow({ result, isActive, isDeleting, onOpen, onDelete }) {
           onDelete(result.id);
         }}
         className="flex-shrink-0 opacity-0 group-hover:opacity-100 w-6 h-6 rounded flex items-center justify-center transition-all duration-150 disabled:opacity-30"
-        style={{ color: "rgba(255,255,255,0.4)" }}
+        style={{ color: "var(--color-faint)" }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.color = "#c9a047";
-          e.currentTarget.style.background = "rgba(201,160,71,0.08)";
+          e.currentTarget.style.color = "var(--color-red)";
+          e.currentTarget.style.background = "var(--color-red-soft)";
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.color = "rgba(255,255,255,0.4)";
+          e.currentTarget.style.color = "var(--color-faint)";
           e.currentTarget.style.background = "transparent";
         }}
         title="Delete">
@@ -99,29 +102,33 @@ export default function Sidebar({
     <aside
       className="flex flex-col h-full"
       style={{
-        fontFamily: "'Plus Jakarta Sans', sans-serif",
-        background: "#0a0b0e",
-        borderRight: "1px solid rgba(255,255,255,0.06)",
+        fontFamily: "var(--font-body)",
+        background: "var(--color-paper-2)",
+        borderRight: "1px solid var(--color-rule)",
       }}>
       {/* ── Brand ── */}
       <div className="flex items-center gap-3 px-6 pt-7 pb-8">
         <img src="/favicon.svg" alt="" className="h-7 w-7 object-contain" />
         <div className="flex items-center gap-2.5 min-w-0">
           <span
-            className="text-[20px] font-semibold leading-none text-white tracking-wide"
-            style={{ fontFamily: "'Fraunces', serif", fontWeight: 600 }}>
+            className="text-[20px] font-semibold leading-none tracking-tight"
+            style={{
+              fontFamily: "var(--font-display)",
+              fontWeight: 600,
+              color: "var(--color-ink)",
+            }}>
             Velora
           </span>
           <span
             className="w-px h-4 flex-shrink-0"
-            style={{ background: "rgba(255,255,255,0.18)" }}
+            style={{ background: "var(--color-rule-2)" }}
           />
           <span
             className="text-[9px] font-semibold uppercase leading-tight whitespace-nowrap"
             style={{
-              color: "rgba(255,255,255,0.45)",
+              color: "var(--color-muted)",
               letterSpacing: "0.12em",
-              fontFamily: "'Inter', sans-serif",
+              fontFamily: "var(--font-body)",
             }}>
             Fleet<br />Intelligence
           </span>
@@ -132,11 +139,11 @@ export default function Sidebar({
       <div
         className="px-6 pb-3 flex items-center justify-between"
         style={{
-          color: "rgba(255,255,255,0.42)",
+          color: "var(--color-muted)",
         }}>
         <span
           className="text-[10px] font-semibold uppercase tracking-[0.18em]"
-          style={{ fontFamily: "'Inter', sans-serif" }}>
+          style={{ fontFamily: "var(--font-body)" }}>
           Test Cases
         </span>
         <button
@@ -144,10 +151,12 @@ export default function Sidebar({
           onClick={onNewCase}
           title="New test case"
           className="w-5 h-5 rounded flex items-center justify-center transition-colors"
-          style={{ color: "rgba(255,255,255,0.45)" }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "#c9a047")}
+          style={{ color: "var(--color-muted)" }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.color = "var(--color-accent-text)")
+          }
           onMouseLeave={(e) =>
-            (e.currentTarget.style.color = "rgba(255,255,255,0.45)")
+            (e.currentTarget.style.color = "var(--color-muted)")
           }>
           <IconPlus />
         </button>
@@ -159,7 +168,7 @@ export default function Sidebar({
           <div className="px-6 py-6">
             <p
               className="text-[11px] leading-relaxed"
-              style={{ color: "rgba(255,255,255,0.35)" }}>
+              style={{ color: "var(--color-faint)" }}>
               No test cases yet.
             </p>
           </div>
@@ -176,7 +185,7 @@ export default function Sidebar({
           ))
         )}
 
-        {/* Delete All — styled as a row item, matching Image 1 */}
+        {/* Delete All — styled as a row item */}
         {results.length > 0 && (
           <button
             type="button"
@@ -191,19 +200,19 @@ export default function Sidebar({
             }}
             className="w-full text-left pl-6 pr-3 py-2.5 transition-colors duration-150"
             style={{
-              color: "rgba(255,255,255,0.45)",
+              color: "var(--color-muted)",
               borderLeft: "2px solid transparent",
               fontSize: "13px",
               fontWeight: 400,
               letterSpacing: "0.01em",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.025)";
-              e.currentTarget.style.color = "rgba(255,255,255,0.7)";
+              e.currentTarget.style.background = "var(--color-paper-3)";
+              e.currentTarget.style.color = "var(--color-red)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = "transparent";
-              e.currentTarget.style.color = "rgba(255,255,255,0.45)";
+              e.currentTarget.style.color = "var(--color-muted)";
             }}>
             Delete All
           </button>
@@ -214,11 +223,11 @@ export default function Sidebar({
       <div
         className="px-6 py-4"
         style={{
-          borderTop: "1px solid rgba(255,255,255,0.04)",
+          borderTop: "1px solid var(--color-rule)",
         }}>
         <p
           className="text-[10px] font-medium tracking-wide"
-          style={{ color: "rgba(255,255,255,0.25)" }}>
+          style={{ color: "var(--color-faint)" }}>
           © 2025 Velora Fleet Intelligence
         </p>
       </div>

@@ -531,7 +531,7 @@ export default function App() {
     <div
       className="flex h-screen overflow-hidden"
       style={{
-        fontFamily: "'Plus Jakarta Sans', sans-serif",
+        fontFamily: "var(--font-body)",
         background: "var(--color-bg)",
       }}>
       <ProgressBar
@@ -560,8 +560,8 @@ export default function App() {
             <header
               className="fixed top-0 left-0 right-0 flex items-center justify-between px-4 py-3 md:hidden z-1000"
               style={{
-                background: "var(--color-surface)",
-                borderBottom: "1px solid var(--color-border)",
+                background: "var(--color-paper-2)",
+                borderBottom: "1px solid var(--color-rule)",
                 backdropFilter: "blur(8px)",
               }}>
               {/* Brand */}
@@ -569,11 +569,13 @@ export default function App() {
                 <img src="/favicon.svg" alt="" className="h-8" />
                 <div>
                   <p
-                    className="text-base font-bold text-white leading-none tracking-wide"
-                    style={{ fontFamily: "'Fraunces', serif" }}>
+                    className="text-base font-bold leading-none tracking-wide"
+                    style={{ fontFamily: "var(--font-display)", color: "var(--color-ink)" }}>
                     VELORA
                   </p>
-                  <p className="text-[10px] text-amber-500/80 font-semibold tracking-widest uppercase mt-0.5">
+                  <p
+                    className="text-[10px] font-semibold tracking-widest uppercase mt-0.5"
+                    style={{ color: "var(--color-accent-text)" }}>
                     Driven by Possibility
                   </p>
                 </div>
@@ -583,15 +585,19 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setSidebarOpen((o) => !o)}
-                className="w-9 h-9 flex flex-col items-center justify-center gap-1.5 rounded-md bg-slate-800/80 border border-slate-700/60">
+                className="w-9 h-9 flex flex-col items-center justify-center gap-1.5 rounded-md"
+                style={{ background: "var(--color-paper-3)", border: "1px solid var(--color-rule-2)" }}>
                 <span
-                  className={`block w-4 h-[2px] bg-slate-300 rounded-full transition-all duration-200 ${sidebarOpen ? "rotate-45 translate-y-[7px]" : ""}`}
+                  className={`block w-4 h-[2px] rounded-full transition-all duration-200 ${sidebarOpen ? "rotate-45 translate-y-[7px]" : ""}`}
+                  style={{ background: "var(--color-ink)" }}
                 />
                 <span
-                  className={`block w-4 h-[2px] bg-slate-300 rounded-full transition-all duration-200 ${sidebarOpen ? "opacity-0" : ""}`}
+                  className={`block w-4 h-[2px] rounded-full transition-all duration-200 ${sidebarOpen ? "opacity-0" : ""}`}
+                  style={{ background: "var(--color-ink)" }}
                 />
                 <span
-                  className={`block w-4 h-[2px] bg-slate-300 rounded-full transition-all duration-200 ${sidebarOpen ? "-rotate-45 -translate-y-[7px]" : ""}`}
+                  className={`block w-4 h-[2px] rounded-full transition-all duration-200 ${sidebarOpen ? "-rotate-45 -translate-y-[7px]" : ""}`}
+                  style={{ background: "var(--color-ink)" }}
                 />
               </button>
             </header>
@@ -601,8 +607,8 @@ export default function App() {
           {isMobile && sidebarOpen && (
             <>
               <div
-                className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm"
-                style={{ zIndex: 1800 }}
+                className="fixed inset-0 backdrop-blur-sm"
+                style={{ zIndex: 1800, background: "oklch(24% 0.012 65 / 0.35)" }}
                 onClick={() => setSidebarOpen(false)}
               />
               <div className="fixed top-0 left-0 bottom-0 w-72 flex flex-col" style={{ zIndex: 1900 }}>
@@ -628,7 +634,13 @@ export default function App() {
       <main
         className={`flex-1 overflow-y-auto ${isMobile && hasCases ? "pt-14" : ""}`}>
         {error && (
-          <div className="mx-4 mt-4 px-4 py-3 rounded-md bg-rose-500/10 border border-rose-500/30 text-rose-400 text-sm font-semibold">
+          <div
+            className="mx-4 mt-4 px-4 py-3 rounded-md text-sm font-semibold"
+            style={{
+              background: "var(--color-red-soft)",
+              border: "1px solid var(--color-red)",
+              color: "var(--color-red)",
+            }}>
             {error}
           </div>
         )}

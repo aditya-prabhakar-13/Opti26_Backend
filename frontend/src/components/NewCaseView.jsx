@@ -94,21 +94,29 @@ function Step({ number, label, active, done }) {
   return (
     <div className="flex items-center gap-3">
       <div
-        className={`
-        w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 transition-all
-        ${done ? "text-white shadow-sm shadow-emerald-900/40" : active ? "text-slate-900 shadow-sm shadow-amber-900/40" : "bg-slate-800 border border-slate-700 text-slate-500"}
-      `}
+        className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 transition-all"
         style={
           done
-            ? { background: "var(--color-green)" }
+            ? { background: "var(--color-green)", color: "var(--color-paper)" }
             : active
-              ? { background: "var(--color-accent)" }
-              : {}
+              ? { background: "var(--color-accent)", color: "var(--color-accent-ink)" }
+              : {
+                  background: "var(--color-paper-3)",
+                  border: "1px solid var(--color-rule-2)",
+                  color: "var(--color-muted)",
+                }
         }>
         {done ? <IconCheck /> : number}
       </div>
       <span
-        className={`text-xs font-semibold ${active ? "text-white" : done ? "text-emerald-400" : "text-slate-500"}`}>
+        className="text-xs font-semibold"
+        style={{
+          color: active
+            ? "var(--color-ink)"
+            : done
+              ? "var(--color-green)"
+              : "var(--color-muted)",
+        }}>
         {label}
       </span>
     </div>
@@ -131,7 +139,7 @@ export default function NewCaseView({
     <section
       className="min-h-screen flex items-center justify-center px-4 py-12"
       style={{
-        fontFamily: "'Plus Jakarta Sans', sans-serif",
+        fontFamily: "var(--font-body)",
         background: "var(--color-bg)",
       }}>
 
@@ -140,15 +148,17 @@ export default function NewCaseView({
         <div className="text-center mb-10 flex flex-col items-center gap-4">
           <div
             className="inline-flex items-center justify-center w-14 h-14 rounded-lg mb-5 flex-shrink-0"
-            style={{ background: "var(--color-accent)" }}>
+            style={{ background: "var(--color-accent)", color: "var(--color-accent-ink)" }}>
             <IconRoute />
           </div>
           <h1
-            className="text-3xl font-bold text-white mb-2"
-            style={{ fontFamily: "'Fraunces', serif" }}>
+            className="text-3xl font-bold mb-2"
+            style={{ fontFamily: "var(--font-display)", color: "var(--color-ink)", letterSpacing: "-0.02em" }}>
             {hasCases ? "New Test Case" : "Welcome to Velora"}
           </h1>
-          <p className="text-slate-400 text-sm leading-relaxed max-w-sm mx-auto">
+          <p
+            className="text-sm leading-relaxed max-w-sm mx-auto"
+            style={{ color: "var(--color-ink-2)" }}>
             {hasCases
               ? "Upload a new Excel dataset to generate and compare optimized fleet routes."
               : "Upload your Excel data to generate explainable, optimized commute routes for your fleet."}
@@ -163,31 +173,35 @@ export default function NewCaseView({
             active={step === 1}
             done={step > 1}
           />
-          <div className="flex-1 h-px bg-slate-700/60 mx-1" />
+          <div className="flex-1 h-px mx-1" style={{ background: "var(--color-rule-2)" }} />
           <Step
             number={2}
             label="Run optimization"
             active={step === 2}
             done={false}
           />
-          <div className="flex-1 h-px bg-slate-700/60 mx-1" />
+          <div className="flex-1 h-px mx-1" style={{ background: "var(--color-rule-2)" }} />
           <Step number={3} label="View results" active={false} done={false} />
         </div>
 
         {/* ── Card ── */}
-        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl overflow-hidden">
+        <div
+          className="rounded-lg overflow-hidden"
+          style={{
+            border: "1px solid var(--color-rule)",
+            background: "var(--color-paper-2)",
+            boxShadow: "var(--shadow-md)",
+          }}>
           {/* Upload zone */}
           <label
             htmlFor="upload-input"
-            className={`
-              relative flex flex-col items-center justify-center gap-4
-              px-8 py-10 cursor-pointer border-b border-slate-700/50
-              transition-all duration-200 group
-              ${selectedFile
-                ? "bg-emerald-500/5 hover:bg-emerald-500/8"
-                : "bg-slate-800/20 hover:bg-slate-700/30"
-              }
-            `}>
+            className="relative flex flex-col items-center justify-center gap-4 px-8 py-10 cursor-pointer transition-all duration-200 group"
+            style={{
+              borderBottom: "1px solid var(--color-rule)",
+              background: selectedFile
+                ? "var(--color-green-soft)"
+                : "var(--color-paper-3)",
+            }}>
             <input
               id="upload-input"
               type="file"
@@ -198,36 +212,35 @@ export default function NewCaseView({
 
             {/* Icon circle */}
             <div
-              className={`
-              w-16 h-16 rounded-lg flex items-center justify-center transition-all duration-200
-              ${selectedFile
-                  ? "bg-emerald-500/15 text-emerald-400 shadow-lg shadow-emerald-900/20"
-                  : "bg-slate-700/80 text-slate-400 group-hover:bg-amber-500/15 group-hover:text-amber-400 group-hover:shadow-lg group-hover:shadow-amber-900/20"
-                }
-            `}>
+              className="w-16 h-16 rounded-lg flex items-center justify-center transition-all duration-200"
+              style={
+                selectedFile
+                  ? { background: "var(--color-green-soft)", color: "var(--color-green)" }
+                  : { background: "var(--color-paper-3)", color: "var(--color-muted)" }
+              }>
               {selectedFile ? <IconFile /> : <IconUpload />}
             </div>
 
             {selectedFile ? (
               <div className="text-center">
                 <div className="flex items-center gap-2 justify-center mb-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  <p className="text-sm font-bold text-emerald-400">
+                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--color-green)" }} />
+                  <p className="text-sm font-bold" style={{ color: "var(--color-green)" }}>
                     File ready
                   </p>
                 </div>
-                <p className="text-white font-semibold text-sm">
+                <p className="font-semibold text-sm" style={{ color: "var(--color-ink)" }}>
                   {selectedFile.name}
                 </p>
-                <p className="text-slate-500 text-xs mt-1">Click to replace</p>
+                <p className="text-xs mt-1" style={{ color: "var(--color-muted)" }}>Click to replace</p>
               </div>
             ) : (
               <div className="text-center">
-                <p className="text-white font-semibold text-sm mb-1">
+                <p className="font-semibold text-sm mb-1" style={{ color: "var(--color-ink)" }}>
                   Drop your file here, or{" "}
-                  <span className="text-amber-400">browse</span>
+                  <span style={{ color: "var(--color-accent-text)" }}>browse</span>
                 </p>
-                <p className="text-slate-500 text-xs">
+                <p className="text-xs" style={{ color: "var(--color-muted)" }}>
                   Supported formats: .xlsx, .json
                 </p>
               </div>
@@ -235,7 +248,10 @@ export default function NewCaseView({
 
             {/* Dashed border overlay */}
             {!selectedFile && (
-              <div className="absolute inset-4 rounded-lg border-2 border-dashed border-slate-600/50 group-hover:border-amber-500/30 transition-colors duration-200 pointer-events-none" />
+              <div
+                className="absolute inset-4 rounded-lg border-2 border-dashed transition-colors duration-200 pointer-events-none group-hover:[border-color:var(--color-accent)]"
+                style={{ borderColor: "var(--color-rule-2)" }}
+              />
             )}
           </label>
 
@@ -245,7 +261,7 @@ export default function NewCaseView({
             {/* Optimization Mode Select */}
             {selectedFile && !selectedFile.name.endsWith('.json') && (
               <div className="flex flex-col gap-3 mb-6">
-                <label className="text-xs font-bold uppercase tracking-widest text-slate-500 text-center">Optimization Mode</label>
+                <label className="text-xs font-bold uppercase tracking-widest text-center" style={{ color: "var(--color-muted)" }}>Optimization Mode</label>
                 <div className="flex items-center justify-center gap-2 flex-wrap">
                   {[
                     { id: '0', label: 'Balanced Optimize' },
@@ -256,10 +272,11 @@ export default function NewCaseView({
                       type="button"
                       disabled={loading}
                       onClick={() => setOptimizationMode(mode.id)}
-                      className={`px-5 py-2 rounded-md text-xs font-bold tracking-wide transition-all ${optimizationMode === mode.id
-                        ? 'bg-amber-500/15 text-amber-400 border border-amber-500/50 shadow-sm shadow-amber-900/20'
-                        : 'bg-slate-800/50 text-slate-400 border border-slate-700/60 hover:bg-slate-700/50 hover:text-slate-200'
-                        }`}
+                      className="px-5 py-2 rounded-md text-xs font-bold tracking-wide transition-all"
+                      style={optimizationMode === mode.id
+                        ? { background: "var(--color-accent-soft)", color: "var(--color-accent-text)", border: "1px solid var(--color-accent)" }
+                        : { background: "var(--color-paper-2)", color: "var(--color-muted)", border: "1px solid var(--color-rule-2)" }
+                      }
                     >
                       {mode.label}
                     </button>
@@ -275,16 +292,15 @@ export default function NewCaseView({
               className="
                 w-full flex items-center justify-center gap-3
                 px-6 py-3.5 rounded-lg
-                font-bold text-sm text-white
+                font-bold text-sm
                 transition-all duration-200
-                disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0
+                disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0
                 hover:-translate-y-0.5
-                shadow-lg shadow-amber-900/20 hover:shadow-amber-900/40
               "
               style={
                 !loading && selectedFile
-                  ? { background: "var(--color-accent)" }
-                  : { background: "rgba(100,116,139,0.2)", boxShadow: "none" }
+                  ? { background: "var(--color-accent)", color: "var(--color-accent-ink)", boxShadow: "var(--shadow-md)" }
+                  : { background: "var(--color-paper-3)", color: "var(--color-muted)", boxShadow: "none" }
               }>
               {loading ? (
                 <>
@@ -300,7 +316,7 @@ export default function NewCaseView({
             </button>
 
             {!selectedFile && (
-              <p className="text-center text-xs text-slate-600">
+              <p className="text-center text-xs" style={{ color: "var(--color-muted)" }}>
                 Upload an Excel file to continue
               </p>
             )}
@@ -309,7 +325,7 @@ export default function NewCaseView({
 
         {/* ── Footer hint ── */}
         {!hasCases && (
-          <p className="text-center text-xs text-slate-600 mt-6">
+          <p className="text-center text-xs mt-6" style={{ color: "var(--color-muted)" }}>
             Your results will appear in the sidebar after optimization
             completes.
           </p>

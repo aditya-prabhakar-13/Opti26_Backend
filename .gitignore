@@ -35,4 +35,7 @@ Thumbs.db
 # Build artifacts and generated outputs
 output.json
 .claude
+.agents
 .understand-anything
+skills-lock.json
+.hallmark

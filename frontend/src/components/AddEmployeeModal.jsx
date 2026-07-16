@@ -61,16 +61,16 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }) {
             alignItems: 'center',
             justifyContent: 'center',
             padding: '20px',
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            backgroundColor: 'oklch(24% 0.012 65 / 0.35)',
             backdropFilter: 'blur(8px)',
         }}>
             <div style={{
                 width: '100%',
                 maxWidth: '1200px',
-                backgroundColor: '#0a0c10',
+                backgroundColor: 'var(--color-paper-2)',
                 border: '1px solid var(--color-border)',
-                borderRadius: '6px',
-                boxShadow: '0 24px 48px -12px rgba(0, 0, 0, 0.5)',
+                borderRadius: 'var(--radius-lg)',
+                boxShadow: 'var(--shadow-lg)',
                 display: 'flex',
                 flexDirection: 'column',
                 maxHeight: '90vh',
@@ -79,7 +79,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }) {
                 <div style={{
                     padding: '16px 24px',
                     borderBottom: '1px solid var(--color-border)',
-                    backgroundColor: '#0c0e12',
+                    backgroundColor: 'var(--color-paper)',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center'
@@ -136,7 +136,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }) {
                                 position: 'sticky',
                                 top: 0,
                                 zIndex: 10,
-                                backgroundColor: '#131620',
+                                backgroundColor: 'var(--color-paper-3)',
                                 borderBottom: '1px solid var(--color-border)'
                             }}>
                                 <tr>
@@ -158,8 +158,8 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }) {
                                     const inputStyle = {
                                         width: '100%',
                                         minWidth: '80px',
-                                        backgroundColor: '#1a1d26',
-                                        border: '1px solid var(--color-border)',
+                                        backgroundColor: 'var(--color-paper)',
+                                        border: '1px solid var(--color-rule-2)',
                                         borderRadius: '4px',
                                         padding: '8px 12px',
                                         fontSize: '0.8125rem',
@@ -177,8 +177,8 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }) {
                                             <td style={wrapStyle}><input required type="number" min="1" max="5" value={emp.priority} onChange={(e) => handleChange(index, 'priority', parseInt(e.target.value))} style={inputStyle} /></td>
                                             <td style={wrapStyle}><input required type="number" step="any" value={emp.lat} onChange={(e) => handleChange(index, 'lat', parseFloat(e.target.value))} placeholder="12.9" style={inputStyle} /></td>
                                             <td style={wrapStyle}><input required type="number" step="any" value={emp.lng} onChange={(e) => handleChange(index, 'lng', parseFloat(e.target.value))} placeholder="77.6" style={inputStyle} /></td>
-                                            <td style={wrapStyle}><input required type="time" value={emp.earliest_pickup} onChange={(e) => handleChange(index, 'earliest_pickup', e.target.value)} style={{ ...inputStyle, textAlign: 'center', colorScheme: 'dark' }} /></td>
-                                            <td style={wrapStyle}><input required type="time" value={emp.latest_drop} onChange={(e) => handleChange(index, 'latest_drop', e.target.value)} style={{ ...inputStyle, textAlign: 'center', colorScheme: 'dark' }} /></td>
+                                            <td style={wrapStyle}><input required type="time" value={emp.earliest_pickup} onChange={(e) => handleChange(index, 'earliest_pickup', e.target.value)} style={{ ...inputStyle, textAlign: 'center', colorScheme: 'light' }} /></td>
+                                            <td style={wrapStyle}><input required type="time" value={emp.latest_drop} onChange={(e) => handleChange(index, 'latest_drop', e.target.value)} style={{ ...inputStyle, textAlign: 'center', colorScheme: 'light' }} /></td>
                                             <td style={wrapStyle}>
                                                 <select value={emp.vehicle_preference} onChange={(e) => handleChange(index, 'vehicle_preference', e.target.value)} style={inputStyle}>
                                                     <option value="any">Any</option>
@@ -222,7 +222,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }) {
                     <div style={{
                         padding: '12px 24px',
                         borderTop: '1px solid var(--color-border)',
-                        backgroundColor: '#0c0e12',
+                        backgroundColor: 'var(--color-paper)',
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center'
@@ -277,7 +277,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSubmit }) {
                                 borderRadius: '4px',
                                 background: 'var(--color-accent)',
                                 border: 'none',
-                                color: '#fff',
+                                color: 'var(--color-accent-ink)',
                                 fontSize: '0.8125rem',
                                 fontWeight: 600,
                                 cursor: 'pointer',
